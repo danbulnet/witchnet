@@ -1,0 +1,19 @@
+[workspace]
+
+members = [
+    "crates/witchnet-common",
+    "crates/asa-graphs",
+    "crates/magds"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.66"
+authors = ["Daniel Bulanda <email: daniel@bulanda.net>"]
+description = "witchnet is a biologically inspired associative neural network"
+license = "AGPL-3.0"
+readme = "README.md"
+repository = "https://github.com/danbulnet/witchnet"
+categories = ["science", "virtualization", "simulation", "database", "data-structures"]
+keywords = ["database", "knowledge-graph", "machine-learning", "associative", "graph"]

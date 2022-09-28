@@ -1,0 +1,17 @@
+@article{horzyk2020asa,
+  title={ASA-graphs for efficient data representation and processing},
+  author={Horzyk, Adrian and Bulanda, Daniel and Starzyk, Janusz A},
+  journal={International Journal of Applied Mathematics and Computer Science},
+  volume={30},
+  number={4},
+  year={2020}
+}
+
+@inproceedings{wojcik2021associative,
+  title={Associative Graphs for Fine-Grained Text Sentiment Analysis},
+  author={W{\'o}jcik, Maciej and Horzyk, Adrian and Bulanda, Daniel},
+  booktitle={International Conference on Neural Information Processing},
+  pages={238--249},
+  year={2021},
+  organization={Springer}
+}
