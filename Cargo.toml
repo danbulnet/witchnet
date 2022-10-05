@@ -1,9 +1,11 @@
 [workspace]
+resolver = "2"
 
 members = [
     "crates/witchnet-common",
     "crates/asa-graphs",
-    "crates/magds"
+    "crates/magds",
+    "crates/witchnet-gui"
 ]
 
 [workspace.package]

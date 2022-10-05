@@ -2,6 +2,8 @@ use std::fs::File;
 
 use polars::prelude::*;
 
+use crate::data::DataTypeValue;
+
 pub enum DataVec {
     BoolVec(Vec<bool>),
     UInt8Vec(Vec<u8>),
@@ -18,6 +20,38 @@ pub enum DataVec {
     Unknown
 }
 
+impl DataVec {
+    pub fn get(&self, index: usize) -> Option<DataTypeValue> {
+        match self {
+            DataVec::BoolVec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::UInt8Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::UInt16Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::UInt32Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::UInt64Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Int8Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Int16Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Int32Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Int64Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Float32Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Float64Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Utf8Vec(v) => if let Some(x) = 
+                v.get(index) {Some(x.clone().into()) } else { None },
+            DataVec::Unknown => None
+        }
+    }
+}
+
 pub enum DataVecOption {
     BoolVec(Vec<Option<bool>>),
     UInt8Vec(Vec<Option<u8>>),
@@ -32,6 +66,50 @@ pub enum DataVecOption {
     Float64Vec(Vec<Option<f64>>),
     Utf8Vec(Vec<Option<String>>),
     Unknown
+}
+
+impl DataVecOption {
+    pub fn get(&self, index: usize) -> Option<DataTypeValue> {
+        match self {
+            DataVecOption::BoolVec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::UInt8Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::UInt16Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::UInt32Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::UInt64Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Int8Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Int16Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Int32Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Int64Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Float32Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Float64Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Utf8Vec(v) => if let Some(x) = v.get(index) { 
+                if let Some(ix) = x.clone() { Some(ix.into()) } else { None } 
+            } else { None },
+            DataVecOption::Unknown => None
+        }
+    }
 }
 
 pub fn csv_to_dataframe(filename: &str) -> Result<DataFrame> {
