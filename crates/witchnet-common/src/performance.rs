@@ -21,20 +21,22 @@ impl SupervisedPerformance {
         references: Vec<DataTypeValue>, 
         predictions: Vec<DataTypeValue>, 
         probabilities: Vec<f32>
-    ) -> SupervisedPerformance {
-        SupervisedPerformance::Classification(SupervisedData{ 
+    ) -> anyhow::Result<SupervisedPerformance> {
+        let ret = SupervisedPerformance::Classification(SupervisedData{ 
             references, predictions, probabilities 
-        })
+        });
+        match ret.is_ok() { Ok(_) => Ok(ret), Err(e) => Err(e) }
     }
 
     pub fn regression(
         references: Vec<DataTypeValue>, 
         predictions: Vec<DataTypeValue>,
         probabilities: Vec<f32>
-    ) -> SupervisedPerformance {
-        SupervisedPerformance::Regression(SupervisedData{ 
+    ) -> anyhow::Result<SupervisedPerformance> {
+        let ret = SupervisedPerformance::Regression(SupervisedData{ 
             references, predictions, probabilities
-        })
+        });
+        match ret.is_ok() { Ok(_) => Ok(ret), Err(e) => Err(e) }
     }
 
     pub fn references(&self) -> &[DataTypeValue] {
@@ -58,53 +60,99 @@ impl SupervisedPerformance {
         }
     }
 
-    pub fn accuracy(&self) -> Option<f64> { 
+    pub fn accuracy(&self) -> anyhow::Result<f64> { 
         match self {
             Self::Classification(data) => {
-                let data_len = data.references.len();
-                assert_eq!(data_len, data.predictions.len());
+                self.is_ok()?;
 
+                let data_len = data.references.len();
                 let mut total_error: f64 = 0.0;
                 for i in 0..data_len {
                     total_error += data.references[i].distance(&data.predictions[i]);
                 }
 
-                Some(total_error / data_len as f64)
+                Ok(total_error / data_len as f64)
             }
-            Self::Regression(_) => { None }
+            Self::Regression(_) => { anyhow::bail!("accuracy is for classification only") }
         }
     }
 
-    pub fn rmse(&self) -> Option<f64> {
+    pub fn rmse(&self) -> anyhow::Result<f64> {
         match self {
-            Self::Classification(_) => { None }
+            Self::Classification(_) => { anyhow::bail!("rmse is for regression only") }
             Self::Regression(data) => {
-                let data_len = data.references.len();
-                assert_eq!(data_len, data.predictions.len());
+                self.is_ok()?;
 
+                let data_len = data.references.len();
                 let mut total_error: f64 = 0.0;
                 for i in 0..data_len {
                     total_error += (data.references[i].distance(&data.predictions[i])).powf(2.0);
                 }
 
-                Some((total_error / data_len as f64).sqrt())
+                Ok((total_error / data_len as f64).sqrt())
             }
         }
     }
 
-    pub fn mae(&self) -> Option<f64> {
+    pub fn mae(&self) -> anyhow::Result<f64> {
         match self {
-            Self::Classification(_) => { None }
+            Self::Classification(_) => { anyhow::bail!("mae is for regression only") }
             Self::Regression(data) => {
-                let data_len = data.references.len();
-                assert_eq!(data_len, data.predictions.len());
+                self.is_ok()?;
 
+                let data_len = data.references.len();
                 let mut total_error: f64 = 0.0;
                 for i in 0..data_len {
                     total_error += data.references[i].distance(&data.predictions[i]);
                 }
 
-                Some(total_error / data_len as f64)
+                Ok(total_error / data_len as f64)
+            }
+        }
+    }
+
+    pub fn mean_probability(&self) -> anyhow::Result<f32> {
+        match self {
+            Self::Classification(data) => { 
+                self.is_ok()?;
+                Ok(data.probabilities.iter().sum::<f32>() / data.probabilities.len() as f32)
+            }
+            Self::Regression(data) => { 
+                self.is_ok()?;
+                Ok(data.probabilities.iter().sum::<f32>() / data.probabilities.len() as f32)
+            }
+        }
+    }
+
+    pub fn is_ok(&self) -> anyhow::Result<()> {
+        match self {
+            Self::Classification(data) => { 
+                if data.references.is_empty() { anyhow::bail!("references vec is empty") }
+                let references_len = data.references.len();
+                let predictions_len = data.predictions.len();
+                let probabilities_len = data.probabilities.len();
+                if references_len != predictions_len || references_len != probabilities_len {
+                    anyhow::bail!(
+                        "references ({}), predictions ({}), and
+                        probabilities ({}) are not equal in length",
+                        references_len, predictions_len, probabilities_len
+                    )
+                }
+                Ok(())
+            }
+            Self::Regression(data) => { 
+                if data.references.is_empty() { anyhow::bail!("references vec is empty") }
+                let references_len = data.references.len();
+                let predictions_len = data.predictions.len();
+                let probabilities_len = data.probabilities.len();
+                if references_len != predictions_len || references_len != probabilities_len {
+                    anyhow::bail!(
+                        "references ({}), predictions ({}), and
+                        probabilities ({}) are not equal in length",
+                        references_len, predictions_len, probabilities_len
+                    )
+                }
+                Ok(())
             }
         }
     }
@@ -129,14 +177,19 @@ mod tests {
         ];
         let probas = vec![0.5, 1.0, 0.8];
 
-        let performace = SupervisedPerformance::regression(y_f64_ref, y_f64_pred, probas);
+        let performace = SupervisedPerformance::regression(
+            y_f64_ref, y_f64_pred, probas
+        ).unwrap();
 
         assert_eq!(performace.mae().unwrap(), 1.0);
-
+        
         let rmse_result = performace.rmse().unwrap();
         assert!(rmse_result > 1.224 && rmse_result < 1.225);
-
-        assert!(performace.accuracy().is_none());
+        
+        let mean_probability_result = performace.mean_probability().unwrap();
+        assert!(mean_probability_result > 0.76 && mean_probability_result < 0.77);
+        
+        assert!(performace.accuracy().is_err());
 
         assert_eq!(performace.references().len(), 3);
         assert_eq!(performace.predictions().len(), 3);
@@ -157,16 +210,35 @@ mod tests {
         ];
         let probas = vec![0.5, 1.0, 0.8];
 
-        let performace = SupervisedPerformance::classification(y_rcstr_ref, y_rcstr_pred, probas);
+        let performace = SupervisedPerformance::classification(
+            y_rcstr_ref, y_rcstr_pred, probas
+        ).unwrap();
 
         let accuracy_result = performace.accuracy().unwrap();
         assert!(accuracy_result > 0.66 && accuracy_result < 0.67);
 
-        assert!(performace.mae().is_none());
-        assert!(performace.rmse().is_none());
+        let mean_probability_result = performace.mean_probability().unwrap();
+        assert!(mean_probability_result > 0.76 && mean_probability_result < 0.77);
+
+        assert!(performace.mae().is_err());
+        assert!(performace.rmse().is_err());
 
         assert_eq!(performace.references().len(), 3);
         assert_eq!(performace.predictions().len(), 3);
         assert_eq!(performace.probabilities().len(), 3);
+    }
+
+    
+    #[test]
+    fn wrong_input() {
+        let performace = SupervisedPerformance::regression(vec![], vec![], vec![]);
+        assert!(performace.is_err());
+
+        let performace = SupervisedPerformance::classification(
+            vec![DataTypeValue::F64(1.5), DataTypeValue::F64(1.5)], 
+            vec![DataTypeValue::F64(1.5)], 
+            vec![0.5]
+        );
+        assert!(performace.is_err());
     }
 }

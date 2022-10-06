@@ -10,7 +10,8 @@ use witchnet_common::{
     data::{ DataTypeValue, DataTypeValueStr, DataCategory },
     neuron::{ Neuron, NeuronID }, distances::Distance,
     sensor::Sensor,
-    polars::{ self as polars_common, DataVecOption }
+    polars::{ self as polars_common, DataVecOption },
+    performance::{ SupervisedPerformance, DataProbability }
 };
 use polars::{
     prelude::*,
@@ -24,7 +25,7 @@ pub fn predict(
     features: &Vec<(Rc<str>, DataTypeValue)>,
     target: Rc<str>,
     fuzzy: bool
-) -> Option<(DataTypeValue, f64)> {
+) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
 
     for (id, value) in features {
@@ -70,12 +71,12 @@ pub fn predict(
 
     let (winner_activation, winner) = neurons_sorted.into_iter().next_back()?;
 
-    let max_activation = features.len() as f64;
-    let proba = winner_activation.to_f32()? as f64 / max_activation;
+    let max_activation = features.len() as f32;
+    let proba = winner_activation.to_f32()? / max_activation;
 
     let predicted_value = winner.borrow().explain_one(target)?;
 
-    Some((predicted_value, proba))
+    Some(DataProbability(predicted_value, proba))
 }
 
 pub fn predict_weighted(
@@ -83,7 +84,7 @@ pub fn predict_weighted(
     features: Vec<(Rc<str>, DataTypeValue, f32)>,
     target: Rc<str>,
     fuzzy: bool
-) -> Option<(DataTypeValue, f64)> {
+) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
 
     for (id, value, weight) in &features {
@@ -129,23 +130,27 @@ pub fn predict_weighted(
 
     let (winner_activation, winner) = neurons_sorted.into_iter().next_back()?;
 
-    let max_activation = features.len() as f64;
-    let proba = winner_activation.to_f32()? as f64 / max_activation;
+    let max_activation = features.len() as f32;
+    let proba = winner_activation.to_f32()? / max_activation;
 
     let predicted_value = winner.borrow().explain_one(target)?;
 
-    Some((predicted_value, proba))
+    Some(DataProbability(predicted_value, proba))
 }
 
 pub fn prediction_score(
     train: &mut MAGDS, test: &mut MAGDS, target: Rc<str>, fuzzy: bool
-) -> Option<(f64, f64)> {
-    let mut total_proba = 0.0;
-    let mut total_error = 0.0;
+) -> anyhow::Result<SupervisedPerformance> {
+    // let mut total_proba = 0.0;
+    // let mut total_error = 0.0;
+    let mut references: Vec<DataTypeValue> = Vec::new();
+    let mut predictions: Vec<DataTypeValue> = Vec::new();
+    let mut probabilities: Vec<f32> = Vec::new();
 
-    let mut i = 1;
-    for (neuron_id, neuron) in &mut test.neurons {
+    // let mut i = 1;
+    for (i, (neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
+
         let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::new();
         let sensors = neuron.borrow().defining_sensors();
         let mut test_reference_value = DataTypeValue::Unknown;
@@ -177,42 +182,56 @@ pub fn prediction_score(
 
         if should_skip { continue }
         if test_reference_value.is_unknown() { 
-            panic!("test_reference_value shouldn't be unknown");
+            anyhow::bail!("test_reference_value shouldn't be unknown");
         }
 
-        let (winner_value, winner_proba) = predict(train, &features, target.clone(), fuzzy)?;
-        total_proba += winner_proba;
+        let data_proba = match predict(train, &features, target.clone(), fuzzy) {
+            Some(dp) => dp,
+            None => { train.deactivate(); continue }
+        };
+        let (winner_value, winner_proba) = (data_proba.0, data_proba.1);
+        // total_proba += winner_proba;
         log::debug!("winner_value {:?}, test_reference_value {:?}", winner_value, test_reference_value);
-        total_error += winner_value.distance(&test_reference_value).powf(2.0);
+        // total_error += winner_value.distance(&test_reference_value).powf(2.0);
         train.deactivate();
 
-        i += 1;
+        references.push(test_reference_value);
+        predictions.push(winner_value);
+        probabilities.push(winner_proba);
+
+        // i += 1;
     }
 
-    let test_len = test.neurons.len() as f64;
-    let final_proba = total_proba / test_len;
+    // let test_len = test.neurons.len() as f32;
+    // let final_proba = total_proba / test_len;
 
             
-    let target_data_category = train.sensor(target.clone())?.borrow().data_category();
+    let target_data_category = match train.sensor(target.clone()) {
+        Some(s) => s.borrow().data_category(),
+        None => anyhow::bail!("error getting sensor {target}")
+    };
     match target_data_category {
         DataCategory::Numerical => {
-            let rmse = (total_error as f64 / test_len).sqrt();
-            Some((rmse, final_proba))
+            SupervisedPerformance::regression(references, predictions, probabilities)
+            // let rmse = (total_error as f64 / test_len).sqrt();
+            // Some((rmse, final_proba))
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
-            let accuracy = total_error as f64 / test_len;
-            Some((accuracy, final_proba))
+            SupervisedPerformance::classification(references, predictions, probabilities)
+            // let accuracy = total_error as f64 / test_len;
+            // Some((accuracy, final_proba))
         }
     }
 }
 
 pub fn prediction_score_df(
     train: &mut MAGDS, test: &DataFrame, target: &str, fuzzy: bool
-) -> Option<(f64, f64)> {
-    let mut total_proba = 0.0;
-    let mut total_error = 0.0;
-
-    let mut i = 1;
+) -> anyhow::Result<SupervisedPerformance> {
+    // let mut total_proba = 0.0;
+    // let mut total_error = 0.0;
+    let mut references: Vec<DataTypeValue> = Vec::new();
+    let mut predictions: Vec<DataTypeValue> = Vec::new();
+    let mut probabilities: Vec<f32> = Vec::new();
 
     let mut feature_columns: HashMap<&str, DataVecOption> = HashMap::new();
     let mut target_column: Option<DataVecOption> = None;
@@ -244,30 +263,42 @@ pub fn prediction_score_df(
                 }
             }
 
-            let (winner_value, winner_proba) = predict(train, &features, target_rc.clone(), fuzzy)?;
-            total_proba += winner_proba;
+            let data_proba = match predict(train, &features, target_rc.clone(), fuzzy) {
+                Some(dp) => dp,
+                None => { train.deactivate(); continue }
+            };
+            let (winner_value, winner_proba) = (data_proba.0, data_proba.1);
+            // total_proba += winner_proba;
             log::debug!("winner_value {:?}, reference_value {:?}", winner_value, reference_value);
-            total_error += winner_value.distance(&reference_value).powf(2.0);
+            // total_error += winner_value.distance(&reference_value).powf(2.0);
             train.deactivate();
+
+            references.push(reference_value);
+            predictions.push(winner_value);
+            probabilities.push(winner_proba);
         } else {
             log::warn!("{target} is missing for row {i}, skipping");
             continue
         }
     }
 
-    let test_len = test.height() as f64;
-    let final_proba = total_proba / test_len;
+    // let test_len = test.height() as f64;
+    // let final_proba = total_proba / test_len;
 
-            
-    let target_data_category = train.sensor(target.into())?.borrow().data_category();
+    let target_data_category = match train.sensor(target.into()) {
+        Some(s) => s.borrow().data_category(),
+        None => anyhow::bail!("error getting sensor {target}")
+    };
     match target_data_category {
         DataCategory::Numerical => {
-            let rmse = (total_error as f64 / test_len).sqrt();
-            Some((rmse, final_proba))
+            SupervisedPerformance::regression(references, predictions, probabilities)
+            // let rmse = (total_error as f64 / test_len).sqrt();
+            // Some((rmse, final_proba))
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
-            let accuracy = total_error as f64 / test_len;
-            Some((accuracy, final_proba))
+            SupervisedPerformance::classification(references, predictions, probabilities)
+            // let accuracy = total_error as f64 / test_len;
+            // Some((accuracy, final_proba))
         }
     }
 }
@@ -293,11 +324,14 @@ mod tests {
         let mut magds_train = parser::magds_from_csv("iris_train", train_file).unwrap();
         let mut magds_test = parser::magds_from_csv("iris_test", test_file).unwrap();
 
-        let (accuracy, proba) = predict::prediction_score(
+        let performance = predict::prediction_score(
             &mut magds_train, &mut magds_test, "variety".into(), false
         ).unwrap();
+        let accuracy = performance.accuracy().unwrap();
+        let proba = performance.mean_probability().unwrap();
         println!("accuracy: {accuracy} proba: {proba}");
         assert!(accuracy > 0.95);
+        assert!(proba > 0.0);
     }
 
     #[test]
@@ -312,10 +346,13 @@ mod tests {
             .finish()
             .unwrap();
 
-        let (accuracy, proba) = predict::prediction_score_df(
+        let performance = predict::prediction_score_df(
             &mut magds_train, &test, "variety".into(), false
         ).unwrap();
+        let accuracy = performance.accuracy().unwrap();
+        let proba = performance.mean_probability().unwrap();
         println!("accuracy: {accuracy} proba: {proba}");
         assert!(accuracy > 0.95);
+        assert!(proba > 0.0);
     }
 }
