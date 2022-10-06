@@ -23,7 +23,7 @@ witchnet-common = { path = "../witchnet-common", version = "0.1.0" }
 asa-graphs = { path = "../asa-graphs", version = "0.1.0" }
 env_logger = "0.9.0"
 log = "0.4.17"
-polars = { version = "0.23.2", features = [ "zip_with", "csv-file", "temporal", "fmt", "dtype-slim" ] }
+polars = { version = "0.24.3", features = [ "zip_with", "csv-file", "temporal", "fmt", "dtype-slim" ] }
 enum-as-inner = "0.5.1"
 ordered-float = "3.0.0"
 regex = "1.6.0"

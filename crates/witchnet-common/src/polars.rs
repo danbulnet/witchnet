@@ -112,12 +112,12 @@ impl DataVecOption {
     }
 }
 
-pub fn csv_to_dataframe(filename: &str) -> Result<DataFrame> {
+pub fn csv_to_dataframe(filename: &str) -> PolarsResult<DataFrame> {
     let file = File::open(filename)?;
     CsvReader::new(file).infer_schema(None).has_header(true).finish()
 }
 
-pub fn series_to_datavec_skipna(series: &Series) -> Result<DataVec> {
+pub fn series_to_datavec_skipna(series: &Series) -> PolarsResult<DataVec> {
     match series.dtype() {
         DataType::UInt8 => Ok(DataVec::UInt8Vec(
             series.u8()?.into_iter().filter(|x| x.is_some()).map(|x| x.unwrap()).collect()
@@ -157,7 +157,7 @@ pub fn series_to_datavec_skipna(series: &Series) -> Result<DataVec> {
     }
 }
 
-pub fn series_to_datavec(series: &Series) -> Result<DataVecOption> {
+pub fn series_to_datavec(series: &Series) -> PolarsResult<DataVecOption> {
     match series.dtype() {
         DataType::UInt8 => Ok(DataVecOption::UInt8Vec(series.u8()?.into_iter().collect())),
         DataType::UInt16 => Ok(DataVecOption::UInt16Vec(series.u16()?.into_iter().collect())),

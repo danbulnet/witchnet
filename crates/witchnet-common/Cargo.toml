@@ -13,7 +13,7 @@ keywords.workspace = true
 [dependencies]
 dyn-clone = "1.0.9"
 num-traits = "0.2.15"
-polars = { version = "0.23.2", features = [ "zip_with", "csv-file", "temporal", "fmt", "dtype-slim" ] }
+polars = { version = "0.24.3", features = [ "zip_with", "csv-file", "temporal", "fmt", "dtype-slim" ] }
 enum-as-inner = "0.5.1"
 
 [dev-dependencies]
