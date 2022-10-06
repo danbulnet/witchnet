@@ -142,6 +142,7 @@ pub fn prediction_score(
     train: &mut MAGDS, test: &mut MAGDS, target: Rc<str>, fuzzy: bool
 ) -> anyhow::Result<SupervisedPerformance> {
     let y_len = test.neurons.len();
+    let n_features = test.sensors.len();
     let mut references: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
@@ -149,7 +150,7 @@ pub fn prediction_score(
     for (i, (neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
-        let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::new();
+        let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::with_capacity(n_features);
         let sensors = neuron.borrow().defining_sensors();
         let mut test_reference_value = DataTypeValue::Unknown;
         let mut should_skip = false;
@@ -214,6 +215,7 @@ pub fn prediction_score_df(
     train: &mut MAGDS, test: &DataFrame, target: &str, fuzzy: bool
 ) -> anyhow::Result<SupervisedPerformance> {
     let y_len = test.height();
+    let n_features = test.width();
     let mut references: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
@@ -242,7 +244,7 @@ pub fn prediction_score_df(
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
         
         if let Some(reference_value) = target_column.get(i) {
-            let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::new();
+            let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::with_capacity(n_features);
             for column_name in feature_columns.keys() {
                 if let Some(f) = feature_columns[column_name].get(i) {
                     features.push((Rc::from(*column_name), f));
