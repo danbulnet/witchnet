@@ -3,45 +3,33 @@ use crate::{
     distances::Distance
 };
 
-pub enum Performance {
+pub enum SupervisedPerformance {
     Classification(SupervisedData),
-    Regression(SupervisedData),
-    Clustering(ClusteringData)
+    Regression(SupervisedData)
 }
 
 pub struct SupervisedData {
-    pub references: Vec<DataTypeValue>,
-    pub predictions: Vec<DataTypeValue>
+    references: Vec<DataTypeValue>,
+    predictions: Vec<DataTypeValue>
 }
 
-pub struct ClusteringData {
-    pub clusters: Vec<DataTypeValue>
-}
-
-impl Performance {
+impl SupervisedPerformance {
     pub fn classification(
         references: Vec<DataTypeValue>, predictions: Vec<DataTypeValue>
-    ) -> Performance {
-        Performance::Classification(SupervisedData{ references, predictions })
+    ) -> SupervisedPerformance {
+        SupervisedPerformance::Classification(SupervisedData{ references, predictions })
     }
 
     pub fn regression(
         references: Vec<DataTypeValue>, predictions: Vec<DataTypeValue>
-    ) -> Performance {
-        Performance::Regression(SupervisedData{ references, predictions })
-    }
-
-    pub fn clustering(
-        clusters: Vec<DataTypeValue>
-    ) -> Performance {
-        Performance::Clustering(ClusteringData { clusters })
+    ) -> SupervisedPerformance {
+        SupervisedPerformance::Regression(SupervisedData{ references, predictions })
     }
 
     pub fn references(&self) -> Option<&[DataTypeValue]> {
         match self {
             Self::Classification(data) => { Some(&data.references) }
             Self::Regression(data) => { Some(&data.references) }
-            Self::Clustering(_) => { None }
         }
     }
     
@@ -49,7 +37,6 @@ impl Performance {
         match self {
             Self::Classification(data) => { Some(&data.predictions) }
             Self::Regression(data) => { Some(&data.predictions) }
-            Self::Clustering(data) => { Some(&data.clusters) }
         }
     }
 
@@ -67,7 +54,6 @@ impl Performance {
                 Some(total_error / data_len as f64)
             }
             Self::Regression(_) => { None }
-            Self::Clustering(_) => { None }
         }
     }
 
@@ -85,7 +71,6 @@ impl Performance {
 
                 Some((total_error / data_len as f64).sqrt())
             }
-            Self::Clustering(_) => { None }
         }
     }
 
@@ -103,7 +88,6 @@ impl Performance {
 
                 Some(total_error / data_len as f64)
             }
-            Self::Clustering(_) => { None }
         }
     }
 }
@@ -126,7 +110,7 @@ mod tests {
             DataTypeValue::F64(5.0)
         ];
 
-        let performace = Performance::regression(y_f64_ref, y_f64_pred);
+        let performace = SupervisedPerformance::regression(y_f64_ref, y_f64_pred);
 
         assert_eq!(performace.mae().unwrap(), 1.0);
 
@@ -152,7 +136,7 @@ mod tests {
             DataTypeValue::RcStr("5.0".into())
         ];
 
-        let performace = Performance::classification(y_rcstr_ref, y_rcstr_pred);
+        let performace = SupervisedPerformance::classification(y_rcstr_ref, y_rcstr_pred);
 
         let accuracy_result = performace.accuracy().unwrap();
         assert!(accuracy_result > 0.66 && accuracy_result < 0.67);
@@ -161,24 +145,6 @@ mod tests {
         assert!(performace.rmse().is_none());
 
         assert_eq!(performace.references().unwrap().len(), 3);
-        assert_eq!(performace.predictions().unwrap().len(), 3);
-    }
-
-    #[test]
-    fn clustering() {
-        let y_usize_pred = vec![
-            DataTypeValue::USize(1), 
-            DataTypeValue::USize(2), 
-            DataTypeValue::USize(5)
-        ];
-
-        let performace = Performance::clustering(y_usize_pred);
-
-        assert!(performace.accuracy().is_none());
-        assert!(performace.mae().is_none());
-        assert!(performace.rmse().is_none());
-        assert!(performace.references().is_none());
-
         assert_eq!(performace.predictions().unwrap().len(), 3);
     }
 }
