@@ -1,1 +1,1 @@
-pub mod predict;
+pub mod prediction;

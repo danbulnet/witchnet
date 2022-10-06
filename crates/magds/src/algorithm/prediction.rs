@@ -8,7 +8,7 @@ use ordered_float::OrderedFloat;
 
 use witchnet_common::{
     data::{ DataTypeValue, DataTypeValueStr, DataCategory },
-    neuron::{ Neuron, NeuronID }, distances::Distance,
+    neuron::{ Neuron, NeuronID },
     sensor::Sensor,
     polars::{ self as polars_common, DataVecOption },
     performance::{ SupervisedPerformance, DataProbability }
@@ -141,13 +141,11 @@ pub fn predict_weighted(
 pub fn prediction_score(
     train: &mut MAGDS, test: &mut MAGDS, target: Rc<str>, fuzzy: bool
 ) -> anyhow::Result<SupervisedPerformance> {
-    // let mut total_proba = 0.0;
-    // let mut total_error = 0.0;
-    let mut references: Vec<DataTypeValue> = Vec::new();
-    let mut predictions: Vec<DataTypeValue> = Vec::new();
-    let mut probabilities: Vec<f32> = Vec::new();
+    let y_len = test.neurons.len();
+    let mut references: Vec<DataTypeValue> = Vec::with_capacity(y_len);
+    let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
+    let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
 
-    // let mut i = 1;
     for (i, (neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
@@ -190,22 +188,14 @@ pub fn prediction_score(
             None => { train.deactivate(); continue }
         };
         let (winner_value, winner_proba) = (data_proba.0, data_proba.1);
-        // total_proba += winner_proba;
         log::debug!("winner_value {:?}, test_reference_value {:?}", winner_value, test_reference_value);
-        // total_error += winner_value.distance(&test_reference_value).powf(2.0);
         train.deactivate();
 
         references.push(test_reference_value);
         predictions.push(winner_value);
         probabilities.push(winner_proba);
-
-        // i += 1;
     }
 
-    // let test_len = test.neurons.len() as f32;
-    // let final_proba = total_proba / test_len;
-
-            
     let target_data_category = match train.sensor(target.clone()) {
         Some(s) => s.borrow().data_category(),
         None => anyhow::bail!("error getting sensor {target}")
@@ -213,13 +203,9 @@ pub fn prediction_score(
     match target_data_category {
         DataCategory::Numerical => {
             SupervisedPerformance::regression(references, predictions, probabilities)
-            // let rmse = (total_error as f64 / test_len).sqrt();
-            // Some((rmse, final_proba))
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
             SupervisedPerformance::classification(references, predictions, probabilities)
-            // let accuracy = total_error as f64 / test_len;
-            // Some((accuracy, final_proba))
         }
     }
 }
@@ -227,11 +213,10 @@ pub fn prediction_score(
 pub fn prediction_score_df(
     train: &mut MAGDS, test: &DataFrame, target: &str, fuzzy: bool
 ) -> anyhow::Result<SupervisedPerformance> {
-    // let mut total_proba = 0.0;
-    // let mut total_error = 0.0;
-    let mut references: Vec<DataTypeValue> = Vec::new();
-    let mut predictions: Vec<DataTypeValue> = Vec::new();
-    let mut probabilities: Vec<f32> = Vec::new();
+    let y_len = test.height();
+    let mut references: Vec<DataTypeValue> = Vec::with_capacity(y_len);
+    let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
+    let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
 
     let mut feature_columns: HashMap<&str, DataVecOption> = HashMap::new();
     let mut target_column: Option<DataVecOption> = None;
@@ -253,8 +238,9 @@ pub fn prediction_score_df(
     let target_column = target_column.unwrap();
     let target_rc: Rc<str> = Rc::from(target);
 
-    for i in 0..test.height() {
+    for i in 0..y_len {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
+        
         if let Some(reference_value) = target_column.get(i) {
             let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::new();
             for column_name in feature_columns.keys() {
@@ -268,9 +254,7 @@ pub fn prediction_score_df(
                 None => { train.deactivate(); continue }
             };
             let (winner_value, winner_proba) = (data_proba.0, data_proba.1);
-            // total_proba += winner_proba;
             log::debug!("winner_value {:?}, reference_value {:?}", winner_value, reference_value);
-            // total_error += winner_value.distance(&reference_value).powf(2.0);
             train.deactivate();
 
             references.push(reference_value);
@@ -282,9 +266,6 @@ pub fn prediction_score_df(
         }
     }
 
-    // let test_len = test.height() as f64;
-    // let final_proba = total_proba / test_len;
-
     let target_data_category = match train.sensor(target.into()) {
         Some(s) => s.borrow().data_category(),
         None => anyhow::bail!("error getting sensor {target}")
@@ -292,13 +273,9 @@ pub fn prediction_score_df(
     match target_data_category {
         DataCategory::Numerical => {
             SupervisedPerformance::regression(references, predictions, probabilities)
-            // let rmse = (total_error as f64 / test_len).sqrt();
-            // Some((rmse, final_proba))
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
             SupervisedPerformance::classification(references, predictions, probabilities)
-            // let accuracy = total_error as f64 / test_len;
-            // Some((accuracy, final_proba))
         }
     }
 }
@@ -312,7 +289,7 @@ mod tests {
 
     #[allow(unused_imports)]
     use crate::{
-        algorithm::predict,
+        algorithm::prediction,
         simple::parser
     };
 
@@ -324,7 +301,7 @@ mod tests {
         let mut magds_train = parser::magds_from_csv("iris_train", train_file).unwrap();
         let mut magds_test = parser::magds_from_csv("iris_test", test_file).unwrap();
 
-        let performance = predict::prediction_score(
+        let performance = prediction::prediction_score(
             &mut magds_train, &mut magds_test, "variety".into(), false
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
@@ -346,7 +323,7 @@ mod tests {
             .finish()
             .unwrap();
 
-        let performance = predict::prediction_score_df(
+        let performance = prediction::prediction_score_df(
             &mut magds_train, &test, "variety".into(), false
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
