@@ -3,6 +3,8 @@ use crate::{
     distances::Distance
 };
 
+pub struct DataProbability(pub DataTypeValue, pub f32);
+
 pub enum SupervisedPerformance {
     Classification(SupervisedData),
     Regression(SupervisedData)
@@ -10,33 +12,49 @@ pub enum SupervisedPerformance {
 
 pub struct SupervisedData {
     references: Vec<DataTypeValue>,
-    predictions: Vec<DataTypeValue>
+    predictions: Vec<DataTypeValue>,
+    probabilities: Vec<f32>
 }
 
 impl SupervisedPerformance {
     pub fn classification(
-        references: Vec<DataTypeValue>, predictions: Vec<DataTypeValue>
+        references: Vec<DataTypeValue>, 
+        predictions: Vec<DataTypeValue>, 
+        probabilities: Vec<f32>
     ) -> SupervisedPerformance {
-        SupervisedPerformance::Classification(SupervisedData{ references, predictions })
+        SupervisedPerformance::Classification(SupervisedData{ 
+            references, predictions, probabilities 
+        })
     }
 
     pub fn regression(
-        references: Vec<DataTypeValue>, predictions: Vec<DataTypeValue>
+        references: Vec<DataTypeValue>, 
+        predictions: Vec<DataTypeValue>,
+        probabilities: Vec<f32>
     ) -> SupervisedPerformance {
-        SupervisedPerformance::Regression(SupervisedData{ references, predictions })
+        SupervisedPerformance::Regression(SupervisedData{ 
+            references, predictions, probabilities
+        })
     }
 
-    pub fn references(&self) -> Option<&[DataTypeValue]> {
+    pub fn references(&self) -> &[DataTypeValue] {
         match self {
-            Self::Classification(data) => { Some(&data.references) }
-            Self::Regression(data) => { Some(&data.references) }
+            Self::Classification(data) => { &data.references }
+            Self::Regression(data) => { &data.references }
         }
     }
     
-    pub fn predictions(&self) -> Option<&[DataTypeValue]> {
+    pub fn predictions(&self) -> &[DataTypeValue] {
         match self {
-            Self::Classification(data) => { Some(&data.predictions) }
-            Self::Regression(data) => { Some(&data.predictions) }
+            Self::Classification(data) => { &data.predictions }
+            Self::Regression(data) => { &data.predictions }
+        }
+    }
+    
+    pub fn probabilities(&self) -> &[f32] {
+        match self {
+            Self::Classification(data) => { &data.probabilities }
+            Self::Regression(data) => { &data.probabilities }
         }
     }
 
@@ -109,8 +127,9 @@ mod tests {
             DataTypeValue::F64(2.5), 
             DataTypeValue::F64(5.0)
         ];
+        let probas = vec![0.5, 1.0, 0.8];
 
-        let performace = SupervisedPerformance::regression(y_f64_ref, y_f64_pred);
+        let performace = SupervisedPerformance::regression(y_f64_ref, y_f64_pred, probas);
 
         assert_eq!(performace.mae().unwrap(), 1.0);
 
@@ -119,8 +138,9 @@ mod tests {
 
         assert!(performace.accuracy().is_none());
 
-        assert_eq!(performace.references().unwrap().len(), 3);
-        assert_eq!(performace.predictions().unwrap().len(), 3);
+        assert_eq!(performace.references().len(), 3);
+        assert_eq!(performace.predictions().len(), 3);
+        assert_eq!(performace.probabilities().len(), 3);
     }
 
     #[test]
@@ -135,8 +155,9 @@ mod tests {
             DataTypeValue::RcStr("2.5".into()), 
             DataTypeValue::RcStr("5.0".into())
         ];
+        let probas = vec![0.5, 1.0, 0.8];
 
-        let performace = SupervisedPerformance::classification(y_rcstr_ref, y_rcstr_pred);
+        let performace = SupervisedPerformance::classification(y_rcstr_ref, y_rcstr_pred, probas);
 
         let accuracy_result = performace.accuracy().unwrap();
         assert!(accuracy_result > 0.66 && accuracy_result < 0.67);
@@ -144,7 +165,8 @@ mod tests {
         assert!(performace.mae().is_none());
         assert!(performace.rmse().is_none());
 
-        assert_eq!(performace.references().unwrap().len(), 3);
-        assert_eq!(performace.predictions().unwrap().len(), 3);
+        assert_eq!(performace.references().len(), 3);
+        assert_eq!(performace.predictions().len(), 3);
+        assert_eq!(performace.probabilities().len(), 3);
     }
 }
