@@ -31,7 +31,10 @@ where
     }
 
     fn search(&self, item: &Key) -> Option<Rc<RefCell<dyn Neuron>>> { 
-        Some(self.search(item).unwrap() as Rc<RefCell<dyn Neuron>>)
+        match self.search(item) {
+            Some(n) => Some(n as Rc<RefCell<dyn Neuron>>),
+            None => None
+        }
     }
 
     fn activate(
