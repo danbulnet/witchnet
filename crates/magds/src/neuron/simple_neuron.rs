@@ -114,24 +114,27 @@ impl SimpleNeuron {
 
     pub fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
+    ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32) {
         self.activation += signal;
 
+        let mut max_activation = 0.0f32;
         let mut neurons = self.defined_neurons();
         if propagate_vertical {
             for (_id, neuron) in &neurons.clone() {
                 if !neuron.borrow().is_sensor() {
-                    let output_signal = self.activation / self.defined_neurons().len() as f32;
+                    let output_signal = self.activation /
+                        f32::max(self.defined_neurons().len() as f32, 1.0f32);
+                    max_activation = f32::max(max_activation, output_signal);
                     neurons.extend(
                         neuron.borrow_mut().activate(
                             output_signal, propagate_horizontal, propagate_vertical
-                        )
+                        ).0
                     );
                 }
             }
         }
 
-        neurons
+        (neurons, max_activation)
     }
 
     pub fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
@@ -168,7 +171,7 @@ impl Neuron for SimpleNeuron {
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
+    ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32) {
         self.activate(signal, propagate_horizontal, propagate_vertical)
     }
 
@@ -445,7 +448,7 @@ mod tests {
         );
 
         let activated = neuron_1.borrow_mut().activate(1.0f32, true, true);
-        assert_eq!(activated.len(), 1);
+        assert_eq!(activated.0.len(), 1);
         assert_eq!(neuron_1.borrow().activation(), 1.0f32);
         assert_eq!(neuron_2.borrow().activation(), 1.0f32);
 

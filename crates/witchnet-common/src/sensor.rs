@@ -144,7 +144,7 @@ pub trait Sensor<D: SensorData>: Any + Display {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String>;
+    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String>;
     
     fn deactivate(
         &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool

@@ -99,6 +99,54 @@ pub enum DataTypeValue {
     Unknown
 }
 
+impl DataTypeValue {
+    pub fn to_f64(&self) -> Option<f64> {
+        match self {
+            DataTypeValue::Bool(_) => None,
+            DataTypeValue::U8(v) => Some(*v as f64),
+            DataTypeValue::U16(v) => Some(*v as f64),
+            DataTypeValue::U32(v) => Some(*v as f64),
+            DataTypeValue::U64(v) => Some(*v as f64),
+            DataTypeValue::U128(v) => Some(*v as f64),
+            DataTypeValue::USize(v) => Some(*v as f64),
+            DataTypeValue::I8(v) => Some(*v as f64),
+            DataTypeValue::I16(v) => Some(*v as f64),
+            DataTypeValue::I32(v) => Some(*v as f64),
+            DataTypeValue::I64(v) => Some(*v as f64),
+            DataTypeValue::I128(v) => Some(*v as f64),
+            DataTypeValue::ISize(v) => Some(*v as f64),
+            DataTypeValue::F32(v) => Some(*v as f64),
+            DataTypeValue::F64(v) => Some(*v as f64),
+            DataTypeValue::RcStr(_) => None,
+            DataTypeValue::String(_) => None,
+            DataTypeValue::Unknown => None
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            DataTypeValue::Bool(v) => v.to_string(),
+            DataTypeValue::U8(v) => v.to_string(),
+            DataTypeValue::U16(v) => v.to_string(),
+            DataTypeValue::U32(v) => v.to_string(),
+            DataTypeValue::U64(v) => v.to_string(),
+            DataTypeValue::U128(v) => v.to_string(),
+            DataTypeValue::USize(v) => v.to_string(),
+            DataTypeValue::I8(v) => v.to_string(),
+            DataTypeValue::I16(v) => v.to_string(),
+            DataTypeValue::I32(v) => v.to_string(),
+            DataTypeValue::I64(v) => v.to_string(),
+            DataTypeValue::I128(v) => v.to_string(),
+            DataTypeValue::ISize(v) => v.to_string(),
+            DataTypeValue::F32(v) => v.to_string(),
+            DataTypeValue::F64(v) => v.to_string(),
+            DataTypeValue::RcStr(v) => v.to_string(),
+            DataTypeValue::String(v) => v.clone(),
+            DataTypeValue::Unknown => String::from("unknown")
+        }
+    }
+}
+
 impl Display for DataType {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{:?}", self)

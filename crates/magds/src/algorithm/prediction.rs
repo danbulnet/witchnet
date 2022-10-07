@@ -1,13 +1,14 @@
 use std::{
     collections::{ HashMap, BTreeMap },
     rc::Rc,
-    cell::RefCell
+    cell::RefCell,
+    str::FromStr
 };
 
 use ordered_float::OrderedFloat;
 
 use witchnet_common::{
-    data::{ DataTypeValue, DataCategory },
+    data::{ DataTypeValue, DataCategory, DataType },
     neuron::{ Neuron, NeuronID },
     sensor::Sensor,
     polars::{ self as polars_common, DataVecOption },
@@ -27,6 +28,7 @@ pub fn predict(
     fuzzy: bool
 ) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
+    let mut max_activation_sum = 0.0f32;
 
     for (id, value) in features {
         let sensor = match magds.sensor_search(id.clone(), value) {
@@ -55,10 +57,13 @@ pub fn predict(
                 }
             }
         };
-        neurons.extend(sensor.borrow_mut().activate(1.0_f32, fuzzy, true));
+        let (current_neurons, max_activation) = sensor.borrow_mut().activate(1.0_f32, fuzzy, true);
+        neurons.extend(current_neurons);
+        max_activation_sum += max_activation;
     }
 
-    if neurons.is_empty() { return None }
+    let neurons_len = neurons.len();
+    if neurons_len == 0 { return None }
 
     let neurons_activations: Vec<OrderedFloat<f32>> = neurons.values()
         .cloned()
@@ -69,25 +74,90 @@ pub fn predict(
     let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
         = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
 
-    let (winner_activation, winner) = neurons_sorted.into_iter().next_back()?;
-
-    let max_activation = features.len() as f32;
-    let proba = winner_activation.to_f32()? / max_activation;
-
-    let predicted_value = winner.borrow().explain_one(target)?;
-
-    Some(DataProbability(predicted_value, proba))
+    let target_data_category = match magds.sensor(target) {
+        Some(s) => s.borrow().data_category(),
+        None => { log::error!("error getting sensor {target}"); return None }
+    };
+    let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
+    match target_data_category {
+        DataCategory::Numerical => {
+            let mut targets_weighted: Vec<f64> = Vec::new();
+            let mut probas: Vec<f32> = Vec::new();
+            let mut weights = 0.0f32;
+            let mut current_weight = 1.0f32;
+            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+                if let Some(target_value) = neuron.borrow().explain_one(target) {
+                    targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
+                    weights += current_weight;
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
+                    current_weight /= 2.0f32;
+                }
+            }
+            let predicted_value_f64: f64 = targets_weighted.iter().sum::<f64>() / weights as f64;
+            let predicted_value: DataTypeValue = match target_data_type {
+                DataType::U8 => (predicted_value_f64 as u8).into(),
+                DataType::U16 => (predicted_value_f64 as u16).into(),
+                DataType::U32 => (predicted_value_f64 as u32).into(),
+                DataType::U64 => (predicted_value_f64 as u64).into(),
+                DataType::U128 => (predicted_value_f64 as u128).into(),
+                DataType::USize => (predicted_value_f64 as usize).into(),
+                DataType::I8 => (predicted_value_f64 as i8).into(),
+                DataType::I16 => (predicted_value_f64 as i16).into(),
+                DataType::I32 => (predicted_value_f64 as i32).into(),
+                DataType::I64 => (predicted_value_f64 as i64).into(),
+                DataType::I128 => (predicted_value_f64 as i128).into(),
+                DataType::ISize => (predicted_value_f64 as isize).into(),
+                DataType::F32 => (predicted_value_f64 as f32).into(),
+                DataType::F64 => (predicted_value_f64 as f64).into(),
+                _ => { log::error!("classified as numerical data so shouldn't be here"); return None }
+            };
+            let proba: f32 = probas.iter().sum::<f32>() / weights;
+            Some(DataProbability(predicted_value.into(), proba))
+        }
+        DataCategory::Categorical | DataCategory::Ordinal => {
+            let mut values: HashMap<String, OrderedFloat<f32>> = HashMap::new();
+            let mut probas: Vec<f32> = Vec::new();
+            let mut weights = 0.0f32;
+            let mut current_weight = 1.0f32;
+            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+                if let Some(target_value) = neuron.borrow().explain_one(target) {
+                    let target_value = target_value.to_string();
+                    if values.contains_key(&target_value) {
+                        let current_value = values.get_mut(&target_value).unwrap();
+                        *current_value += current_weight;
+                    } else {
+                        values.insert(target_value, OrderedFloat(current_weight));
+                    }
+                    weights += current_weight;
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
+                    current_weight /= 2.0f32;
+                }
+            }
+            let values_sorted: BTreeMap<OrderedFloat<f32>, &str> 
+                = BTreeMap::from_iter(values.values().map(|x| *x).zip(values.keys().map(|x| x as &str)));
+            let predicted_value_str = values_sorted.into_iter().next_back()?.1;
+            let predicted_value: DataTypeValue = match target_data_type {
+                DataType::Bool => bool::from_str(predicted_value_str).ok()?.into(),
+                DataType::RcStr => Rc::<str>::from(predicted_value_str).into(),
+                DataType::String => predicted_value_str.to_string().into(),
+                _ => { log::error!("classified as not numerical data so shouldn't be here"); return None }
+            };
+            let proba: f32 = probas.iter().sum::<f32>() / weights;
+            Some(DataProbability(predicted_value.into(), proba))
+        }
+    }
 }
 
 pub fn predict_weighted(
     magds: &mut MAGDS, 
-    features: Vec<(u32, DataTypeValue, f32)>,
+    features: &Vec<(u32, DataTypeValue, f32)>,
     target: u32,
     fuzzy: bool
 ) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
+    let mut max_activation_sum = 0.0f32;
 
-    for (id, value, weight) in &features {
+    for (id, value, weight) in features {
         let sensor = match magds.sensor_search(id.clone(), value) {
             Some(s) => s,
             None => {
@@ -114,10 +184,13 @@ pub fn predict_weighted(
                 }
             }
         };
-        neurons.extend(sensor.borrow_mut().activate(*weight, fuzzy, true));
+        let (current_neurons, max_activation) = sensor.borrow_mut().activate(*weight, fuzzy, true);
+        neurons.extend(current_neurons);
+        max_activation_sum += max_activation;
     }
 
-    if neurons.is_empty() { return None }
+    let neurons_len = neurons.len();
+    if neurons_len == 0 { return None }
 
     let neurons_activations: Vec<OrderedFloat<f32>> = neurons.values()
         .cloned()
@@ -128,14 +201,79 @@ pub fn predict_weighted(
     let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
         = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
 
-    let (winner_activation, winner) = neurons_sorted.into_iter().next_back()?;
+    let target_data_category = match magds.sensor(target) {
+        Some(s) => s.borrow().data_category(),
+        None => { log::error!("error getting sensor {target}"); return None }
+    };
+    let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
 
-    let max_activation = features.len() as f32;
-    let proba = winner_activation.to_f32()? / max_activation;
-
-    let predicted_value = winner.borrow().explain_one(target)?;
-
-    Some(DataProbability(predicted_value, proba))
+    match target_data_category {
+        DataCategory::Numerical => {
+            let mut targets_weighted: Vec<f64> = Vec::new();
+            let mut probas: Vec<f32> = Vec::new();
+            let mut weights = 0.0f32;
+            let mut current_weight = 1.0f32;
+            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+                if let Some(target_value) = neuron.borrow().explain_one(target) {
+                    targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
+                    weights += current_weight;
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
+                    current_weight /= 2.0f32;
+                }
+            }
+            let predicted_value_f64: f64 = targets_weighted.iter().sum::<f64>() / weights as f64;
+            let predicted_value: DataTypeValue = match target_data_type {
+                DataType::U8 => (predicted_value_f64 as u8).into(),
+                DataType::U16 => (predicted_value_f64 as u16).into(),
+                DataType::U32 => (predicted_value_f64 as u32).into(),
+                DataType::U64 => (predicted_value_f64 as u64).into(),
+                DataType::U128 => (predicted_value_f64 as u128).into(),
+                DataType::USize => (predicted_value_f64 as usize).into(),
+                DataType::I8 => (predicted_value_f64 as i8).into(),
+                DataType::I16 => (predicted_value_f64 as i16).into(),
+                DataType::I32 => (predicted_value_f64 as i32).into(),
+                DataType::I64 => (predicted_value_f64 as i64).into(),
+                DataType::I128 => (predicted_value_f64 as i128).into(),
+                DataType::ISize => (predicted_value_f64 as isize).into(),
+                DataType::F32 => (predicted_value_f64 as f32).into(),
+                DataType::F64 => (predicted_value_f64 as f64).into(),
+                _ => { log::error!("classified as numerical data so shouldn't be here"); return None }
+            };
+            let proba: f32 = probas.iter().sum::<f32>() / weights;
+            Some(DataProbability(predicted_value.into(), proba))
+        }
+        DataCategory::Categorical | DataCategory::Ordinal => {
+            let mut values: HashMap<String, OrderedFloat<f32>> = HashMap::new();
+            let mut probas: Vec<f32> = Vec::new();
+            let mut weights = 0.0f32;
+            let mut current_weight = 1.0f32;
+            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+                if let Some(target_value) = neuron.borrow().explain_one(target) {
+                    let target_value = target_value.to_string();
+                    if values.contains_key(&target_value) {
+                        let current_value = values.get_mut(&target_value).unwrap();
+                        *current_value += current_weight;
+                    } else {
+                        values.insert(target_value, OrderedFloat(current_weight));
+                    }
+                    weights += current_weight;
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
+                    current_weight /= 2.0f32;
+                }
+            }
+            let values_sorted: BTreeMap<OrderedFloat<f32>, &str> 
+                = BTreeMap::from_iter(values.values().map(|x| *x).zip(values.keys().map(|x| x as &str)));
+            let predicted_value_str = values_sorted.into_iter().next_back()?.1;
+            let predicted_value: DataTypeValue = match target_data_type {
+                DataType::Bool => bool::from_str(predicted_value_str).ok()?.into(),
+                DataType::RcStr => Rc::<str>::from(predicted_value_str).into(),
+                DataType::String => predicted_value_str.to_string().into(),
+                _ => { log::error!("classified as not numerical data so shouldn't be here"); return None }
+            };
+            let proba: f32 = probas.iter().sum::<f32>() / weights;
+            Some(DataProbability(predicted_value.into(), proba))
+        }
+    }
 }
 
 pub fn prediction_score(

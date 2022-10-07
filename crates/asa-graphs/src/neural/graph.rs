@@ -376,7 +376,7 @@ where
 
     pub fn activate(
         &mut self, key: &Key, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String> {
+    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
         let element = match self.search(key) {
             Some(e) => e,
             None => { 

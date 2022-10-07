@@ -102,7 +102,10 @@ where
         let mut neurons: Vec<(Rc<RefCell<dyn Neuron>>, f32)> = self
             .defining_neurons()
             .values()
-            .map(|neuron| (neuron.clone(), self.activation() / defining_neurons_len as f32))
+            .map(|neuron| (
+                neuron.clone(), 
+                self.activation() / f32::max(defining_neurons_len as f32, 1.0f32)
+            ))
             .collect();
 
         let mut element_activation = self.activation;
@@ -120,7 +123,8 @@ where
                         .into_iter().map(
                             |neuron| (
                                 neuron.clone(), 
-                                element.borrow().activation() / defining_neurons_len as f32
+                                element.borrow().activation() / 
+                                    f32::max(defining_neurons_len as f32, 1.0f32)
                             )
                         )
                         .collect()
@@ -153,7 +157,8 @@ where
                         .into_iter().map(
                             |neuron| (
                                 neuron.clone(), 
-                                element.borrow().activation() / defining_neurons_len as f32
+                                element.borrow().activation() / 
+                                    f32::max(defining_neurons_len as f32, 1.0f32)
                             )
                         )
                         .collect()
@@ -183,7 +188,10 @@ where
         self.defining_neurons()
             .values()
             .cloned()
-            .into_iter().map(|x| (x.clone(), self.activation() / defining_neurons_len as f32))
+            .into_iter().map(|x| (
+                x.clone(), 
+                self.activation() / f32::max(defining_neurons_len as f32, 1.0f32)
+            ))
             .collect()
     }
 
@@ -230,7 +238,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
+    ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32) {
         let data_category: DataCategory = self.data_type.data_category();
         let is_fuzzy_ok = match data_category {
             DataCategory::Numerical | DataCategory::Ordinal => true,
@@ -244,20 +252,22 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
         let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
 
+        let mut max_activation = 0.0f32;
         if propagate_vertical {
             for (neuron, activation) in &neurons_activation {
+                max_activation = f32::max(max_activation, *activation);
                 neurons.insert(neuron.borrow().id(), neuron.clone());
                 if !neuron.borrow().is_sensor() {
                     neurons.extend(
                         neuron.borrow_mut().activate(
                             *activation, propagate_horizontal, propagate_vertical
-                        )
+                        ).0
                     );
                 }
             }
         }
 
-        neurons
+        (neurons, max_activation)
     }
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
@@ -505,7 +515,7 @@ mod tests {
         );
 
         let activated = element_1_ptr.borrow_mut().activate(1.0f32, true, true);
-        assert_eq!(activated.len(), 0);
+        assert_eq!(activated.0.len(), 0);
         assert_eq!(element_1_ptr.borrow().activation(), 1.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 

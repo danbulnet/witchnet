@@ -47,7 +47,7 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "price".into(), false
+            &mut magds_train, &test_df, "price".into(), true
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();

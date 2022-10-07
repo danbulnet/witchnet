@@ -151,7 +151,7 @@ impl MAGDS {
         signal: f32,
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String> {
+    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
         self.sensors
             .get_mut(&id)
             .unwrap_or(Err(format!("sensor {} doesn't exists", id))?)

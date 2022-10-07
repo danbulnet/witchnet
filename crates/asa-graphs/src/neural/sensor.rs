@@ -43,7 +43,7 @@ where
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String> {
+    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
         self.activate(item, signal, propagate_horizontal, propagate_vertical)
     }
 
@@ -81,7 +81,7 @@ mod tests {
 
         let neurons = graph.activate(&5, 1.0f32, true, true);
         assert!(neurons.is_ok());
-        assert_eq!(neurons.unwrap().len(), 0);
+        assert_eq!(neurons.unwrap().0.len(), 0);
         
         for (i, element) in graph.into_iter().enumerate() {
             let activation = element.borrow().activation();
@@ -132,7 +132,7 @@ mod tests {
         assert!(neurons.is_ok());
         let neurons = graph.activate(&8, 1.0f32, false, false);
         assert!(neurons.is_ok());
-        assert_eq!(neurons.unwrap().len(), 0);
+        assert_eq!(neurons.unwrap().0.len(), 0);
         for (i, element) in graph.into_iter().enumerate() {
             let activation = element.borrow().activation();
             match i + 1 {

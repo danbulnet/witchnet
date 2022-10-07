@@ -243,7 +243,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String> {
+    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
         match self {
             SensorConatiner::Bool(v) => {
                 v.activate(
