@@ -27,25 +27,28 @@ where
     fn data_category(&self) -> DataCategory { self.data_category() }
 
     fn insert(&mut self, item: &Key) -> Rc<RefCell<dyn Neuron>> {
-        self.insert(item.any().downcast_ref::<Key>().unwrap())
+        self.insert(item)
     }
 
     fn search(&self, item: &Key) -> Option<Rc<RefCell<dyn Neuron>>> { 
-        Some(
-            self.search(
-                item.any().downcast_ref::<Key>().unwrap()
-            ).unwrap() as Rc<RefCell<dyn Neuron>>
-        )
+        Some(self.search(item).unwrap() as Rc<RefCell<dyn Neuron>>)
     }
 
     fn activate(
-        &mut self, item: &Key, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
+        &mut self, 
+        item: &Key, 
+        signal: f32, 
+        propagate_horizontal: bool, 
+        propagate_vertical: bool
     ) -> Result<HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, String> {
         self.activate(item, signal, propagate_horizontal, propagate_vertical)
     }
 
     fn deactivate(
-        &mut self, item: &Key, propagate_horizontal: bool, propagate_vertical: bool
+        &mut self, 
+        item: &Key, 
+        propagate_horizontal: bool, 
+        propagate_vertical: bool
     ) -> Result<(), String> {
         self.deactivate(item, propagate_horizontal, propagate_vertical)
     }

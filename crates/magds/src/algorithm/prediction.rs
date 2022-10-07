@@ -153,7 +153,7 @@ pub fn prediction_score(
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
         let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
-        let sensors = neuron.borrow().defining_sensors();
+        let sensors = neuron.borrow().explain();
         let mut test_reference_value = DataTypeValue::Unknown;
         let mut should_skip = true;
 
