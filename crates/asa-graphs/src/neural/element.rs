@@ -96,11 +96,11 @@ where
     pub fn fuzzy_activate(&mut self, signal: f32) -> Vec<(Rc<RefCell<dyn Neuron>>, f32)> {
         self.activation += signal;
 
-        let defined_neurons_len = self.defined_neurons().len();
+        let defining_neurons_len = self.defining_neurons().len();
         let mut neurons: Vec<(Rc<RefCell<dyn Neuron>>, f32)> = self
-            .defined_neurons()
+            .defining_neurons()
             .values()
-            .map(|neuron| (neuron.clone(), self.activation() / defined_neurons_len as f32))
+            .map(|neuron| (neuron.clone(), self.activation() / defining_neurons_len as f32))
             .collect();
 
         let mut element_activation = self.activation;
@@ -109,16 +109,16 @@ where
             let mut weight = next.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 element.borrow_mut().activate(element_activation * weight, false, false);
-                let defined_neurons_len = element.borrow().defined_neurons().len();
+                let defining_neurons_len = element.borrow().defining_neurons().len();
                 neurons.append(
                     &mut element.borrow()
-                        .defined_neurons()
+                        .defining_neurons()
                         .values()
                         .cloned()
                         .into_iter().map(
                             |neuron| (
                                 neuron.clone(), 
-                                element.borrow().activation() / defined_neurons_len as f32
+                                element.borrow().activation() / defining_neurons_len as f32
                             )
                         )
                         .collect()
@@ -142,16 +142,16 @@ where
             let mut weight = prev.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 element.borrow_mut().activate(element_activation * weight, false, false);
-                let defined_neurons_len = element.borrow().defined_neurons().len();
+                let defining_neurons_len = element.borrow().defining_neurons().len();
                 neurons.append(
                     &mut element.borrow()
-                        .defined_neurons()
+                        .defining_neurons()
                         .values()
                         .cloned()
                         .into_iter().map(
                             |neuron| (
                                 neuron.clone(), 
-                                element.borrow().activation() / defined_neurons_len as f32
+                                element.borrow().activation() / defining_neurons_len as f32
                             )
                         )
                         .collect()
@@ -177,15 +177,15 @@ where
         &mut self, signal: f32
     )-> Vec<(Rc<RefCell<dyn Neuron>>, f32)> {
         self.activation += signal;
-        let defined_neurons_len = self.defined_neurons().len();
-        self.defined_neurons()
+        let defining_neurons_len = self.defining_neurons().len();
+        self.defining_neurons()
             .values()
             .cloned()
-            .into_iter().map(|x| (x.clone(), self.activation() / defined_neurons_len as f32))
+            .into_iter().map(|x| (x.clone(), self.activation() / defining_neurons_len as f32))
             .collect()
     }
 
-    pub fn defined_neurons(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
+    pub fn defining_neurons(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
         let mut neurons = HashMap::new();
         for (_id, definition) in &self.definitions {
             let neuron = definition.borrow().to();
@@ -261,7 +261,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
         let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
         if propagate_vertical {
-            neurons = self.defined_neurons().values().cloned().collect();
+            neurons = self.defining_neurons().values().cloned().collect();
         }
 
         if propagate_horizontal{
@@ -271,7 +271,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
                     element.borrow_mut().activation = 0.0f32;
                     if propagate_vertical {
                         neurons.append(
-                            &mut element.borrow().defined_neurons().values().cloned().collect()
+                            &mut element.borrow().defining_neurons().values().cloned().collect()
                         );
                     }
                     let new_element = match &element.borrow().next {
@@ -288,7 +288,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
                     element.borrow_mut().activation = 0.0f32;
                     if propagate_vertical {
                         neurons.append(
-                            &mut element.borrow().defined_neurons().values().cloned().collect()
+                            &mut element.borrow().defining_neurons().values().cloned().collect()
                         );
                     };
                     let new_element = match &element.borrow().prev {
@@ -670,13 +670,13 @@ mod tests {
 
         let ok = element_1.borrow_mut().connect_to(element_2.clone(), ConnectionKind::Defining);
         assert!(ok.is_ok());
-        assert_eq!(element_1.borrow().defined_neurons().len(), 0);
+        assert_eq!(element_1.borrow().defining_neurons().len(), 0);
         let connection = ok.unwrap();
         assert!(Rc::ptr_eq(&connection.borrow().to(), &(element_2 as Rc<RefCell<dyn Neuron>>)));
 
         let er = element_1.borrow_mut().connect_to_connection(connection);
         assert!(er.is_ok());
 
-        assert_eq!(element_1.borrow().defined_neurons().len(), 0);
+        assert_eq!(element_1.borrow().defining_neurons().len(), 0);
     }
 }

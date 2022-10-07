@@ -573,14 +573,14 @@ mod tests {
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_sensors().len(), 1);
-        assert_eq!(neuron_2.borrow().defined_neurons().len(), 0);
+        assert_eq!(neuron_2.borrow().defining_neurons().len(), 0);
         let connection_1 = connection_1.unwrap();
         let connection_2 = neuron_2.borrow_mut().connect_to_connection(connection_1.clone());
         assert!(connection_2.is_ok());
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_sensors().len(), 1);
-        assert_eq!(neuron_2.borrow().defined_neurons().len(), 1);
+        assert_eq!(neuron_2.borrow().defining_neurons().len(), 1);
         assert_eq!(
             connection_1.borrow().from().as_ptr() as *const () as usize, 
             neuron_2.as_ptr() as *const () as usize
@@ -606,7 +606,7 @@ mod tests {
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_sensors().len(), 0);
-        assert_eq!(neuron_2.borrow().defined_neurons().len(), 0);
+        assert_eq!(neuron_2.borrow().defining_neurons().len(), 0);
     }
 
     #[test]
@@ -624,7 +624,7 @@ mod tests {
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_sensors().len(), 0);
-        assert_eq!(neuron_2.borrow().defined_neurons().len(), 0);
+        assert_eq!(neuron_2.borrow().defining_neurons().len(), 0);
     }
 
     #[test]
@@ -642,7 +642,7 @@ mod tests {
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
         assert_eq!(neuron_1.borrow().defining_sensors().len(), 1);
-        assert_eq!(neuron_2.borrow().defined_neurons().len(), 1);
+        assert_eq!(neuron_2.borrow().defining_neurons().len(), 1);
     }
 
     #[test]
