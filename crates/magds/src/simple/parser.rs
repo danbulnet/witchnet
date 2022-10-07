@@ -29,90 +29,94 @@ use crate::{
 
 #[allow(dead_code)]
 pub(crate) fn sensor_from_datavec(
-    magds: &mut MAGDS, id: &str, data: &DataVec
-) -> Option<Rc<RefCell<SensorConatiner>>> {
+    magds: &mut MAGDS, name: &str, data: &DataVec
+) -> (Rc<RefCell<SensorConatiner>>, u32) {
+    let new_id: u32 = *magds.sensors.keys().max().unwrap_or(&0) + 1;
     match data {
         DataVec::Unknown => {
-            log::error!("can't parse vec data type for sensor {id}");
-            return None
+            panic!("can't parse vec data type for sensor {name}")
         }
         DataVec::BoolVec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt8Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt16Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int8Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int16Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Float32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Float64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Utf8Vec(vec) => {
-            let graph = ASAGraph::<String>::new_from_vec(id, vec);
-            magds.add_sensor(Rc::new(RefCell::new(graph.into())))
+            let graph = ASAGraph::<String>::new_from_vec(new_id, vec);
+            magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
     }
 }
 
 pub(crate) fn connected_sensor_from_datavec(
-    mut magds: &mut MAGDS, id: &str, data: &DataVecOption, neurons: &[Rc<RefCell<SimpleNeuron>>]
-) -> Option<Rc<RefCell<SensorConatiner>>> {  
+    mut magds: &mut MAGDS, name: &str, data: &DataVecOption, neurons: &[Rc<RefCell<SimpleNeuron>>]
+) -> (Rc<RefCell<SensorConatiner>>, u32) {
+    let new_id: u32 = *magds.sensors.keys().max().unwrap_or(&0) + 1;
     match data {
         DataVecOption::Unknown => {
-            log::error!("can't parse vec data type for sensor {id}");
-            return None
+            panic!("can't parse vec data type for sensor {name}")
         }
-        DataVecOption::BoolVec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::UInt8Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::UInt16Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::UInt32Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::UInt64Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Int8Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Int16Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Int32Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Int64Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Float32Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Float64Vec(vec) => { connector(&mut magds, id, vec, neurons) }
-        DataVecOption::Utf8Vec(vec) => { connector_string(&mut magds, id, vec, neurons) }
+        DataVecOption::BoolVec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::UInt8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::UInt16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::UInt32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::UInt64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Int8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Int16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Int32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Int64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Float32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Float64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::Utf8Vec(vec) => { connector_string(&mut magds, name, new_id, vec, neurons) }
     }
 }
 
 fn connector_string(
-    magds: &mut MAGDS, id: &str, vec: &[Option<String>], neurons: &[Rc<RefCell<SimpleNeuron>>]
-) -> Option<Rc<RefCell<SensorConatiner>>> 
+    magds: &mut MAGDS, 
+    name: &str,
+    id: u32,
+    vec: &[Option<String>], 
+    neurons: &[Rc<RefCell<SimpleNeuron>>]
+) -> (Rc<RefCell<SensorConatiner>>, u32) 
 where 
     PhantomData<String>: DataDeductor, 
     SensorConatiner: From<ASAGraph<String>>,
@@ -167,12 +171,16 @@ where
             continue
         }
     }
-    magds.add_sensor(Rc::new(RefCell::new(sensor.into())))
+    magds.add_sensor(name, Rc::new(RefCell::new(sensor.into())))
 }
 
 fn connector<T: SensorData>(
-    magds: &mut MAGDS, id: &str, vec: &[Option<T>], neurons: &[Rc<RefCell<SimpleNeuron>>]
-) -> Option<Rc<RefCell<SensorConatiner>>> 
+    magds: &mut MAGDS, 
+    name: &str,
+    id: u32,
+    vec: &[Option<T>], 
+    neurons: &[Rc<RefCell<SimpleNeuron>>]
+) -> (Rc<RefCell<SensorConatiner>>, u32)
 where 
     PhantomData<T>: DataDeductor, 
     SensorConatiner: From<ASAGraph<T>>,
@@ -198,7 +206,7 @@ where
             continue
         }
     }
-    magds.add_sensor(Rc::new(RefCell::new(sensor.into())))
+    magds.add_sensor(name, Rc::new(RefCell::new(sensor.into())))
 }
 
 pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
@@ -207,14 +215,15 @@ pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
     log::info!("magds_from_df: df size: {} (cols) x {} (rows)", df.width(), df.height());
     log::info!("magds_from_df: df columns: {:?}", df.get_column_names());
     
-
+    let neuron_group_id: u32 = *magds.neuron_group_names.keys().max().unwrap_or(&0) + 1;
     let mut neurons: Vec<Rc<RefCell<SimpleNeuron>>> = Vec::new();
-    for i in 0..df.height() {
+    for i in 1..=df.height() {
         let neuron = magds.create_neuron(
-            NeuronID{ id: (i + 1).to_string().into(), parent_id: df_name.clone() }
+            NeuronID{ id: i as u32, parent_id: neuron_group_id }
         ).unwrap();
         neurons.push(neuron);
     }
+    magds.add_neuron_group(&df_name, neuron_group_id);
 
     for column in df.get_columns() {
         let column_name = column.name();
@@ -225,12 +234,7 @@ pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
                 continue
             }
         };
-        if let None = connected_sensor_from_datavec(
-            &mut magds, column_name, &datavec, &neurons
-        ) {
-            log::error!("error convering {column_name} datavec to sensor");
-            continue
-        };
+        connected_sensor_from_datavec(&mut magds, column_name, &datavec, &neurons);
     }
 
     magds
@@ -259,12 +263,15 @@ mod tests {
     #[test]
     fn vec_parse() {
         let magds = super::magds_from_csv("lists", "data/lists.csv").unwrap();
-        assert!(magds.sensor_search("x".into(), &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search("x".into(), &DataTypeValue::String("b".into())).is_some());
-        assert!(magds.sensor_search("y".into(), &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search("y".into(), &DataTypeValue::String("b".into())).is_some());
-        assert!(magds.sensor_search("z".into(), &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search("z".into(), &DataTypeValue::String("b".into())).is_some());
+        let x_sensor_id = *magds.sensor_ids("x").unwrap().first().unwrap();
+        let y_sensor_id = *magds.sensor_ids("y").unwrap().first().unwrap();
+        let z_sensor_id = *magds.sensor_ids("z").unwrap().first().unwrap();
+        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::String("a".into())).is_some());
+        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::String("b".into())).is_some());
+        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::String("a".into())).is_some());
+        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::String("b".into())).is_some());
+        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::String("a".into())).is_some());
+        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::String("b".into())).is_some());
         println!("{magds}");
     }
 
@@ -273,12 +280,13 @@ mod tests {
         let magds = super::magds_from_csv("iris", "data/iris.csv").unwrap();
         println!("{magds}");
 
+        let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
         let versicolor = 
-            magds.sensor_search("variety".into(), &"Versicolor".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Versicolor".to_string().into()).unwrap();
         let setosa = 
-            magds.sensor_search("variety".into(), &"Setosa".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Setosa".to_string().into()).unwrap();
         let virginica = 
-            magds.sensor_search("variety".into(), &"Virginica".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Virginica".to_string().into()).unwrap();
         assert_eq!(setosa.borrow().counter(), 49);
         assert_eq!(versicolor.borrow().counter(), 50);
         assert_eq!(virginica.borrow().counter(), 50);
@@ -290,50 +298,58 @@ mod tests {
         let magds = super::magds_from_df("iris".into(), &df);
         println!("{magds}");
 
+        let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
+        let sepal_length_sensor_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();
+        let petal_length_sensor_id = *magds.sensor_ids("petal.length").unwrap().first().unwrap();
+        let petal_width_sensor_id = *magds.sensor_ids("petal.width").unwrap().first().unwrap();
+        let sepal_width_sensor_id = *magds.sensor_ids("sepal.width").unwrap().first().unwrap();
+
         let versicolor = 
-            magds.sensor_search("variety".into(), &"Versicolor".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Versicolor".to_string().into()).unwrap();
         let setosa = 
-            magds.sensor_search("variety".into(), &"Setosa".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Setosa".to_string().into()).unwrap();
         let virginica = 
-            magds.sensor_search("variety".into(), &"Virginica".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &"Virginica".to_string().into()).unwrap();
         assert_eq!(setosa.borrow().counter(), 49);
         assert_eq!(versicolor.borrow().counter(), 50);
         assert_eq!(virginica.borrow().counter(), 50);
 
-        let sl58 = magds.sensor_search("sepal.length".into(), &5.8_f64.into()).unwrap();
+        let sl58 = magds.sensor_search(sepal_length_sensor_id, &5.8_f64.into()).unwrap();
         assert_eq!(sl58.borrow().counter(), 7);
 
-        let neuron_1 = magds.neuron("1".into(), "iris".into()).unwrap();
+        let iris_neuron_group_id = *magds.neuron_group_ids("iris").unwrap().first().unwrap();
+        let neuron_1 = magds.neuron(1, iris_neuron_group_id).unwrap();
         println!("neuron_1 {}", neuron_1.borrow());
+
         for (id, sensor) in &neuron_1.borrow().explain() {
-            println!("{id}");
-            if id.parent_id == "petal.length".into() {
-                assert_eq!(sensor.borrow().id().id, "1.4".into());
-            } else if id.parent_id == "petal.width".into() {
-                assert_eq!(sensor.borrow().id().id, "0.2".into());
-            } else if id.parent_id == "sepal.width".into() {
-                assert_eq!(sensor.borrow().id().id, "3.5".into());
-            } else if id.parent_id == "variety".into() {
-                assert_eq!(sensor.borrow().id().id, "Setosa".into());
-            } else if id.parent_id == "sepal.length".into() {
+            println!("sensor {id} {}", sensor.borrow().value());
+            if id.parent_id == petal_length_sensor_id {
+                assert_eq!(sensor.borrow().value(), 1.4.into());
+            } else if id.parent_id == petal_width_sensor_id {
+                assert_eq!(sensor.borrow().value(), 0.2.into());
+            } else if id.parent_id == sepal_width_sensor_id {
+                assert_eq!(sensor.borrow().value(), 3.5.into());
+            } else if id.parent_id == variety_sensor_id {
+                assert_eq!(sensor.borrow().value(), String::from("Setosa").into());
+            } else if id.parent_id == sepal_length_sensor_id {
                 panic!()
             } 
         }
 
-        let neuron_2 = magds.neuron("2".into(), "iris".into()).unwrap();
+        let neuron_2 = magds.neuron(2, iris_neuron_group_id).unwrap();
         println!("neuron_2 {}", neuron_2.borrow());
         for (id, sensor) in &neuron_2.borrow().explain() {
             println!("{id}");
-            if id.parent_id == "petal.length".into() {
-                assert_eq!(sensor.borrow().id().id, "1.4".into());
-            } else if id.parent_id == "petal.width".into() {
-                assert_eq!(sensor.borrow().id().id, "0.2".into());
-            } else if id.parent_id == "sepal.width".into() {
-                assert_eq!(sensor.borrow().id().id, "3".into());
-            } else if id.parent_id == "variety".into() {
-                assert_eq!(sensor.borrow().id().id, "Setosa".into());
-            } else if id.parent_id == "sepal.length".into() {
-                assert_eq!(sensor.borrow().id().id, "4.9".into());
+            if id.parent_id == petal_length_sensor_id {
+                assert_eq!(sensor.borrow().value(), 1.4.into());
+            } else if id.parent_id == petal_width_sensor_id {
+                assert_eq!(sensor.borrow().value(), 0.2.into());
+            } else if id.parent_id == sepal_width_sensor_id {
+                assert_eq!(sensor.borrow().value(), 3.0.into());
+            } else if id.parent_id == variety_sensor_id {
+                assert_eq!(sensor.borrow().value(), String::from("Setosa").into());
+            } else if id.parent_id == sepal_length_sensor_id {
+                assert_eq!(sensor.borrow().value(), 4.9.into());
             } 
         }
     }
@@ -353,10 +369,9 @@ mod tests {
         let variety_graph = super::sensor_from_datavec(
             &mut magds, "variety", &variety_df_datavec
         );
-        assert!(variety_graph.is_some());
-        let variety_graph = variety_graph.unwrap();
-        println!("{}", variety_graph.borrow());
-        let variety_from_magds = magds.sensor("variety".into()).unwrap();
+        let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
+        println!("{}", variety_graph.0.borrow());
+        let variety_from_magds = magds.sensor(variety_sensor_id).unwrap();
         let versicolor_result = variety_from_magds.borrow().search(
             &"Versicolor".to_string().into()
         );
@@ -371,10 +386,9 @@ mod tests {
             &mut magds, "sepal.length", &sepal_length_df_datavec
         );
 
-        assert!(sepal_length_graph.is_some());
-        let sepal_length_graph = sepal_length_graph.unwrap();
-        println!("{}", sepal_length_graph.borrow());
-        let sepal_length_graph_from_magds = magds.sensor("sepal.length".into()).unwrap();
+        let sepal_length_sensor_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();
+        println!("{}", sepal_length_graph.0.borrow());
+        let sepal_length_graph_from_magds = magds.sensor(sepal_length_sensor_id).unwrap();
         let sepal_length_result = sepal_length_graph_from_magds.borrow().search(&5.8_f64.into());
         assert!(sepal_length_result.is_some());
         assert_eq!(sepal_length_result.unwrap().borrow().counter(), 7);

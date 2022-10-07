@@ -7,7 +7,7 @@ use std::{
 use ordered_float::OrderedFloat;
 
 use witchnet_common::{
-    data::{ DataTypeValue, DataTypeValueStr, DataCategory },
+    data::{ DataTypeValue, DataCategory },
     neuron::{ Neuron, NeuronID },
     sensor::Sensor,
     polars::{ self as polars_common, DataVecOption },
@@ -22,8 +22,8 @@ use crate::simple::magds::MAGDS;
 
 pub fn predict(
     magds: &mut MAGDS, 
-    features: &Vec<(Rc<str>, DataTypeValue)>,
-    target: Rc<str>,
+    features: &Vec<(u32, DataTypeValue)>,
+    target: u32,
     fuzzy: bool
 ) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
@@ -81,8 +81,8 @@ pub fn predict(
 
 pub fn predict_weighted(
     magds: &mut MAGDS, 
-    features: Vec<(Rc<str>, DataTypeValue, f32)>,
-    target: Rc<str>,
+    features: Vec<(u32, DataTypeValue, f32)>,
+    target: u32,
     fuzzy: bool
 ) -> Option<DataProbability> {
     let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
@@ -147,35 +147,27 @@ pub fn prediction_score(
     let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
 
-    for (i, (neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
+    let target_id = *train.sensor_ids(&target).unwrap().first().unwrap();
+
+    for (i, (_neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
-        let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::with_capacity(n_features);
+        let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
         let sensors = neuron.borrow().defining_sensors();
         let mut test_reference_value = DataTypeValue::Unknown;
-        let mut should_skip = false;
+        let mut should_skip = true;
 
         for (sensor_id, sensor) in sensors {
-            let feature_name: Rc<str> = sensor_id.parent_id.clone();
-            let feature_value_rcstr: Rc<str> = sensor_id.id.clone();
-            let feaure_value_str = DataTypeValueStr(&feature_value_rcstr);
-            let feature_data_type = sensor.borrow().data_type();
-            let feature_value = feaure_value_str.data_type_value(feature_data_type);
+            let feature_id = sensor_id.parent_id;
+            let feature_name = test.sensor_name(feature_id).unwrap();
+            let feature_value = sensor.borrow().value();
+            let feature_id_train = *train.sensor_ids(feature_name).unwrap().first().unwrap();
             
             if *feature_name == *target {
-                match feature_value {
-                    Some(v) => test_reference_value = v,
-                    None => {
-                        log::warn!("target feature {target} is None for {neuron_id}, skipping");
-                        should_skip = true;
-                        break
-                    }
-                };
+                test_reference_value = feature_value;
+                should_skip = false;
             } else {
-                match feature_value {
-                    Some(v) => features.push((feature_name, v)),
-                    None => continue,
-                };
+                features.push((feature_id_train, feature_value));
             }
         }
 
@@ -184,7 +176,7 @@ pub fn prediction_score(
             anyhow::bail!("test_reference_value shouldn't be unknown");
         }
 
-        let data_proba = match predict(train, &features, target.clone(), fuzzy) {
+        let data_proba = match predict(train, &features, target_id, fuzzy) {
             Some(dp) => dp,
             None => { train.deactivate(); continue }
         };
@@ -197,7 +189,7 @@ pub fn prediction_score(
         probabilities.push(winner_proba);
     }
 
-    let target_data_category = match train.sensor(target.clone()) {
+    let target_data_category = match train.sensor(target_id) {
         Some(s) => s.borrow().data_category(),
         None => anyhow::bail!("error getting sensor {target}")
     };
@@ -220,7 +212,9 @@ pub fn prediction_score_df(
     let mut predictions: Vec<DataTypeValue> = Vec::with_capacity(y_len);
     let mut probabilities: Vec<f32> = Vec::with_capacity(y_len);
 
-    let mut feature_columns: HashMap<&str, DataVecOption> = HashMap::new();
+    let target_id = *train.sensor_ids(target).unwrap().first().unwrap();
+
+    let mut feature_columns: HashMap<u32, DataVecOption> = HashMap::new();
     let mut target_column: Option<DataVecOption> = None;
     for column in test.get_columns() {
         let column_name = column.name();
@@ -234,24 +228,24 @@ pub fn prediction_score_df(
         if column_name == target {
             target_column = Some(datavec);
         } else {
-            feature_columns.insert(column_name, datavec);
+            let feature_id_train = *train.sensor_ids(column_name).unwrap().first().unwrap();
+            feature_columns.insert(feature_id_train, datavec);
         }
     }
     let target_column = target_column.unwrap();
-    let target_rc: Rc<str> = Rc::from(target);
 
     for i in 0..y_len {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
         
         if let Some(reference_value) = target_column.get(i) {
-            let mut features: Vec<(Rc<str>, DataTypeValue)> = Vec::with_capacity(n_features);
-            for column_name in feature_columns.keys() {
-                if let Some(f) = feature_columns[column_name].get(i) {
-                    features.push((Rc::from(*column_name), f));
+            let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
+            for feature_id in feature_columns.keys() {
+                if let Some(f) = feature_columns[feature_id].get(i) {
+                    features.push((*feature_id, f));
                 }
             }
 
-            let data_proba = match predict(train, &features, target_rc.clone(), fuzzy) {
+            let data_proba = match predict(train, &features, target_id, fuzzy) {
                 Some(dp) => dp,
                 None => { train.deactivate(); continue }
             };
@@ -268,7 +262,7 @@ pub fn prediction_score_df(
         }
     }
 
-    let target_data_category = match train.sensor(target.into()) {
+    let target_data_category = match train.sensor(target_id) {
         Some(s) => s.borrow().data_category(),
         None => anyhow::bail!("error getting sensor {target}")
     };
@@ -328,6 +322,9 @@ mod tests {
         let performance = prediction::prediction_score_df(
             &mut magds_train, &test, "variety".into(), false
         ).unwrap();
+        println!("performance.predictions() {:?}", performance.predictions());
+        println!("performance.references() {:?}", performance.references());
+        println!("performance.probabilities() {:?}", performance.probabilities());
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
         println!("accuracy: {accuracy} proba: {proba}");

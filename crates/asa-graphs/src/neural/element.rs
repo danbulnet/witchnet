@@ -21,10 +21,11 @@ use witchnet_common::{
 #[derive(Clone)]
 pub struct Element<Key, const ORDER: usize>
 where Key: SensorData, [(); ORDER + 1]: {
+    pub id: u32,
+    pub parent_id: u32,
     pub key: Key,
     pub counter: usize,
     pub activation: f32,
-    pub parent: Rc<str>,
     pub(crate) self_ptr: Weak<RefCell<Element<Key, ORDER>>>,
     pub next: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
@@ -40,15 +41,16 @@ where
 {
     pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.8;
 
-    pub fn new(key: &Key, parent: &Rc<str>)
+    pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Rc<RefCell<Element<Key, ORDER>>> {
         let element_ptr = Rc::new(
             RefCell::new(
                 Element {
+                    id,
+                    parent_id,
                     key: *dyn_clone::clone_box(key),
                     counter: 1,
                     activation: 0.0f32,
-                    parent: parent.clone(),
                     self_ptr: Weak::new(), 
                     next: None,
                     prev: None,
@@ -201,10 +203,12 @@ impl<Key, const ORDER: usize> Neuron for Element<Key, ORDER>
 where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTypeValue: From<Key> {
     fn id(&self) -> NeuronID {
         NeuronID {
-            id: Rc::from(self.key.to_string()),
-            parent_id: self.parent.clone()
+            id: self.id,
+            parent_id: self.parent_id
         }
     }
+
+    fn value(&self) -> DataTypeValue { (*dyn_clone::clone_box(&self.key)).into() }
 
     fn activation(&self) -> f32 { self.activation }
 
@@ -220,7 +224,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
         ) 
     }
 
-    fn explain_one(&self, _parent: Rc<str>) -> Option<DataTypeValue> {
+    fn explain_one(&self, _parent: u32) -> Option<DataTypeValue> {
         Some((*dyn_clone::clone_box(&self.key)).into())
     }
 
@@ -399,13 +403,13 @@ mod tests {
     #[test]
     fn set_connections() {
         let graph = Rc::new(
-            RefCell::new(ASAGraph::<i32, 3>::new("test"))
+            RefCell::new(ASAGraph::<i32, 3>::new(1))
         );
-        let graph_name = &graph.borrow().name;
+        let graph_id = graph.borrow().id;
 
-        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, graph_name);
-        let element_2_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, graph_name);
-        let element_3_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&3, graph_name);
+        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, graph_id);
+        let element_2_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, graph_id);
+        let element_3_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&3, 3, graph_id);
 
         assert!(element_1_ptr.borrow().prev.is_none());
         assert!(element_1_ptr.borrow().next.is_none());
@@ -456,29 +460,31 @@ mod tests {
     }
 
     #[test]
-    fn parent_name() {
-        let graph = Rc::new(RefCell::new(ASAGraph::<i32, 3>::new("test")));
-        let graph_name_ptr = &graph.borrow().name;
+    fn parent_id() {
+        let graph = Rc::new(RefCell::new(ASAGraph::<i32, 3>::new(1)));
+        let graph_id = graph.borrow().id;
 
-        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, graph_name_ptr);
-        let parent_name = &*element_1_ptr.borrow().parent;
-        assert_eq!(parent_name, "test");
+        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, graph_id);
+        let id = element_1_ptr.borrow().id;
+        let parent_id = element_1_ptr.borrow().parent_id;
+        assert_eq!(id, 1);
+        assert_eq!(parent_id, 1);
     }
 
     #[test]
     fn as_neuron() {
-        let graph = Rc::new(RefCell::new(ASAGraph::<i32, 3>::new("test")));
-        let graph_name = &graph.borrow().name;
+        let graph = Rc::new(RefCell::new(ASAGraph::<i32, 3>::new(1)));
+        let graph_id = graph.borrow().id;
 
-        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, graph_name);
-        let element_2_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, graph_name);
+        let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, graph_id);
+        let element_2_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, graph_id);
 
         let element_1_id = element_1_ptr.borrow().id();
         assert_eq!(element_1_id.id.to_string(), 1.to_string());
-        assert_eq!(element_1_id.parent_id.to_string(), graph.borrow().name.to_string());
+        assert_eq!(element_1_id.parent_id.to_string(), graph.borrow().id.to_string());
         let element_2_id = element_2_ptr.borrow().id();
         assert_eq!(element_2_id.id.to_string(),2.to_string());
-        assert_eq!(element_2_id.parent_id.to_string(), graph.borrow().name.to_string());
+        assert_eq!(element_2_id.parent_id.to_string(), graph.borrow().id.to_string());
 
         assert_eq!(element_1_ptr.borrow().is_sensor(), true);
 
@@ -536,7 +542,7 @@ mod tests {
         assert_eq!(Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD, 0.8f32);
 
         let graph = Rc::new(
-            RefCell::new(ASAGraph::<i32, 3>::new("test"))
+            RefCell::new(ASAGraph::<i32, 3>::new(1))
         );
         for i in 1..=9 { graph.borrow_mut().insert(&i); }
         {
@@ -617,7 +623,7 @@ mod tests {
     #[test]
     fn simple_activate() {
         let graph = Rc::new(
-            RefCell::new(ASAGraph::<i32, 3>::new("test"))
+            RefCell::new(ASAGraph::<i32, 3>::new(1))
         );
         for i in 1..=9 { graph.borrow_mut().insert(&i); }
 
@@ -662,8 +668,8 @@ mod tests {
 
     #[test]
     fn connections_trait() {
-        let element_1: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
-        let element_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, &Rc::from("test"));
+        let element_1: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
+        let element_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, 1);
 
         let er = element_1.borrow_mut().connect_from(element_2.clone(), ConnectionKind::Defining);
         assert!(er.is_err());

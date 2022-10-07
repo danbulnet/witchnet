@@ -20,7 +20,7 @@ where
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
 {
-    fn id(&self) -> Rc<str> { self.id() }
+    fn id(&self) -> u32 { self.id() }
 
     fn data_type(&self) -> DataType { self.data_type() }
 
@@ -55,8 +55,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use witchnet_common::{
         data::DataCategory,
         neuron::Neuron
@@ -69,10 +67,10 @@ mod tests {
     fn sensor() {
         assert_eq!(Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD, 0.8f32);
 
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
         for i in (1..=9).rev() { graph.insert(&i); }
         
-        assert_eq!(graph.id(), Rc::from("test"));
+        assert_eq!(graph.id(), 1);
         assert_eq!(graph.data_category(), DataCategory::Numerical);
 
         let neurons = graph.activate(&5, 1.0f32, true, true);

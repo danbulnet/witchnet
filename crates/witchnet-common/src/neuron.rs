@@ -13,13 +13,13 @@ use crate::{
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct NeuronID {
-    pub id: Rc<str>,
-    pub parent_id: Rc<str>
+    pub id: u32,
+    pub parent_id: u32
 }
 
 impl NeuronID {
-    pub fn new(id: &str, parent_id: &str) -> NeuronID {
-        NeuronID { id: Rc::from(id), parent_id: Rc::from(parent_id) }
+    pub fn new(id: u32, parent_id: u32) -> NeuronID {
+        NeuronID { id, parent_id }
     }
 }
 
@@ -32,6 +32,8 @@ impl Display for NeuronID {
 pub trait Neuron {
     fn id(&self) -> NeuronID;
 
+    fn value(&self) -> DataTypeValue;
+
     fn activation(&self) -> f32;
 
     fn is_sensor(&self) -> bool;
@@ -42,7 +44,7 @@ pub trait Neuron {
 
     fn explain(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>;
 
-    fn explain_one(&self, parent: Rc<str>) -> Option<DataTypeValue>;
+    fn explain_one(&self, parent: u32) -> Option<DataTypeValue>;
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool

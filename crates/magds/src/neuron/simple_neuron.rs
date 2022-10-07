@@ -20,7 +20,7 @@ use witchnet_common::{
         defining_connection::DefiningConnection
     },
     sensor::SensorData,
-    data::{ DataDeductor, DataTypeValue, DataType, DataTypeValueStr }
+    data::{ DataDeductor, DataTypeValue, DataType }
 };
 
 use asa_graphs::neural::element::Element;
@@ -89,6 +89,8 @@ impl SimpleNeuron {
 
     pub fn id(&self) -> NeuronID { self.id.clone() }
 
+    pub fn value(&self) -> DataTypeValue { self.id().id.into() }
+
     pub fn activation(&self) -> f32 { self.activation }
 
     pub fn is_sensor(&self) -> bool { false }
@@ -101,16 +103,13 @@ impl SimpleNeuron {
         self.defining_sensors()
     }
 
-    fn explain_one(&self, parent: Rc<str>) -> Option<DataTypeValue> {
+    fn explain_one(&self, parent: u32) -> Option<DataTypeValue> {
         let defining_sensors = self.defining_sensors();
         let sensor = defining_sensors.into_iter()
             .filter(|(id, _sensor)| id.parent_id == parent)
             .next()?.1;
-
-        let sensor_id = sensor.borrow().id().id;
-        let value_str = DataTypeValueStr(&sensor_id);
-        let sensor_data_type = sensor.borrow().data_type();
-        value_str.data_type_value(sensor_data_type)
+        let ret = sensor.borrow().value();
+        Some(ret)
     }
 
     pub fn activate(
@@ -149,6 +148,8 @@ impl SimpleNeuron {
 impl Neuron for SimpleNeuron {
     fn id(&self) -> NeuronID { self.id() }
 
+    fn value(&self) -> DataTypeValue { self.value() }
+
     fn activation(&self) -> f32 { self.activation() }
 
     fn is_sensor(&self) -> bool { self.is_sensor() }
@@ -161,7 +162,7 @@ impl Neuron for SimpleNeuron {
         self.explain()
     }
 
-    fn explain_one(&self, parent: Rc<str>) -> Option<DataTypeValue> {
+    fn explain_one(&self, parent: u32) -> Option<DataTypeValue> {
         self.explain_one(parent)
     }
 
@@ -410,20 +411,20 @@ mod tests {
 
     #[test]
     fn as_neuron() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
         let neuron_1_id = neuron_1.borrow().id();
-        assert_eq!(neuron_1_id.id.to_string(), "neuron_1".to_string());
-        assert_eq!(neuron_1_id.parent_id.to_string(), parent_name.to_string());
+        assert_eq!(neuron_1_id.id, 1);
+        assert_eq!(neuron_1_id.parent_id, parent_id);
         let neuron_2_id = neuron_2.borrow().id();
-        assert_eq!(neuron_2_id.id.to_string(), "neuron_2".to_string());
-        assert_eq!(neuron_2_id.parent_id.to_string(), parent_name.to_string());
+        assert_eq!(neuron_2_id.id, 2);
+        assert_eq!(neuron_2_id.parent_id, parent_id);
 
         assert_eq!(neuron_1.borrow().is_sensor(), false);
 
@@ -482,12 +483,12 @@ mod tests {
 
     #[test]
     fn connect_from_neuron() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
         let connection_1 = neuron_1.borrow_mut().connect_from(
@@ -521,12 +522,12 @@ mod tests {
 
     #[test]
     fn connect_to_neuron() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
         let connection_1 = neuron_1.borrow_mut().connect_to(
@@ -560,11 +561,11 @@ mod tests {
 
     #[test]
     fn connect_from_sensor() {
-        let parent_name:Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
-        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
+        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_from(
             neuron_2.clone(), ConnectionKind::Defining
@@ -593,11 +594,11 @@ mod tests {
 
     #[test]
     fn connect_to_sensor() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
-        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
+        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_to(
             neuron_2.clone(), ConnectionKind::Defining
@@ -611,11 +612,11 @@ mod tests {
 
     #[test]
     fn connect_bilateral_to_sensor() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
-        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
+        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_bilateral_to(
             neuron_2.clone(), ConnectionKind::Defining
@@ -629,11 +630,11 @@ mod tests {
 
     #[test]
     fn connect_bilateral_from_sensor() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
-        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
+        let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_bilateral_from(
             neuron_2.clone(), ConnectionKind::Defining
@@ -647,12 +648,12 @@ mod tests {
 
     #[test]
     fn connect_bilateral_to_neuron() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
         let connection_1 = neuron_1.borrow_mut().connect_bilateral_to(
@@ -669,12 +670,12 @@ mod tests {
 
     #[test]
     fn connect_bilateral_from_neuron() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
         let connection_1 = neuron_1.borrow_mut().connect_bilateral_from(
@@ -691,14 +692,14 @@ mod tests {
 
     #[test]
     fn connect_wrong() {
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
-        let sensor: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, &Rc::from("test"));
+        let sensor: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_bilateral_from(
             neuron_2.clone(), ConnectionKind::Inhibitory

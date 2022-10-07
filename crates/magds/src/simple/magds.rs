@@ -17,88 +17,135 @@ use crate::neuron::simple_neuron::SimpleNeuron;
 use super::sensor::SensorConatiner;
 
 pub struct MAGDS {
-    pub(crate) sensors: HashMap<Rc<str>, Rc<RefCell<SensorConatiner>>>,
-    pub(crate) neurons: HashMap<NeuronID, Rc<RefCell<SimpleNeuron>>>
+    pub(crate) sensors: HashMap<u32, Rc<RefCell<SensorConatiner>>>,
+    pub(crate) sensor_names: HashMap<u32, Rc<str>>,
+    pub(crate) sensor_ids: HashMap<Rc<str>, Vec<u32>>,
+    pub(crate) neurons: HashMap<NeuronID, Rc<RefCell<SimpleNeuron>>>,
+    pub(crate) neuron_group_names: HashMap<u32, Rc<str>>,
+    pub(crate) neuron_group_ids: HashMap<Rc<str>, Vec<u32>>
 }
 
 impl MAGDS {
     pub fn new() -> MAGDS {
-        MAGDS { sensors: HashMap::new(), neurons: HashMap::new() }
+        MAGDS { 
+            sensors: HashMap::new(),
+            sensor_names: HashMap::new(),
+            sensor_ids: HashMap::new(),
+            neurons: HashMap::new(),
+            neuron_group_names: HashMap::new(),
+            neuron_group_ids: HashMap::new()
+        }
     }
     
     pub fn new_rc() -> Rc<RefCell<MAGDS>> {
-        Rc::new(RefCell::new(MAGDS { sensors: HashMap::new(), neurons: HashMap::new() }))
+        Rc::new(RefCell::new(
+            MAGDS { 
+                sensors: HashMap::new(),
+                sensor_names: HashMap::new(),
+                sensor_ids: HashMap::new(),
+                neurons: HashMap::new(),
+                neuron_group_names: HashMap::new(),
+                neuron_group_ids: HashMap::new()
+            }
+        ))
     }
 
     pub fn create_sensor(
-        &mut self, id: Rc<str>, data_type: DataType
-    ) -> Option<Rc<RefCell<SensorConatiner>>> {
+        &mut self, name: &str, data_type: DataType
+    ) -> (Rc<RefCell<SensorConatiner>>, u32) {
+        let name_rc: Rc<str> = Rc::from(name);
+        let new_id: u32 = *self.sensors.keys().max().unwrap_or(&0) + 1;
+
         let sensor = match data_type {
-            DataType::Bool => SensorConatiner::Bool(ASAGraph::<bool>::new(&id)),
-            DataType::U8 => SensorConatiner::U8(ASAGraph::<u8>::new(&id)),
-            DataType::U16 => SensorConatiner::U16(ASAGraph::<u16>::new(&id)),
-            DataType::U32 => SensorConatiner::U32(ASAGraph::<u32>::new(&id)),
-            DataType::U64 => SensorConatiner::U64(ASAGraph::<u64>::new(&id)),
-            DataType::U128 => SensorConatiner::U128(ASAGraph::<u128>::new(&id)),
-            DataType::USize => SensorConatiner::USize(ASAGraph::<usize>::new(&id)),
-            DataType::I8 => SensorConatiner::I8(ASAGraph::<i8>::new(&id)),
-            DataType::I16 => SensorConatiner::I16(ASAGraph::<i16>::new(&id)),
-            DataType::I32 => SensorConatiner::I32(ASAGraph::<i32>::new(&id)),
-            DataType::I64 => SensorConatiner::I64(ASAGraph::<i64>::new(&id)),
-            DataType::I128 => SensorConatiner::I128(ASAGraph::<i128>::new(&id)),
-            DataType::ISize => SensorConatiner::ISize(ASAGraph::<isize>::new(&id)),
-            DataType::F32 => SensorConatiner::F32(ASAGraph::<f32>::new(&id)),
-            DataType::F64 => SensorConatiner::F64(ASAGraph::<f64>::new(&id)),
-            DataType::RcStr => SensorConatiner::RcStr(ASAGraph::<Rc<str>>::new(&id)),
-            DataType::String => SensorConatiner::String(ASAGraph::<String>::new(&id)),
+            DataType::Bool => SensorConatiner::Bool(ASAGraph::<bool>::new(new_id)),
+            DataType::U8 => SensorConatiner::U8(ASAGraph::<u8>::new(new_id)),
+            DataType::U16 => SensorConatiner::U16(ASAGraph::<u16>::new(new_id)),
+            DataType::U32 => SensorConatiner::U32(ASAGraph::<u32>::new(new_id)),
+            DataType::U64 => SensorConatiner::U64(ASAGraph::<u64>::new(new_id)),
+            DataType::U128 => SensorConatiner::U128(ASAGraph::<u128>::new(new_id)),
+            DataType::USize => SensorConatiner::USize(ASAGraph::<usize>::new(new_id)),
+            DataType::I8 => SensorConatiner::I8(ASAGraph::<i8>::new(new_id)),
+            DataType::I16 => SensorConatiner::I16(ASAGraph::<i16>::new(new_id)),
+            DataType::I32 => SensorConatiner::I32(ASAGraph::<i32>::new(new_id)),
+            DataType::I64 => SensorConatiner::I64(ASAGraph::<i64>::new(new_id)),
+            DataType::I128 => SensorConatiner::I128(ASAGraph::<i128>::new(new_id)),
+            DataType::ISize => SensorConatiner::ISize(ASAGraph::<isize>::new(new_id)),
+            DataType::F32 => SensorConatiner::F32(ASAGraph::<f32>::new(new_id)),
+            DataType::F64 => SensorConatiner::F64(ASAGraph::<f64>::new(new_id)),
+            DataType::RcStr => SensorConatiner::RcStr(ASAGraph::<Rc<str>>::new(new_id)),
+            DataType::String => SensorConatiner::String(ASAGraph::<String>::new(new_id)),
             DataType::Unknown => panic!("unknown data type sensor is not allowed")
         };
-        if self.sensors.contains_key(&id) { return None }
         let sensor_ptr = Rc::new(RefCell::new(sensor));
-        self.sensors.insert(id, sensor_ptr.clone());
-        Some(sensor_ptr)
+        self.sensors.insert(new_id, sensor_ptr.clone());
+
+        self.sensor_names.insert(new_id, name_rc.clone());
+        match self.sensor_ids.get_mut(name) {
+            Some(v) => v.push(new_id),
+            None => { self.sensor_ids.insert(name_rc, vec![new_id]); }
+        }
+
+        (sensor_ptr, new_id)
     }
 
     pub fn add_sensor(
-        &mut self, sensor: Rc<RefCell<SensorConatiner>>
-    ) -> Option<Rc<RefCell<SensorConatiner>>> {
-        let sensor_id = sensor.borrow().id().clone();
-        if self.sensors.contains_key(&sensor_id) { return None }
-        self.sensors.insert(sensor_id, sensor.clone());
-        Some(sensor)
+        &mut self, name: &str, sensor: Rc<RefCell<SensorConatiner>>
+    ) -> (Rc<RefCell<SensorConatiner>>, u32) {
+        let new_id: u32 = *self.sensors.keys().max().unwrap_or(&0) + 1;
+        let name_rc: Rc<str> = Rc::from(name);
+
+        self.sensors.insert(new_id, sensor.clone());
+
+        self.sensor_names.insert(new_id, name_rc.clone());
+        match self.sensor_ids.get_mut(name) {
+            Some(v) => v.push(new_id),
+            None => { self.sensor_ids.insert(name_rc, vec![new_id]); }
+        }
+
+        (sensor, new_id)
     }
 
-    pub fn sensor(&self, id: Rc<str>) -> Option<&Rc<RefCell<SensorConatiner>>> {
+    pub fn sensor(&self, id: u32) -> Option<&Rc<RefCell<SensorConatiner>>> {
         self.sensors.get(&id)
     }
 
-    pub fn sensor_id(&self, id: Rc<str>) -> Option<Rc<str>> { 
-        Some(self.sensors.get(&id)?.borrow().id().clone())
+    pub fn sensor_ids(&self, name: &str) -> Option<&[u32]> { 
+        match self.sensor_ids.get(name.into()) {
+            Some(id) => Some(id),
+            None => None
+        }
     }
 
-    pub fn sensor_data_type(&self, id: Rc<str>) -> Option<DataType> { 
+    pub fn sensor_name(&self, id: u32) -> Option<&str> { 
+        match self.sensor_names.get(&id) {
+            Some(id) => Some(&id),
+            None => None
+        }
+    }
+
+    pub fn sensor_data_type(&self, id: u32) -> Option<DataType> { 
         Some(self.sensors.get(&id)?.borrow().data_type())
     }
 
-    pub fn sensor_data_category(&self, id: Rc<str>) -> Option<DataCategory> { 
+    pub fn sensor_data_category(&self, id: u32) -> Option<DataCategory> { 
         Some(self.sensors.get(&id)?.borrow().data_category())
     }
 
     pub fn sensor_insert(
-        &mut self, id: Rc<str>, item: &DataTypeValue
+        &mut self, id: u32, item: &DataTypeValue
     ) -> Option<Rc<RefCell<dyn Neuron>>> {
         Some(self.sensors.get_mut(&id)?.borrow_mut().insert(item))
     }
     
     pub fn sensor_search(
-        &self, id: Rc<str>, item: &DataTypeValue
+        &self, id: u32, item: &DataTypeValue
     ) -> Option<Rc<RefCell<dyn Neuron>>> { 
         self.sensors.get(&id)?.borrow().search(item) 
     }
 
     pub fn sensor_activate(
         &mut self, 
-        id: Rc<str>, 
+        id: u32, 
         item: &DataTypeValue,
         signal: f32,
         propagate_horizontal: bool, 
@@ -113,7 +160,7 @@ impl MAGDS {
 
     pub fn sensor_deactivate(
         &mut self, 
-        id: Rc<str>, 
+        id: u32, 
         item: &DataTypeValue,
         propagate_horizontal: bool, 
         propagate_vertical: bool
@@ -125,7 +172,7 @@ impl MAGDS {
             .deactivate(item, propagate_horizontal, propagate_vertical)
     }
 
-    pub fn deactivate_whole_sensor(&mut self, id: Rc<str>) -> Result<(), String> {
+    pub fn deactivate_whole_sensor(&mut self, id: u32) -> Result<(), String> {
         self.sensors
             .get_mut(&id)
             .unwrap_or(Err(format!("sensor {} doesn't exists", id))?)
@@ -163,14 +210,37 @@ impl MAGDS {
         Some(self.neurons.get(id)?.clone())
     }
 
-    pub fn neuron(&self, id: &str, parent_id: &str) -> Option<Rc<RefCell<SimpleNeuron>>> {
+    pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Rc<RefCell<SimpleNeuron>>> {
         Some(self.neurons.get(&NeuronID::new(id, parent_id))?.clone())
     }
 
     pub fn deactivate(&mut self) {
         for sensor in &mut self.sensors.values() { sensor.borrow_mut().deactivate_sensor(); }
         for neuron in &mut self.neurons.values() { neuron.borrow_mut().deactivate(false, false); }
-    } 
+    }
+
+    pub fn add_neuron_group(&mut self, group_name: &str, group_id: u32) {
+        let group_name_rc: Rc<str> = group_name.into();
+        self.neuron_group_names.insert(group_id, group_name_rc.clone());
+        match self.neuron_group_ids.get_mut(&group_name_rc) {
+            Some(v) => v.push(group_id),
+            None => { self.neuron_group_ids.insert(group_name_rc, vec![group_id]); }
+        }
+    }
+
+    pub fn neuron_group_ids(&self, name: &str) -> Option<&[u32]> { 
+        match self.neuron_group_ids.get(name.into()) {
+            Some(id) => Some(id),
+            None => None
+        }
+    }
+
+    pub fn neuron_group_name(&self, id: u32) -> Option<&str> { 
+        match self.neuron_group_names.get(&id) {
+            Some(id) => Some(&id),
+            None => None
+        }
+    }
 }
 
 impl Display for MAGDS {
@@ -222,26 +292,36 @@ mod tests {
     fn create_magds() {
         let mut magds = MAGDS::new();
 
-        let mut sensor_1 = ASAGraph::<i32>::new("test");
+        let mut sensor_1 = ASAGraph::<i32>::new(1);
         for i in 1..=9 { sensor_1.insert(&i); }
 
-        let mut sensor_2 = ASAGraph::<String>::new("test_string");
+        let mut sensor_2 = ASAGraph::<String>::new(2);
         for i in 1..=9 { sensor_2.insert(&i.to_string()); }
 
-        let parent_name: Rc<str> = Rc::from("test");
+        let parent_id = 1u32;
         let neuron_1 = SimpleNeuron::new(
-            NeuronID { id: "neuron_1".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 1, parent_id }
         );
         let neuron_2 = SimpleNeuron::new(
-            NeuronID { id: "neuron_2".into(), parent_id: parent_name.clone() }
+            NeuronID { id: 2, parent_id }
         );
 
-        magds.add_sensor(Rc::new(RefCell::new(sensor_1.into())));
-        magds.add_sensor(Rc::new(RefCell::new(sensor_2.into())));
+        magds.add_neuron_group("1", parent_id);
+        println!("{:?}", magds.neuron_group_ids);
+        assert_eq!(magds.neuron_group_ids("1").unwrap().first().unwrap(), &1);
+        assert_eq!(magds.neuron_group_name(1).unwrap(), "1");
+
+        magds.add_sensor("test_1".into(), Rc::new(RefCell::new(sensor_1.into())));
+        magds.add_sensor("test_2".into(), Rc::new(RefCell::new(sensor_2.into())));
+        assert_eq!(magds.sensor_names[&1], Rc::from("test_1"));
+        assert_eq!(magds.sensor_names[&2], Rc::from("test_2"));
+        assert_eq!(magds.sensor_name(1).unwrap(), "test_1");
+        assert_eq!(magds.sensor_name(2).unwrap(), "test_2");
+
         magds.add_neuron(neuron_1);
         magds.add_neuron(neuron_2);
 
-        let sensor_1_from_magds = magds.sensor("test".into()).unwrap();
+        let sensor_1_from_magds = magds.sensor(1).unwrap();
         sensor_1_from_magds.borrow_mut().insert(&10.into());
         sensor_1_from_magds.borrow_mut().insert(&11.into());
         sensor_1_from_magds.borrow_mut().insert(&12.into());
@@ -251,9 +331,7 @@ mod tests {
         for i in 1..=12 {
             let el = sensor_1_from_magds.borrow().search(&(i as i32).into());
             assert!(el.is_some());
-            let neuron_id = NeuronID { 
-                id: Rc::from(i.to_string()), parent_id: "test".into() 
-            };
+            let neuron_id = NeuronID { id: i, parent_id: 1 };
             let el = el.unwrap();
             assert_eq!(el.borrow().id(), neuron_id);
             let counter = el.borrow().counter();
@@ -262,7 +340,7 @@ mod tests {
         }
         assert_eq!(sum, 12);
 
-        let sensor_2_from_magds = magds.sensor("test_string".into()).unwrap();
+        let sensor_2_from_magds = magds.sensor(2).unwrap();
         sensor_2_from_magds.borrow_mut().insert(&10.to_string().into());
         sensor_2_from_magds.borrow_mut().insert(&11.to_string().into());
         sensor_2_from_magds.borrow_mut().insert(&12.to_string().into());
@@ -271,10 +349,9 @@ mod tests {
         for i in 1..=12 {
             let el = sensor_2_from_magds.borrow().search(&(i.to_string()).into());
             assert!(el.is_some());
-            let neuron_id = NeuronID { 
-                id: Rc::from(i.to_string()), parent_id: "test_string".into() 
-            };
+            let neuron_id = NeuronID { id: i, parent_id: 2 };
             let el = el.unwrap();
+            println!("i {i} el_id {} ket {}", el.borrow().id(), el.borrow().value());
             assert_eq!(el.borrow().id(), neuron_id);
             let counter = el.borrow().counter();
             sum += counter;
@@ -282,15 +359,15 @@ mod tests {
         }
         assert_eq!(sum, 12);
 
-        let neuron_1_id = NeuronID::new("neuron_1", "test");
+        let neuron_1_id = NeuronID::new(1, 1);
         let neuron_1_from_magds = magds.neuron_from_id(&neuron_1_id).unwrap();
         assert_eq!(neuron_1_from_magds.borrow().id(), neuron_1_id);
-        let neuron_1_from_magds = magds.neuron("neuron_1", "test").unwrap();
+        let neuron_1_from_magds = magds.neuron(1, 1).unwrap();
         assert_eq!(neuron_1_from_magds.borrow().id(), neuron_1_id);
 
-        magds.create_sensor(Rc::from("rcstr_test"), DataType::RcStr);
+        let (_rcstr_test_sensor, rcstr_test_id) = magds.create_sensor("rcstr_test", DataType::RcStr);
         let text: Rc<str> = Rc::from("test");
-        let sensor_element = magds.sensor_insert(Rc::from("rcstr_test"), &text.into());
+        let sensor_element = magds.sensor_insert(rcstr_test_id, &text.into());
         assert!(sensor_element.is_some())
     }
 
@@ -300,14 +377,15 @@ mod tests {
         let magds = parser::magds_from_df("iris".into(), &df);
         println!("{magds}");
 
-        let sl43 = magds.sensor_search("sepal.length".into(), &4.3_f64.into()).unwrap();
-        let sl57 = magds.sensor_search("sepal.length".into(), &5.7_f64.into()).unwrap();
-        let sl58 = magds.sensor_search("sepal.length".into(), &5.8_f64.into()).unwrap();
-        let sl59 = magds.sensor_search("sepal.length".into(), &5.9_f64.into()).unwrap();
-        let sl79 = magds.sensor_search("sepal.length".into(), &7.9_f64.into()).unwrap();
-        let neuron_15 = magds.neuron("15".into(), "iris".into()).unwrap();
-        let neuron_16 = magds.neuron("16".into(), "iris".into()).unwrap();
-        
+        let sepal_length_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();
+        let sl43 = magds.sensor_search(sepal_length_id, &4.3_f64.into()).unwrap();
+        let sl57 = magds.sensor_search(sepal_length_id, &5.7_f64.into()).unwrap();
+        let sl58 = magds.sensor_search(sepal_length_id, &5.8_f64.into()).unwrap();
+        let sl59 = magds.sensor_search(sepal_length_id, &5.9_f64.into()).unwrap();
+        let sl79 = magds.sensor_search(sepal_length_id, &7.9_f64.into()).unwrap();
+        let neuron_15 = magds.neuron(15, 1).unwrap();
+        let neuron_16 = magds.neuron(16, 1).unwrap();
+       
         sl58.borrow_mut().activate(1.0, false, false);
         assert_eq!(sl57.borrow().activation(), 0.0_f32);
         assert_eq!(sl58.borrow().activation(), 1.0_f32);

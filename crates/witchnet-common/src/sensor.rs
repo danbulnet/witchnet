@@ -128,7 +128,7 @@ impl<T: UnknownDataTypeMarker + SensorDataMarker> DataDeductor for PhantomData<T
 }
 
 pub trait Sensor<D: SensorData>: Any + Display {
-    fn id(&self) -> Rc<str>;
+    fn id(&self) -> u32;
 
     fn data_type(&self) -> DataType;
 

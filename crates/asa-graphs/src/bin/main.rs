@@ -26,7 +26,7 @@ fn main() {
 
     let mut rng = StdRng::seed_from_u64(35);
 
-    let mut graph_neural = ASAGraphNeural::<i32, 3>::new("test");
+    let mut graph_neural = ASAGraphNeural::<i32, 3>::new(1);
 
     for _i in 0..10_000 {
         let number = rng.gen_range(0..58);
@@ -43,7 +43,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use witchnet_common::neuron::Neuron;
 fn fuzzy_activate() {
-    let graph = Rc::new(RefCell::new(ASAGraphNeural::<i32, 3>::new("test")));
+    let graph = Rc::new(RefCell::new(ASAGraphNeural::<i32, 3>::new(1)));
     for i in 1..=9 { graph.borrow_mut().insert(&i); }
 
     let mid_element = graph.borrow().search(&5).unwrap();

@@ -21,10 +21,11 @@ use super::{
 #[derive(Clone)]
 pub struct ASAGraph<Key, const ORDER: usize = 25>
 where Key: SensorData, [(); ORDER + 1]: {
-    pub name: Rc<str>,
+    pub id: u32,
     pub(crate) root: Rc<RefCell<Node<Key, ORDER>>>,
     pub element_min: Option<Rc<RefCell<Element<Key, ORDER>>>>,
     pub element_max: Option<Rc<RefCell<Element<Key, ORDER>>>>,
+    pub elements_counter: u32,
     pub key_min: Option<Key>,
     pub key_max: Option<Key>,
     pub(crate) data_type: PhantomData<Key>
@@ -37,50 +38,51 @@ where
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
 {
-    pub fn new(name: &str) -> ASAGraph<Key, ORDER> {
+    pub fn new(id: u32) -> ASAGraph<Key, ORDER> {
         if ORDER < 3 {
             panic!("Graph order must be >= 3");
         }
         ASAGraph {
-            name: Rc::from(name),
+            id,
             root: Rc::new(RefCell::new(Node::<Key, ORDER>::new(true, None))),
             element_min: None,
             element_max: None,
+            elements_counter: 0,
             key_min: None,
             key_max: None,
             data_type: PhantomData
         }
     }
 
-    pub fn new_rc(name: &str) -> Rc<RefCell<ASAGraph<Key, ORDER>>> {
+    pub fn new_rc(id: u32) -> Rc<RefCell<ASAGraph<Key, ORDER>>> {
         if ORDER < 3 {
             panic!("Graph order must be >= 3");
         }
-        Rc::new(RefCell::new(ASAGraph::new(name)))
+        Rc::new(RefCell::new(ASAGraph::new(id)))
     }
 
-    pub fn new_box(name: &str) -> Box<ASAGraph<Key, ORDER>> {
+    pub fn new_box(id: u32) -> Box<ASAGraph<Key, ORDER>> {
         if ORDER < 3 {
             panic!("Graph order must be >= 3");
         }
-        Box::new(ASAGraph::new(name))
+        Box::new(ASAGraph::new(id))
     }
 
-    pub fn new_from_vec(name: &str, data: &[Key]) -> Self {
-        let mut graph = Self::new(name);
+    pub fn new_from_vec(id: u32, data: &[Key]) -> Self {
+        let mut graph = Self::new(id);
         for point in data { graph.insert(point); }
         graph
     }
 
-    pub fn new_rc_from_vec(name: &str, data: &[Key]) -> Rc<RefCell<Self>> {
-        Rc::new(RefCell::new(Self::new_from_vec(name, data)))
+    pub fn new_rc_from_vec(id: u32, data: &[Key]) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self::new_from_vec(id, data)))
     }
 
-    pub fn new_box_from_vec(name: &str, data: &[Key]) -> Box<Self> {
-        Box::new(Self::new_from_vec(name, data))
+    pub fn new_box_from_vec(id: u32, data: &[Key]) -> Box<Self> {
+        Box::new(Self::new_from_vec(id, data))
     }
     
-    pub fn id(&self) -> Rc<str> { self.name.clone() }
+    pub fn id(&self) -> u32 { self.id }
 
     pub fn data_type(&self) -> DataType { self.data_type.data_type() }
 
@@ -174,14 +176,18 @@ where
             let mut index = node_insert_result.1;
     
             if node.borrow().is_leaf {
-                let element = Node::insert_key_leaf(&node, key, &self.name, self.range());
+                let element_id = self.elements_counter + 1;
+                let element = Node::insert_key_leaf(&node, key, element_id, self.id, self.range());
+                self.elements_counter += 1;
                 self.set_extrema(&element);
                 return element
             } else {
                 let child_size = node.borrow().children[index].as_ref().unwrap().borrow().size;
                 if child_size == Node::<Key, ORDER>::MAX_KEYS {
                     Node::split_child(&node, index);
-                    if key.partial_compare(&node.borrow().elements[index].as_ref().unwrap().borrow().key) == Some(Greater) {
+                    if key.partial_compare(
+                        &node.borrow().elements[index].as_ref().unwrap().borrow().key
+                    ) == Some(Greater) {
                         index += 1 
                     } else if key.equals(node.borrow().keys[index].as_ref().unwrap()) {
                         return node.borrow().elements[index].as_ref().unwrap().clone()
@@ -245,7 +251,7 @@ where
     fn insert_first_element(
         &mut self, node: &Rc<RefCell<Node<Key, ORDER>>>,  key: &Key
     ) -> Rc<RefCell<Element<Key, ORDER>>> {
-        let element_pointer = Element::<Key, ORDER>::new(key, &self.name);
+        let element_pointer = Element::<Key, ORDER>::new(key, 1, self.id);
         node.borrow_mut().elements[0] = Some(element_pointer.clone());
         node.borrow_mut().keys[0] = Some(*dyn_clone::clone_box(key));
 
@@ -254,6 +260,8 @@ where
         self.element_min = Some(element_pointer.clone());
         self.element_max = Some(element_pointer.clone());
         node.borrow_mut().size = 1;
+
+        self.elements_counter = 1;
 
         element_pointer
     }
@@ -532,7 +540,7 @@ pub mod tests {
 
     #[test]
     fn create_empty_graph() {
-        ASAGraph::<i32, 3>::new("test");
+        ASAGraph::<i32, 3>::new(1);
     }
 
     #[test]
@@ -541,7 +549,7 @@ pub mod tests {
 
         let start = Instant::now();
 
-        let mut graph = Box::new(ASAGraph::<i32, 3>::new("test"));
+        let mut graph = Box::new(ASAGraph::<i32, 3>::new(1));
 
         let n = 1_000;
         for _ in 0..n {
@@ -558,7 +566,7 @@ pub mod tests {
     fn print_graph() {
         let mut rng = rand::thread_rng();
 
-        let mut graph = ASAGraph::<i32, 5>::new("test");
+        let mut graph = ASAGraph::<i32, 5>::new(1);
 
         for _ in 0..50 {
             let number: i32 = rng.gen_range(1..=20);
@@ -570,7 +578,7 @@ pub mod tests {
 
     #[test]
     fn insert_3_degree() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
 
         for i in 1..=250 {
             graph.insert(&i);
@@ -595,7 +603,7 @@ pub mod tests {
 
     #[test]
     fn insert_25_degree() {
-        let mut graph = ASAGraph::<i32, 25>::new("test");
+        let mut graph = ASAGraph::<i32, 25>::new(1);
 
         for i in 1..=250 {
             graph.insert(&i);
@@ -620,7 +628,7 @@ pub mod tests {
 
     #[test]
     fn search() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
 
         let n = 100;
         for i in 0..n {
@@ -639,7 +647,7 @@ pub mod tests {
 
     #[test]
     fn test_connections() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
     
         let n = 50;
         for i in 1..=n {
@@ -672,7 +680,7 @@ pub mod tests {
 
     #[test]
     fn test_connections_rev() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
     
         let n = 50;
         for i in (1..=n).rev() {
@@ -705,7 +713,7 @@ pub mod tests {
 
     #[test]
     fn iterator_test() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
         let n = 50;
         for i in (0..=n).rev() { graph.insert(&i); }
         for (i, element) in graph.into_iter().enumerate() {
@@ -717,15 +725,22 @@ pub mod tests {
     #[test]
     fn new_from_vec() {
         let vec = vec!["kot".to_string(), "pies".to_string()];
-        let graph = ASAGraph::<_, 25>::new_rc_from_vec("test", &vec[..]);
+        let graph = ASAGraph::<_, 25>::new_rc_from_vec(1, &vec[..]);
         assert!(graph.borrow().search(&"kot".to_string()).is_some());
-        let graph = ASAGraph::<_, 3>::new_from_vec("test", &vec[..]);
+        let graph = ASAGraph::<_, 3>::new_from_vec(1, &vec[..]);
         assert!(graph.search(&"pies".to_string()).is_some());
     }
 
     #[test]
+    fn ids() {
+        let mut graph = ASAGraph::<i32, 3>::new(1);
+        for i in 1..=25 { graph.insert(&i); }
+        for i in 1..=25 { assert_eq!(i as u32, graph.search(&i).unwrap().borrow().id) }
+    }
+
+    #[test]
     fn display_graph() {
-        let mut graph = ASAGraph::<i32, 3>::new("test");
+        let mut graph = ASAGraph::<i32, 3>::new(1);
         for i in 1..=25 { graph.insert(&i); }
 
         println!("{graph}");

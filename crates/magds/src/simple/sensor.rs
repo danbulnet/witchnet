@@ -61,7 +61,7 @@ impl Display for SensorConatiner {
 }
 
 impl Sensor<DataTypeValue> for SensorConatiner {
-    fn id(&self) -> Rc<str> {
+    fn id(&self) -> u32 {
         match self {
             SensorConatiner::Bool(v) => v.id(),
             SensorConatiner::U8(v) => v.id(),
