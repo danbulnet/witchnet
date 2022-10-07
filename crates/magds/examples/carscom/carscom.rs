@@ -51,7 +51,8 @@ fn main() {
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();
+    let mae = performance.mae().unwrap();
     let proba = performance.mean_probability().unwrap();
     
-    println!("rmse: {rmse} proba: {proba}");
+    println!("rmse: {rmse} mae: {mae} proba: {proba}");
 }

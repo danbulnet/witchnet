@@ -19,3 +19,16 @@ readme = "README.md"
 repository = "https://github.com/danbulnet/witchnet"
 categories = ["science", "virtualization", "simulation", "database", "data-structures"]
 keywords = ["database", "knowledge-graph", "machine-learning", "associative", "graph"]
+
+[profile.release] 
+debug = false
+
+[profile.release-lto]
+inherits = "release"
+debug = false
+lto = true
+
+[profile.release-debug]
+inherits = "release"
+debug = true
+lto = true
