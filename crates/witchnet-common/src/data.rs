@@ -4,6 +4,8 @@ use std::{
     fmt::{ Display, Formatter, Result as FmtResult }
 };
 
+use regex::Regex;
+
 use enum_as_inner::EnumAsInner;
 
 use num_traits::ToPrimitive;
@@ -142,7 +144,66 @@ impl DataTypeValue {
             DataTypeValue::F64(v) => v.to_string(),
             DataTypeValue::RcStr(v) => v.to_string(),
             DataTypeValue::String(v) => v.clone(),
-            DataTypeValue::Unknown => String::from("unknown")
+            DataTypeValue::Unknown => String::from("")
+        }
+    }
+
+    pub fn to_vec(&self) -> Vec<DataTypeValue> {
+        match self {
+            DataTypeValue::Bool(v) => vec![DataTypeValue::Bool(*v)],
+            DataTypeValue::U8(v) => vec![DataTypeValue::U8(*v)],
+            DataTypeValue::U16(v) => vec![DataTypeValue::U16(*v)],
+            DataTypeValue::U32(v) => vec![DataTypeValue::U32(*v)],
+            DataTypeValue::U64(v) => vec![DataTypeValue::U64(*v)],
+            DataTypeValue::U128(v) => vec![DataTypeValue::U128(*v)],
+            DataTypeValue::USize(v) => vec![DataTypeValue::USize(*v)],
+            DataTypeValue::I8(v) => vec![DataTypeValue::I8(*v)],
+            DataTypeValue::I16(v) => vec![DataTypeValue::I16(*v)],
+            DataTypeValue::I32(v) => vec![DataTypeValue::I32(*v)],
+            DataTypeValue::I64(v) => vec![DataTypeValue::I64(*v)],
+            DataTypeValue::I128(v) => vec![DataTypeValue::I128(*v)],
+            DataTypeValue::ISize(v) => vec![DataTypeValue::ISize(*v)],
+            DataTypeValue::F32(v) => vec![DataTypeValue::F32(*v)],
+            DataTypeValue::F64(v) => vec![DataTypeValue::F64(*v)],
+            DataTypeValue::RcStr(key) => {
+                let key = key.to_string();
+                if key.starts_with("[") && key.ends_with("]") {
+                    let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
+                    Regex::new(r"\s*,\s*")
+                        .unwrap()
+                        .split(key)
+                        .map(|x| {
+                            let string = Regex::new(r#"["']+"#).unwrap()
+                                .split(x)
+                                .filter(|x| *x != "")
+                                .next()
+                                .unwrap();
+                            DataTypeValue::String(string.into())
+                        }).collect()
+                } else {
+                    vec![DataTypeValue::RcStr(key.into())]
+                }
+            },
+            DataTypeValue::String(key) => {
+                if key.starts_with("[") && key.ends_with("]") {
+                    let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
+                    Regex::new(r"\s*,\s*")
+                        .unwrap()
+                        .split(key)
+                        .map(|x| {
+                            let string = Regex::new(r#"["']+"#).unwrap()
+                                .split(x)
+                                .filter(|x| *x != "")
+                                .next()
+                                .unwrap()
+                                .to_string();
+                            DataTypeValue::String(string)
+                        }).collect()
+                } else {
+                    vec![DataTypeValue::String(key.clone())]
+                }
+            },
+            DataTypeValue::Unknown => vec![]
         }
     }
 }

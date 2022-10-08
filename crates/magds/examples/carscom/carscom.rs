@@ -30,7 +30,8 @@ fn main() {
         "carscom_full_1m_18_08_2022_prepared_test_small.csv"
     );
 
-    let skip_list = vec!["vin"];
+    // let skip_list = vec![];
+    let skip_list = vec!["vin", "seller", "features"];
 
     let train_df = polars_common::csv_to_dataframe(&train_file_path, &skip_list).unwrap();
     println!("train set shape {:?}", train_df.shape());

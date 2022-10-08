@@ -378,8 +378,10 @@ pub fn prediction_score_df(
         if let Some(reference_value) = target_column.get(i) {
             let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
             for feature_id in feature_columns.keys() {
-                if let Some(f) = feature_columns[feature_id].get(i) {
-                    features.push((*feature_id, f));
+                if let Some(feature_raw) = feature_columns[feature_id].get(i) {
+                    for feature in  feature_raw.to_vec() {
+                        features.push((*feature_id, feature));
+                    }
                 }
             }
 
