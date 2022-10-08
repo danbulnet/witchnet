@@ -39,7 +39,7 @@ where
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
-    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.8;
+    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.998;
 
     pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Rc<RefCell<Element<Key, ORDER>>> {

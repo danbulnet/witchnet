@@ -436,7 +436,7 @@ mod tests {
         let mut magds_test = parser::magds_from_csv("iris_test", test_file).unwrap();
 
         let performance = prediction::prediction_score(
-            &mut magds_train, &mut magds_test, "variety".into(), false
+            &mut magds_train, &mut magds_test, "variety".into(), true
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
@@ -458,7 +458,7 @@ mod tests {
             .unwrap();
 
         let performance = prediction::prediction_score_df(
-            &mut magds_train, &test, "variety".into(), false
+            &mut magds_train, &test, "variety".into(), true
         ).unwrap();
         println!("performance.predictions() {:?}", performance.predictions());
         println!("performance.references() {:?}", performance.references());
