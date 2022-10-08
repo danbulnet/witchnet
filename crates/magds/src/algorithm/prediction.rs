@@ -373,7 +373,7 @@ pub fn prediction_score_df(
     let target_column = target_column.unwrap();
 
     for i in 0..y_len {
-        if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
+        if i % 1000 == 0 { log::info!("prediction iteration: {i}"); }
         
         if let Some(reference_value) = target_column.get(i) {
             let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
@@ -432,8 +432,8 @@ mod tests {
         let train_file = "data/iris_train.csv";
         let test_file = "data/iris_test.csv";
 
-        let mut magds_train = parser::magds_from_csv("iris_train", train_file).unwrap();
-        let mut magds_test = parser::magds_from_csv("iris_test", test_file).unwrap();
+        let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
+        let mut magds_test = parser::magds_from_csv("iris_test", test_file, &vec![]).unwrap();
 
         let performance = prediction::prediction_score(
             &mut magds_train, &mut magds_test, "variety".into(), true
@@ -450,7 +450,7 @@ mod tests {
         let train_file = "data/iris_train.csv";
         let test_file = "data/iris_test.csv";
 
-        let mut magds_train = parser::magds_from_csv("iris_train", train_file).unwrap();
+        let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
         let test: DataFrame = CsvReader::new(File::open(test_file).unwrap())
             .infer_schema(None)
             .has_header(true)

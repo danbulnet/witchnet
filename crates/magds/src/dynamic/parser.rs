@@ -225,7 +225,7 @@ where
     )
 }
 
-pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
+pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
     let mut magds = MAGDS::new();
     
     log::info!("magds_from_df: df size: {} (cols) x {} (rows)", df.width(), df.height());
@@ -240,7 +240,7 @@ pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
         neurons.push(neuron.clone());
         magds.add_neuron(neuron as Rc<RefCell<dyn Neuron>>).unwrap();
     }
-    magds.add_neuron_group(&df_name, neuron_group_id);
+    magds.add_neuron_group(df_name, neuron_group_id);
 
     for column in df.get_columns() {
         let column_name = column.name();
@@ -257,11 +257,11 @@ pub fn magds_from_df(df_name: Rc<str>, df: &DataFrame) -> MAGDS {
     magds
 }
 
-pub fn magds_from_csv(name: &str, file_path: &str) -> Option<MAGDS> {
+pub fn magds_from_csv(name: &str, file_path: &str, skip: &[&str]) -> Option<MAGDS> {
     let path = Path::new(file_path);
     if !path.is_file() || !file_path.ends_with(".csv") { return None }
-    let df = polars_common::csv_to_dataframe(file_path).ok()?;
-    let magds = magds_from_df(name.into(), &df);
+    let df = polars_common::csv_to_dataframe(file_path, &skip).ok()?;
+    let magds = magds_from_df(name, &df);
     Some(magds)
 }
 
@@ -279,7 +279,7 @@ mod tests {
 
     #[test]
     fn vec_parse() {
-        let magds = super::magds_from_csv("lists", "data/lists.csv").unwrap();
+        let magds = super::magds_from_csv("lists", "data/lists.csv", &vec![]).unwrap();
         let x_sensor_id = *magds.sensor_ids("x").unwrap().first().unwrap();
         let y_sensor_id = *magds.sensor_ids("y").unwrap().first().unwrap();
         let z_sensor_id = *magds.sensor_ids("z").unwrap().first().unwrap();
@@ -294,7 +294,7 @@ mod tests {
 
     #[test]
     fn csv_to_magds() {
-        let magds = super::magds_from_csv("iris", "data/iris.csv").unwrap();
+        let magds = super::magds_from_csv("iris", "data/iris.csv", &vec![]).unwrap();
         println!("{magds}");
 
         let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
@@ -311,8 +311,8 @@ mod tests {
 
     #[test]
     fn df_to_magds() {
-        let df = polars_common::csv_to_dataframe("data/iris.csv").unwrap();
-        let magds = super::magds_from_df("iris".into(), &df);
+        let df = polars_common::csv_to_dataframe("data/iris.csv", &vec![]).unwrap();
+        let magds = super::magds_from_df("iris", &df);
         println!("{magds}");
 
         let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
@@ -375,7 +375,7 @@ mod tests {
     fn csv_to_sensors() {
         let mut magds = MAGDS::new();
 
-        let df = polars_common::csv_to_dataframe("data/iris.csv");
+        let df = polars_common::csv_to_dataframe("data/iris.csv", &vec![]);
         assert!(df.is_ok());
         let df = df.unwrap();
         println!("{}", df);

@@ -9,7 +9,10 @@ use magds::{
     algorithm::prediction
 };
 
-use witchnet_common::benchmark;
+use witchnet_common::{
+    benchmark,
+    polars as polars_common
+};
 
 fn main() {
     env_logger::init();
@@ -17,32 +20,26 @@ fn main() {
     let train_file_path = format!(
         "{}/{}", 
         "magds/examples/carscom/data", 
+        // "carscom_full_1m_18_08_2022_prepared_train.csv"
         "carscom_full_1m_18_08_2022_prepared_train_small.csv"
     );
     let test_file_path = format!(
         "{}/{}", 
         "magds/examples/carscom/data", 
+        // "carscom_full_1m_18_08_2022_prepared_test.csv"
         "carscom_full_1m_18_08_2022_prepared_test_small.csv"
     );
 
-    let train_file = File::open(&train_file_path).expect("could not open file");
-    let train_df: DataFrame = CsvReader::new(train_file)
-        .infer_schema(None)
-        .has_header(true)
-        .finish()
-        .unwrap();
+    let skip_list = vec!["vin"];
+
+    let train_df = polars_common::csv_to_dataframe(&train_file_path, &skip_list).unwrap();
     println!("train set shape {:?}", train_df.shape());
 
-    let test_file = File::open(&test_file_path).expect("could not open file");
-    let test_df: DataFrame = CsvReader::new(test_file)
-        .infer_schema(None)
-        .has_header(true)
-        .finish()
-        .unwrap();
+    let test_df = polars_common::csv_to_dataframe(&test_file_path, &skip_list).unwrap();
     println!("test set shape {:?}", test_df.shape());
 
     let mut magds_train = benchmark::timeit("magds training", move || {
-        parser::magds_from_csv("carscom_train", &train_file_path).unwrap()
+        parser::magds_from_df("carscom_train", &train_df)
     });
 
     let performance = benchmark::timeit("magds prediction", move || {

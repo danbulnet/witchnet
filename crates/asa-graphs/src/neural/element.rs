@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     fn fuzzy_activate_deactivate() {
-        assert_eq!(Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD, 0.8f32);
+        let threshold = Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD;
 
         let graph = Rc::new(
             RefCell::new(ASAGraph::<i32, 3>::new(1))
@@ -561,38 +561,40 @@ mod tests {
             assert_eq!(mid_element.borrow().activation(), 1.0f32);
             let mid_element_ref =  mid_element.borrow();
 
-            let (left_neighbour_ptr, left_neighbour_weight) = mid_element_ref.prev.as_ref().unwrap();
-            let left_neighbour = left_neighbour_ptr.upgrade().unwrap();
-            assert_eq!(*left_neighbour_weight, 0.875f32);
-            assert_eq!(left_neighbour.borrow().activation(), 0.875f32);
-            let left_neighbour_ref =  left_neighbour.borrow();
-
-            let (left_left_neighbour_ptr, left_left_neighbour_weight) = left_neighbour_ref.prev.as_ref().unwrap();
-            let left_left_neighbour = left_left_neighbour_ptr.upgrade().unwrap();
-            assert_eq!(*left_left_neighbour_weight, 0.875f32);
-            assert_eq!(left_left_neighbour.borrow().activation(), 0.765625f32);
-
-            let (right_neighbour_ptr, right_neighbour_weight) = mid_element_ref.next.as_ref().unwrap();
-            let right_neighbour = right_neighbour_ptr.upgrade().unwrap();
-            assert_eq!(*right_neighbour_weight, 0.875f32);
-            assert_eq!(right_neighbour.borrow().activation(), 0.875f32);
-            let right_neighbour_ref =  right_neighbour.borrow();
-
-            let (right_right_neighbour_ptr, right_right_neighbour_weight) = right_neighbour_ref.next.as_ref().unwrap();
-            let right_right_neighbour = right_right_neighbour_ptr.upgrade().unwrap();
-            assert_eq!(*right_right_neighbour_weight, 0.875f32);
-            assert_eq!(right_right_neighbour.borrow().activation(), 0.765625f32);
-
-            let second_element = graph.borrow().search(&2).unwrap();
-            assert_eq!(second_element.borrow().activation(), 0.0f32);
-            let eight_element = graph.borrow().search(&8).unwrap();
-            assert_eq!(eight_element.borrow().activation(), 0.0f32);
-
-            let element_min = graph.borrow().element_min.as_ref().unwrap().clone();
-            assert_eq!(element_min.borrow().activation(), 0.0f32);
-
-            let element_max = graph.borrow().element_max.as_ref().unwrap().clone();
-            assert_eq!(element_max.borrow().activation(), 0.0f32);
+            if threshold == 0.8f32 {
+                let (left_neighbour_ptr, left_neighbour_weight) = mid_element_ref.prev.as_ref().unwrap();
+                let left_neighbour = left_neighbour_ptr.upgrade().unwrap();
+                assert_eq!(*left_neighbour_weight, 0.875f32);
+                assert_eq!(left_neighbour.borrow().activation(), 0.875f32);
+                let left_neighbour_ref =  left_neighbour.borrow();
+    
+                let (left_left_neighbour_ptr, left_left_neighbour_weight) = left_neighbour_ref.prev.as_ref().unwrap();
+                let left_left_neighbour = left_left_neighbour_ptr.upgrade().unwrap();
+                assert_eq!(*left_left_neighbour_weight, 0.875f32);
+                assert_eq!(left_left_neighbour.borrow().activation(), 0.765625f32);
+    
+                let (right_neighbour_ptr, right_neighbour_weight) = mid_element_ref.next.as_ref().unwrap();
+                let right_neighbour = right_neighbour_ptr.upgrade().unwrap();
+                assert_eq!(*right_neighbour_weight, 0.875f32);
+                assert_eq!(right_neighbour.borrow().activation(), 0.875f32);
+                let right_neighbour_ref =  right_neighbour.borrow();
+    
+                let (right_right_neighbour_ptr, right_right_neighbour_weight) = right_neighbour_ref.next.as_ref().unwrap();
+                let right_right_neighbour = right_right_neighbour_ptr.upgrade().unwrap();
+                assert_eq!(*right_right_neighbour_weight, 0.875f32);
+                assert_eq!(right_right_neighbour.borrow().activation(), 0.765625f32);
+    
+                let second_element = graph.borrow().search(&2).unwrap();
+                assert_eq!(second_element.borrow().activation(), 0.0f32);
+                let eight_element = graph.borrow().search(&8).unwrap();
+                assert_eq!(eight_element.borrow().activation(), 0.0f32);
+    
+                let element_min = graph.borrow().element_min.as_ref().unwrap().clone();
+                assert_eq!(element_min.borrow().activation(), 0.0f32);
+    
+                let element_max = graph.borrow().element_max.as_ref().unwrap().clone();
+                assert_eq!(element_max.borrow().activation(), 0.0f32);
+            }
         }
 
         let mid_element = graph.borrow().search(&5).unwrap();

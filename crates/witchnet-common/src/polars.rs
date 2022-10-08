@@ -112,9 +112,14 @@ impl DataVecOption {
     }
 }
 
-pub fn csv_to_dataframe(filename: &str) -> PolarsResult<DataFrame> {
+pub fn csv_to_dataframe(filename: &str, skip: &[&str]) -> PolarsResult<DataFrame> {
     let file = File::open(filename)?;
-    CsvReader::new(file).infer_schema(None).has_header(true).finish()
+    let mut df = CsvReader::new(file).infer_schema(None).has_header(true).finish()?;
+    for column_name in skip {
+        let _ = df.drop_in_place(column_name)?;
+        log::info!("skipping {column_name} since it is on skip list");
+    }
+    Ok(df)
 }
 
 pub fn series_to_datavec_skipna(series: &Series) -> PolarsResult<DataVec> {
@@ -175,5 +180,22 @@ pub fn series_to_datavec(series: &Series) -> PolarsResult<DataVecOption> {
                 .collect()
         )),
         _ => Ok(DataVecOption::Unknown)
+    }
+}
+
+mod tests {
+    #[test]
+    fn csv_to_dataframe() {
+        let df = super::csv_to_dataframe("data/iris.csv", &vec!["sepal.width"]).unwrap();
+        let valid_columns = vec![
+            "sepal.length",
+            "petal.length",
+            "petal.width",
+            "variety"
+        ];
+        for column_name in df.get_column_names() {
+            println!("{column_name}");
+            assert!(valid_columns.contains(&column_name));
+        }
     }
 }

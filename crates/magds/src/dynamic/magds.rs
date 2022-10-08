@@ -374,8 +374,8 @@ mod tests {
 
     #[test]
     fn magds_activation() {
-        let df = polars_common::csv_to_dataframe("data/iris.csv").unwrap();
-        let magds = parser::magds_from_df("iris".into(), &df);
+        let df = polars_common::csv_to_dataframe("data/iris.csv", &vec![]).unwrap();
+        let magds = parser::magds_from_df("iris", &df);
         println!("{magds}");
 
         let sepal_length_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();
