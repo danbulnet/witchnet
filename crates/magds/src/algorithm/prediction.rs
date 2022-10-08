@@ -79,18 +79,23 @@ pub fn predict(
         None => { log::error!("error getting sensor {target}"); return None }
     };
     let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
+    let winners_limit = 12usize;
     match target_data_category {
         DataCategory::Numerical => {
             let mut targets_weighted: Vec<f64> = Vec::new();
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
+            let mut winners_counter = 0;
             for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= 2.0f32;
+
+                    winners_counter += 1;
+                    if winners_counter >= winners_limit { break }
                 }
             }
             let predicted_value_f64: f64 = targets_weighted.iter().sum::<f64>() / weights as f64;
@@ -119,6 +124,7 @@ pub fn predict(
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
+            let mut winners_counter = 0;
             for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     let target_value = target_value.to_string();
@@ -131,6 +137,9 @@ pub fn predict(
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= 2.0f32;
+                    
+                    winners_counter += 1;
+                    if winners_counter >= winners_limit { break }
                 }
             }
             let values_sorted: BTreeMap<OrderedFloat<f32>, &str> 
@@ -206,19 +215,23 @@ pub fn predict_weighted(
         None => { log::error!("error getting sensor {target}"); return None }
     };
     let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
-
+    let winners_limit = 12usize;
     match target_data_category {
         DataCategory::Numerical => {
             let mut targets_weighted: Vec<f64> = Vec::new();
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
+            let mut winners_counter = 0;
             for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= 2.0f32;
+
+                    winners_counter += 1;
+                    if winners_counter >= winners_limit { break }
                 }
             }
             let predicted_value_f64: f64 = targets_weighted.iter().sum::<f64>() / weights as f64;
@@ -247,6 +260,7 @@ pub fn predict_weighted(
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
+            let mut winners_counter = 0;
             for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     let target_value = target_value.to_string();
@@ -259,6 +273,9 @@ pub fn predict_weighted(
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= 2.0f32;
+
+                    winners_counter += 1;
+                    if winners_counter >= winners_limit { break }
                 }
             }
             let values_sorted: BTreeMap<OrderedFloat<f32>, &str> 
@@ -373,7 +390,7 @@ pub fn prediction_score_df(
     let target_column = target_column.unwrap();
 
     for i in 0..y_len {
-        if i % 1000 == 0 { log::info!("prediction iteration: {i}"); }
+        if i % 1000 == 0 { println!("prediction iteration: {i}"); }
         
         if let Some(reference_value) = target_column.get(i) {
             let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
