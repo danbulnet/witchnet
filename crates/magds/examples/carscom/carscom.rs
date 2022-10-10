@@ -45,12 +45,12 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "price".into(), true
+            &mut magds_train, &test_df, "price".into(), true, false
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();
     let mae = performance.mae().unwrap();
-    let proba = performance.mean_probability().unwrap();
+    let mean_probability = performance.mean_probability().unwrap();
     
-    println!("rmse: {rmse} mae: {mae} proba: {proba}");
+    println!("rmse: {rmse} mae: {mae} mean_probability: {mean_probability}");
 }
