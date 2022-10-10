@@ -57,6 +57,10 @@ where
     }
 
     fn deactivate_sensor(&mut self) { self.deactivate_sensor() }
+
+    fn to_vec(&self) -> Vec<Key> {
+        self.into_iter().map(|e| *dyn_clone::clone_box(&e.borrow().key)).collect()
+    }
 }
 
 #[cfg(test)]

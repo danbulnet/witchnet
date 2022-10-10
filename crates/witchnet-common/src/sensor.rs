@@ -156,6 +156,8 @@ pub trait Sensor<D: SensorData>: Any + Display {
     ) -> Result<(), String>;
 
     fn deactivate_sensor(&mut self);
+
+    fn to_vec(&self) -> Vec<D>;
 }
 
 pub trait SensorDynamicDowncast<D: SensorData> {

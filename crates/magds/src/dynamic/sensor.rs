@@ -449,6 +449,28 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::String(v) => v.deactivate_sensor()
         }
     }
+
+    fn to_vec(&self) -> Vec<DataTypeValue> {
+        match self {
+            SensorConatiner::Bool(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::USize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::ISize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::RcStr(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::String(v) => v.to_vec().into_iter().map(|x| x.into()).collect()
+        }
+    }
 }
 
 impl From<Box<dyn Sensor<bool>>> for SensorConatiner {

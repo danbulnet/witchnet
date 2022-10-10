@@ -10,6 +10,7 @@ use enum_as_inner::EnumAsInner;
 use witchnet_common::{
     neuron::{ Neuron, NeuronID },
     sensor::Sensor,
+    // sensor_container::SensorContainer
     data::{ DataType, DataTypeValue, DataCategory }
 };
 
@@ -449,6 +450,28 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::F64(v) => v.deactivate_sensor(),
             SensorConatiner::RcStr(v) => v.deactivate_sensor(),
             SensorConatiner::String(v) => v.deactivate_sensor()
+        }
+    }
+
+    fn to_vec(&self) -> Vec<DataTypeValue> {
+        match self {
+            SensorConatiner::Bool(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::USize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::ISize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::RcStr(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::String(v) => v.to_vec().into_iter().map(|x| x.into()).collect()
         }
     }
 }

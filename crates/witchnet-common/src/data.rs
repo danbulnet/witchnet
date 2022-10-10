@@ -103,6 +103,10 @@ pub enum DataTypeValue {
 }
 
 impl DataTypeValue {
+    // pub fn is_type_same_as(&self, other: &DataTypeValue) -> bool {
+    //     self.data_type() == other.data_type()
+    // }
+
     pub fn to_f64(&self) -> Option<f64> {
         match self {
             DataTypeValue::Bool(_) => None,

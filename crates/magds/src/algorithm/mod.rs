@@ -1,2 +1,2 @@
 pub mod prediction;
-pub mod mutual_information;
+pub mod similarity;
