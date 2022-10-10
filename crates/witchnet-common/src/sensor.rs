@@ -15,7 +15,8 @@ use dyn_clone::DynClone;
 
 use crate::{
     data::{ DataCategory, DataType, DataTypeValue, DataDeductor, UnknownDataTypeMarker },
-    neuron::{ Neuron, NeuronID }
+    neuron::{ Neuron, NeuronID },
+    distances::Distance
 };
 
 pub trait AnyCast {
@@ -97,7 +98,11 @@ impl SensorData for DataTypeValue {
     }
 
     fn distance(&self, rhs: &dyn SensorData) -> f64 {
-        if *self == *rhs.any().downcast_ref::<DataTypeValue>().unwrap() { 0.0 } else { 1.0 }
+        let rhs = match rhs.any().downcast_ref::<DataTypeValue>() {
+            Some(v) => v,
+            None => return 1.0
+        };
+        Distance::distance(self, rhs)
     }
 }
 

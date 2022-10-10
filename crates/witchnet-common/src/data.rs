@@ -8,10 +8,11 @@ use regex::Regex;
 
 use enum_as_inner::EnumAsInner;
 
-use num_traits::ToPrimitive;
-
 use crate::{
-    distances::Distance
+    distances::{ 
+        Distance, 
+        DistanceChecked::{ self, * }
+    }
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -224,8 +225,8 @@ impl Distance for DataTypeValue {
     fn distance(&self, v: &DataTypeValue) -> f64 {
         match self {
             DataTypeValue::Bool(lhs) => {
-                let rhs = match v.as_bool() { Some(v) => v, None => return f64::INFINITY };
-                if *lhs == *rhs { 0.0 } else { f64::INFINITY }
+                let rhs = match v.as_bool() { Some(v) => v, None => return 1.0 };
+                if *lhs == *rhs { 0.0 } else { 1.0 }
             }
             DataTypeValue::U8(lhs) => {
                 (*lhs as f64 - v.to_f64().unwrap()).abs()
@@ -271,23 +272,97 @@ impl Distance for DataTypeValue {
             }
             DataTypeValue::RcStr(lhs) => {
                 match v.as_rc_str() { 
-                    Some(rhs) => if *lhs == *rhs { 0.0 } else { f64::INFINITY },
+                    Some(rhs) => if *lhs == *rhs { 0.0 } else { 1.0 },
                     None => match v.as_string() {
-                        Some(rhs) => if lhs.to_string() == *rhs { 0.0 } else { f64::INFINITY },
-                        None => f64::INFINITY
+                        Some(rhs) => if lhs.to_string() == *rhs { 0.0 } else { 1.0 },
+                        None => 1.0
                     }
                 }
             }
             DataTypeValue::String(lhs) => {
                 match v.as_string() { 
-                    Some(rhs) => if *lhs == *rhs { 0.0 } else { f64::INFINITY },
+                    Some(rhs) => if *lhs == *rhs { 0.0 } else { 1.0 },
                     None => match v.as_rc_str() {
-                        Some(rhs) => if *lhs == rhs.to_string() { 0.0 } else { f64::INFINITY },
-                        None => f64::INFINITY
+                        Some(rhs) => if *lhs == rhs.to_string() { 0.0 } else { 1.0 },
+                        None => 1.0
                     }
                 }
             }
             DataTypeValue::Unknown => f64::NAN
+        }
+    }
+
+    fn distance_checked(&self, v: &DataTypeValue) -> DistanceChecked {
+        match self {
+            DataTypeValue::Bool(lhs) => {
+                let rhs = match v.as_bool() { Some(v) => v, None => return Incomparable };
+                if *lhs == *rhs { Comparable(0.0) } else { Incomparable }
+            }
+            DataTypeValue::U8(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::U16(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::U32(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::U64(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::U128(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::USize(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::I8(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::I16(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::I32(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::I64(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::I128(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::ISize(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::F32(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::F64(lhs) => {
+                Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
+            }
+            DataTypeValue::RcStr(lhs) => {
+                match v.as_rc_str() { 
+                    Some(rhs) => if *lhs == *rhs { Comparable(0.0) } else { Incomparable },
+                    None => match v.as_string() {
+                        Some(rhs) => {
+                            if lhs.to_string() == *rhs { Comparable(0.0) } else { Incomparable }
+                        }
+                        None => Incomparable
+                    }
+                }
+            }
+            DataTypeValue::String(lhs) => {
+                match v.as_string() { 
+                    Some(rhs) => if *lhs == *rhs { Comparable(0.0) } else { Incomparable },
+                    None => match v.as_rc_str() {
+                        Some(rhs) => {
+                            if *lhs == rhs.to_string() { Comparable(0.0) } else { Incomparable }
+                        }
+                        None => Incomparable
+                    }
+                }
+            }
+            DataTypeValue::Unknown => Incomparable
         }
     }
 }
@@ -690,16 +765,18 @@ mod tests {
         let y: DataTypeValue = "1.0f32".to_string().into();
         assert_eq!(x.distance(&y), 0.0f64);
         let y: DataTypeValue = "0.0f32".to_string().into();
-        assert!(x.distance(&y).is_infinite());
+        assert_eq!(x.distance(&y), 1.0f64);
 
         let x: DataTypeValue = "1.0f32".to_string().into();
         let y: DataTypeValue = Rc::<str>::from("1.0f32").into();
         assert_eq!(x.distance(&y), 0.0f64);
         let y: DataTypeValue = Rc::<str>::from("1.1f32").into();
-        assert!(x.distance(&y).is_infinite());
+        assert_eq!(x.distance(&y), 1.0f64);
 
         let x: DataTypeValue = 1.0f32.into();
         let y: DataTypeValue = 3.0f64.into();
         assert_eq!(x.distance(&y), 2.0f64);
+        assert_eq!(y.distance(&x), 2.0f64);
+        
     }
 }
