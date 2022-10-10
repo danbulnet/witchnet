@@ -15,7 +15,7 @@ use crate::{
     }
 };
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumAsInner)]
 pub enum DataCategory {
     Numerical,
     Categorical,
@@ -58,7 +58,7 @@ impl_numerical! {
 
 impl_categorical! { String, Rc<str>, bool }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, EnumAsInner)]
 pub enum DataType {
     Bool,
     U8,
@@ -103,9 +103,9 @@ pub enum DataTypeValue {
 }
 
 impl DataTypeValue {
-    // pub fn is_type_same_as(&self, other: &DataTypeValue) -> bool {
-    //     self.data_type() == other.data_type()
-    // }
+    pub fn is_type_same_as(&self, other: &DataTypeValue) -> bool {
+        DataType::from(self) ==  DataType::from(other)
+    }
 
     pub fn to_f64(&self) -> Option<f64> {
         match self {
@@ -222,6 +222,56 @@ impl Display for DataType {
 impl Display for DataTypeValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{:?}", self)
+    }
+}
+
+impl From<&DataTypeValue> for DataCategory {
+    fn from(data: &DataTypeValue) -> DataCategory {
+        match data {
+            DataTypeValue::Bool(_) => DataCategory::Categorical,
+            DataTypeValue::U8(_) => DataCategory::Numerical,
+            DataTypeValue::U16(_) => DataCategory::Numerical,
+            DataTypeValue::U32(_) => DataCategory::Numerical,
+            DataTypeValue::U64(_) => DataCategory::Numerical,
+            DataTypeValue::U128(_) => DataCategory::Numerical,
+            DataTypeValue::USize(_) => DataCategory::Numerical,
+            DataTypeValue::I8(_) => DataCategory::Numerical,
+            DataTypeValue::I16(_) => DataCategory::Numerical,
+            DataTypeValue::I32(_) => DataCategory::Numerical,
+            DataTypeValue::I64(_) => DataCategory::Numerical,
+            DataTypeValue::I128(_) => DataCategory::Numerical,
+            DataTypeValue::ISize(_) => DataCategory::Numerical,
+            DataTypeValue::F32(_) => DataCategory::Numerical,
+            DataTypeValue::F64(_) => DataCategory::Numerical,
+            DataTypeValue::RcStr(_) => DataCategory::Categorical,
+            DataTypeValue::String(_) => DataCategory::Categorical,
+            DataTypeValue::Unknown => DataCategory::Categorical
+        }
+    }
+}
+
+impl From<&DataTypeValue> for DataType {
+    fn from(data: &DataTypeValue) -> DataType {
+        match data {
+            DataTypeValue::Bool(_) => DataType::Bool,
+            DataTypeValue::U8(_) => DataType::U8,
+            DataTypeValue::U16(_) => DataType::U16,
+            DataTypeValue::U32(_) => DataType::U32,
+            DataTypeValue::U64(_) => DataType::U64,
+            DataTypeValue::U128(_) => DataType::U128,
+            DataTypeValue::USize(_) => DataType::USize,
+            DataTypeValue::I8(_) => DataType::I8,
+            DataTypeValue::I16(_) => DataType::I16,
+            DataTypeValue::I32(_) => DataType::I32,
+            DataTypeValue::I64(_) => DataType::I64,
+            DataTypeValue::I128(_) => DataType::I128,
+            DataTypeValue::ISize(_) => DataType::ISize,
+            DataTypeValue::F32(_) => DataType::F32,
+            DataTypeValue::F64(_) => DataType::F64,
+            DataTypeValue::RcStr(_) => DataType::RcStr,
+            DataTypeValue::String(_) => DataType::String,
+            DataTypeValue::Unknown => DataType::Unknown
+        }
     }
 }
 

@@ -157,7 +157,11 @@ pub trait Sensor<D: SensorData>: Any + Display {
 
     fn deactivate_sensor(&mut self);
 
-    fn to_vec(&self) -> Vec<D>;
+    fn neurons(&self) -> Vec<Rc<RefCell<dyn Neuron>>>;
+
+    fn values(&self) -> Vec<D>;
+
+    // fn iterator(&self) -> Vec<D>;
 }
 
 pub trait SensorDynamicDowncast<D: SensorData> {

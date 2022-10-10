@@ -58,7 +58,11 @@ where
 
     fn deactivate_sensor(&mut self) { self.deactivate_sensor() }
 
-    fn to_vec(&self) -> Vec<Key> {
+    fn neurons(&self) -> Vec<Rc<RefCell<dyn Neuron>>> {
+        self.into_iter().map(|x| x.clone() as Rc<RefCell<dyn Neuron>>).collect()
+    }
+
+    fn values(&self) -> Vec<Key> {
         self.into_iter().map(|e| *dyn_clone::clone_box(&e.borrow().key)).collect()
     }
 }

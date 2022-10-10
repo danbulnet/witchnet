@@ -450,25 +450,47 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         }
     }
 
-    fn to_vec(&self) -> Vec<DataTypeValue> {
+    fn neurons(&self) -> Vec<Rc<RefCell<dyn Neuron>>> {
         match self {
-            SensorConatiner::Bool(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::U8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::U16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::U32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::U64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::U128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::USize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::I8(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::I16(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::I32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::I64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::I128(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::ISize(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::F32(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::F64(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::RcStr(v) => v.to_vec().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::String(v) => v.to_vec().into_iter().map(|x| x.into()).collect()
+            SensorConatiner::Bool(v) => v.neurons(),
+            SensorConatiner::U8(v) => v.neurons(),
+            SensorConatiner::U16(v) => v.neurons(),
+            SensorConatiner::U32(v) => v.neurons(),
+            SensorConatiner::U64(v) => v.neurons(),
+            SensorConatiner::U128(v) => v.neurons(),
+            SensorConatiner::USize(v) => v.neurons(),
+            SensorConatiner::I8(v) => v.neurons(),
+            SensorConatiner::I16(v) => v.neurons(),
+            SensorConatiner::I32(v) => v.neurons(),
+            SensorConatiner::I64(v) => v.neurons(),
+            SensorConatiner::I128(v) => v.neurons(),
+            SensorConatiner::ISize(v) => v.neurons(),
+            SensorConatiner::F32(v) => v.neurons(),
+            SensorConatiner::F64(v) => v.neurons(),
+            SensorConatiner::RcStr(v) => v.neurons(),
+            SensorConatiner::String(v) => v.neurons()
+        }
+    }
+
+    fn values(&self) -> Vec<DataTypeValue> {
+        match self {
+            SensorConatiner::Bool(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U8(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U16(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U32(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U64(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::U128(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::USize(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I8(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I16(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I32(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I64(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::I128(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::ISize(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F32(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::F64(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::RcStr(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::String(v) => v.values().into_iter().map(|x| x.into()).collect()
         }
     }
 }
