@@ -19,13 +19,13 @@ fn main() {
 
     let train_file_path = format!(
         "{}/{}", 
-        "magds/examples/carscom/data", 
+        "crates/magds/examples/carscom/data", 
         // "carscom_full_1m_18_08_2022_prepared_train.csv"
         "carscom_full_1m_18_08_2022_prepared_train_small.csv"
     );
     let test_file_path = format!(
         "{}/{}", 
-        "magds/examples/carscom/data", 
+        "crates/magds/examples/carscom/data", 
         // "carscom_full_1m_18_08_2022_prepared_test.csv"
         "carscom_full_1m_18_08_2022_prepared_test_small.csv"
     );

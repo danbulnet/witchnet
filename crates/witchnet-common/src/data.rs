@@ -222,82 +222,70 @@ impl Display for DataTypeValue {
 
 impl Distance for DataTypeValue {
     fn distance(&self, v: &DataTypeValue) -> f64 {
-        fn numeric_distance<T: ToPrimitive>(lhs: &T, rhs: &T) -> f64 {
-            unsafe { 
-                let lhsv = ToPrimitive::to_f64(lhs).unwrap_unchecked();
-                let rhsv = ToPrimitive::to_f64(rhs).unwrap_unchecked();
-                (lhsv - rhsv).abs()
-            }
-        }
-
         match self {
             DataTypeValue::Bool(lhs) => {
-                let rhs = match v.as_bool() { Some(v) => v, None => return f64::NAN };
-                if *lhs == *rhs { 0.0 } else { 1.0 }
+                let rhs = match v.as_bool() { Some(v) => v, None => return f64::INFINITY };
+                if *lhs == *rhs { 0.0 } else { f64::INFINITY }
             }
             DataTypeValue::U8(lhs) => {
-                let rhs = match v.as_u8() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::U16(lhs) => {
-                let rhs = match v.as_u16() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::U32(lhs) => {
-                let rhs = match v.as_u32() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::U64(lhs) => {
-                let rhs = match v.as_u64() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::U128(lhs) => {
-                let rhs = match v.as_u128() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::USize(lhs) => {
-                let rhs = match v.as_u_size() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::I8(lhs) => {
-                let rhs = match v.as_i8() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::I16(lhs) => {
-                let rhs = match v.as_i16() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::I32(lhs) => {
-                let rhs = match v.as_i32() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::I64(lhs) => {
-                let rhs = match v.as_i64() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::I128(lhs) => {
-                let rhs = match v.as_i128() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::ISize(lhs) => {
-                let rhs = match v.as_i_size() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::F32(lhs) => {
-                let rhs = match v.as_f32() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::F64(lhs) => {
-                let rhs = match v.as_f64() { Some(v) => v, None => return f64::NAN };
-                numeric_distance(lhs, rhs)
+                (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
             DataTypeValue::RcStr(lhs) => {
-                let rhs = match v.as_rc_str() { Some(v) => v, None => return f64::NAN };
-                if *lhs == *rhs { 0.0 } else { 1.0 }
+                match v.as_rc_str() { 
+                    Some(rhs) => if *lhs == *rhs { 0.0 } else { f64::INFINITY },
+                    None => match v.as_string() {
+                        Some(rhs) => if lhs.to_string() == *rhs { 0.0 } else { f64::INFINITY },
+                        None => f64::INFINITY
+                    }
+                }
             }
             DataTypeValue::String(lhs) => {
-                let rhs = match v.as_string() { Some(v) => v, None => return f64::NAN };
-                if *lhs == *rhs { 0.0 } else { 1.0 }
+                match v.as_string() { 
+                    Some(rhs) => if *lhs == *rhs { 0.0 } else { f64::INFINITY },
+                    None => match v.as_rc_str() {
+                        Some(rhs) => if *lhs == rhs.to_string() { 0.0 } else { f64::INFINITY },
+                        None => f64::INFINITY
+                    }
+                }
             }
             DataTypeValue::Unknown => f64::NAN
         }
@@ -679,4 +667,39 @@ impl DataDeductor for PhantomData<Rc<str>> {
 impl DataDeductor for PhantomData<String> {
     fn data_type(&self) -> DataType { DataType::String }
     fn data_category(&self) -> DataCategory { DataCategory::Categorical }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn data_type_value_distance() {
+        let x: DataTypeValue = 1.0f32.into();
+        let y: DataTypeValue = 3.0f32.into();
+        assert_eq!(x.distance(&y), 2.0f64);
+        
+        let x: DataTypeValue = 1.0f32.into();
+        let y: DataTypeValue = 3i32.into();
+        assert_eq!(x.distance(&y), 2.0f64);
+
+        let x: DataTypeValue = 1.0f64.into();
+        let y: DataTypeValue = 2usize.into();
+        assert_eq!(x.distance(&y), 1.0f64);
+
+        let x: DataTypeValue = "1.0f32".to_string().into();
+        let y: DataTypeValue = "1.0f32".to_string().into();
+        assert_eq!(x.distance(&y), 0.0f64);
+        let y: DataTypeValue = "0.0f32".to_string().into();
+        assert!(x.distance(&y).is_infinite());
+
+        let x: DataTypeValue = "1.0f32".to_string().into();
+        let y: DataTypeValue = Rc::<str>::from("1.0f32").into();
+        assert_eq!(x.distance(&y), 0.0f64);
+        let y: DataTypeValue = Rc::<str>::from("1.1f32").into();
+        assert!(x.distance(&y).is_infinite());
+
+        let x: DataTypeValue = 1.0f32.into();
+        let y: DataTypeValue = 3.0f64.into();
+        assert_eq!(x.distance(&y), 2.0f64);
+    }
 }

@@ -68,7 +68,8 @@ impl SupervisedPerformance {
                 let data_len = data.references.len();
                 let mut total_error: f64 = 0.0;
                 for i in 0..data_len {
-                    total_error += data.references[i].distance(&data.predictions[i]);
+                    let is_err = data.references[i].distance(&data.predictions[i]).is_infinite();
+                    total_error += if is_err { 1.0 } else { 0.0 };
                 }
 
                 Ok(total_error / data_len as f64)
