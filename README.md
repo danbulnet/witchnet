@@ -9,6 +9,8 @@ this repo is composed of the following subprojects:
   self-balancing, aggregating, and sorting tree-like data structures for efficient data representation
 - magds  
   self-organizing graphs that facilitates and significantly accelerates various operations, especially the search for data relationships
+- witchnet-gui  
+  3D, interactive, GPU-powered associative network simulation that can be used with any real data and run as a desktop or web application (via WebAssembly)   
 
 ## license
 ### open source license
