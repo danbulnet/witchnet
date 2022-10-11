@@ -10,6 +10,13 @@ this repo is composed of the following subprojects:
 - magds  
   self-organizing graphs that facilitates and significantly accelerates various operations, especially the search for data relationships
 
+## license
+### open source license
+If you are creating an open source application under a license compatible with the GNU Affero General Public License v3.0, you may use this project under the terms of the GNU Affero General Public License v3.0.
+
+### commercial license
+If you want to use witchnet to develop commercial sites, themes, projects, and applications, the commercial license is the appropriate license. With this option, your source code is kept proprietary. Write to <daniel@bulanda.net> for details.
+
 ## citation
 Horzyk, Adrian, Daniel Bulanda, and Janusz A. Starzyk. "ASA-graphs for efficient data representation and processing." International Journal of Applied Mathematics and Computer Science 30.4 (2020).
 
