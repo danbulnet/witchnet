@@ -31,4 +31,4 @@ lto = true
 [profile.release-debug]
 inherits = "release"
 debug = true
-lto = true
+lto = false

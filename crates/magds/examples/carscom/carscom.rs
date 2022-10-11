@@ -16,18 +16,18 @@ fn main() {
     let train_file_path = format!(
         "{}/{}", 
         "crates/magds/examples/carscom/data", 
-        // "carscom_full_1m_18_08_2022_prepared_train.csv"
+        // "carscom_full_1m_18_08_2022_prepared_train_mid.csv"
         "carscom_full_1m_18_08_2022_prepared_train_small.csv"
     );
     let test_file_path = format!(
         "{}/{}", 
         "crates/magds/examples/carscom/data", 
-        // "carscom_full_1m_18_08_2022_prepared_test.csv"
+        // "carscom_full_1m_18_08_2022_prepared_test_mid.csv"
         "carscom_full_1m_18_08_2022_prepared_test_small.csv"
     );
 
     // let skip_list = vec![];
-    let skip_list = vec!["vin", "seller", "features"];
+    let skip_list = vec!["vin", "seller"];
 
     let train_df = polars_common::csv_to_dataframe(&train_file_path, &skip_list).unwrap();
     println!("train set shape {:?}", train_df.shape());

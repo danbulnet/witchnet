@@ -46,6 +46,8 @@ pub trait Neuron {
 
     fn explain_one(&self, parent: u32) -> Option<DataTypeValue>;
 
+    // fn connected_neuron_ids(&self) -> &[u32];
+
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
     ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32);

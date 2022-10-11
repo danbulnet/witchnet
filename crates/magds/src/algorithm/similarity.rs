@@ -115,6 +115,8 @@ pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<
         )?;
         ret.insert(id, similarity);
     }
+
+    log::info!("features_target_weights for target {target_id} {:?}", ret);
     Ok(ret)
 }
 
