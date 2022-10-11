@@ -1,14 +1,16 @@
-use std::collections::HashSet;
+use std::collections::{ HashMap, HashSet };
 
 use anyhow::{ Result, Context };
 
-use log::{ log_enabled, Level};
-
 use witchnet_common::{
-    data::{DataTypeValue, DataCategory},
+    data::DataTypeValue,
     sensor::Sensor,
-    distances::{ Distance, DistanceChecked },
     neuron::NeuronID
+};
+
+use crate::{
+    simple::magds::MAGDS,
+    algorithm::similarity
 };
 
 pub fn entropy<S: Sensor<DataTypeValue>>(sensor: &S) -> Result<f64> {
@@ -96,8 +98,38 @@ pub fn mutual_information<S1: Sensor<DataTypeValue>, S2: Sensor<DataTypeValue>>(
     Ok(mutual_information)
 }
 
+
+pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<u32, f64>> {
+    let target_sensor = magds.sensor(target_id).context("error getting target sensor")?;
+    
+    let features_ids: Vec<u32> = magds.sensors.keys()
+        .map(|id| *id)
+        .filter(|id| *id != target_id)
+        .collect();
+
+    let mut ret = HashMap::new();
+    for id in features_ids {
+        let sensor = magds.sensor(id).context("error getting sensor id {id}")?;
+        let similarity = similarity::mutual_information(
+            &*sensor.borrow(), &*target_sensor.borrow(), true
+        )?;
+        ret.insert(id, similarity);
+    }
+    Ok(ret)
+}
+
+
 mod tests {
     use crate::simple::parser;
+
+    #[test]
+    fn features_target_weights() {
+        let magds = parser::magds_from_csv("iris", "data/iris.csv", &vec![]).unwrap();
+        let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
+        let weights = super::features_target_weights(&magds, variety_sensor_id).unwrap();
+        println!("{:?}", weights);
+        for (_id, weight) in weights.into_iter() { assert!(weight > 0f64); }
+    }
 
     #[test]
     fn entropy() {

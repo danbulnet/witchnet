@@ -19,7 +19,10 @@ use polars::{
     export::num::ToPrimitive
 };
 
-use crate::simple::magds::MAGDS;
+use crate::{
+    simple::magds::MAGDS,
+    algorithm::similarity
+};
 
 pub fn predict(
     magds: &mut MAGDS, 
@@ -270,27 +273,26 @@ pub fn prediction_score_df(
     }
     let target_column = target_column.unwrap();
 
+    let mut similarities: HashMap<u32, f64> = HashMap::new();
+    if weighted {
+        similarities = similarity::features_target_weights(train, target_id)?;
+    }
+
     for i in 0..y_len {
         if i % 1000 == 0 { println!("prediction iteration: {i}"); }
         
         if let Some(reference_value) = target_column.get(i) {
-            let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
+            let mut features: Vec<(u32, DataTypeValue, f32)> = Vec::with_capacity(n_features);
             for feature_id in feature_columns.keys() {
+                let weight = if weighted { similarities[feature_id] as f32 } else { 1.0f32 };
                 if let Some(feature_raw) = feature_columns[feature_id].get(i) {
                     for feature in  feature_raw.to_vec() {
-                        features.push((*feature_id, feature));
+                        features.push((*feature_id, feature, weight));
                     }
                 }
             }
 
-            let features_weighted: Vec<(u32, DataTypeValue, f32)> = if weighted {
-                features.into_iter().map(|(i, v)| (i, v.clone(), 1.0f32)).collect()
-            } else {
-                features.into_iter().map(|(i, v)| (i, v.clone(), 1.0f32)).collect()
-            };
-            let data_proba = match predict_weighted(
-                train, &features_weighted, target_id, fuzzy
-            ) {
+            let data_proba = match predict_weighted(train, &features, target_id, fuzzy) {
                 Some(dp) => dp,
                 None => { train.deactivate(); continue }
             };

@@ -1,7 +1,3 @@
-use std::fs::File;
-
-use polars::prelude::*;
-
 use env_logger;
 
 use magds::{
@@ -45,7 +41,7 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "price".into(), true, false
+            &mut magds_train, &test_df, "price".into(), true, true
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();
