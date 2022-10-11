@@ -71,7 +71,7 @@ impl SupervisedPerformance {
                     total_error += data.references[i].distance(&data.predictions[i]);
                 }
 
-                Ok(total_error / data_len as f64)
+                Ok(1.0f64 - (total_error / data_len as f64))
             }
             Self::Regression(_) => { anyhow::bail!("accuracy is for classification only") }
         }
@@ -215,7 +215,8 @@ mod tests {
         ).unwrap();
 
         let accuracy_result = performace.accuracy().unwrap();
-        assert!(accuracy_result > 0.66 && accuracy_result < 0.67);
+        println!("accuracy_result {accuracy_result}");
+        assert!(accuracy_result > 0.33 && accuracy_result < 0.34);
 
         let mean_probability_result = performace.mean_probability().unwrap();
         assert!(mean_probability_result > 0.76 && mean_probability_result < 0.77);

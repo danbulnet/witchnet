@@ -27,7 +27,8 @@ fn main() {
     );
 
     // let skip_list = vec![];
-    let skip_list = vec!["vin", "seller"];
+    // let skip_list = vec!["vin", "seller"];
+    let skip_list = vec!["vin", "seller", "features"];
 
     let train_df = polars_common::csv_to_dataframe(&train_file_path, &skip_list).unwrap();
     println!("train set shape {:?}", train_df.shape());

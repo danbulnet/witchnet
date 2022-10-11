@@ -339,8 +339,8 @@ mod tests {
 
     #[test]
     fn prediction_score() {
-        let train_file = "data/iris_train.csv";
-        let test_file = "data/iris_test.csv";
+        let train_file = "data/iris_original_train.csv";
+        let test_file = "data/iris_original_test.csv";
 
         let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
         let mut magds_test = parser::magds_from_csv("iris_test", test_file, &vec![]).unwrap();
@@ -351,14 +351,14 @@ mod tests {
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
         println!("accuracy: {accuracy} proba: {proba}");
-        assert!(accuracy > 0.95);
+        assert!(accuracy > 0.90);
         assert!(proba > 0.0);
     }
 
     #[test]
     fn prediction_score_df() {
-        let train_file = "data/iris_train.csv";
-        let test_file = "data/iris_test.csv";
+        let train_file = "data/iris_original_train.csv";
+        let test_file = "data/iris_original_test.csv";
 
         let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
         let test: DataFrame = CsvReader::new(File::open(test_file).unwrap())
@@ -376,7 +376,16 @@ mod tests {
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
         println!("accuracy: {accuracy} proba: {proba}");
-        assert!(accuracy > 0.95);
+        assert!(accuracy > 0.90);
+        assert!(proba > 0.0);
+
+        let performance = prediction::prediction_score_df(
+            &mut magds_train, &test, "variety".into(), true, true
+        ).unwrap();
+        let accuracy = performance.accuracy().unwrap();
+        let proba = performance.mean_probability().unwrap();
+        println!("accuracy: {accuracy} proba: {proba}");
+        assert!(accuracy > 0.80);
         assert!(proba > 0.0);
     }
 }
