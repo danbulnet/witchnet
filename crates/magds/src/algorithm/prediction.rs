@@ -332,6 +332,7 @@ pub fn prediction_score_df(
     }
 }
 
+#[allow(unused_imports)]
 mod tests {
     use std::fs::File;
     

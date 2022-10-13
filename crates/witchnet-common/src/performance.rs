@@ -158,6 +158,7 @@ impl SupervisedPerformance {
     }
 }
 
+#[allow(unused_imports)]
 mod tests {
     use crate::data::DataTypeValue;
 

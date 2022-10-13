@@ -798,6 +798,7 @@ impl DataDeductor for PhantomData<String> {
     fn data_category(&self) -> DataCategory { DataCategory::Categorical }
 }
 
+#[allow(unused_imports)]
 mod tests {
     use super::*;
 

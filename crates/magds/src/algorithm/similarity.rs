@@ -120,7 +120,7 @@ pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<
     Ok(ret)
 }
 
-
+#[allow(unused_imports)]
 mod tests {
     use crate::simple::parser;
 
