@@ -9,7 +9,10 @@ use regex::Regex;
 
 use polars::prelude::*;
 
-use asa_graphs::neural::graph::ASAGraph;
+use asa_graphs::neural::{
+    element::Element,
+    graph::ASAGraph
+};
 
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
@@ -141,7 +144,6 @@ where
             if key == "" { continue }
             
             let neuron_ptr = neurons[i].clone();
-            let mut neuron = neuron_ptr.borrow_mut();
 
             if key.starts_with("[") && key.ends_with("]") {
                 let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
@@ -157,24 +159,24 @@ where
                     }).collect();
                 for key in key_vec {
                     let element = sensor.insert(&key);
-                    if let Err(e) = neuron.connect_bilateral_from(
-                        element.clone(), ConnectionKind::Defining
+                    if let Err(e) = Element::connect_bilateral(
+                        element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
                     ) {
                         log::error!(
                             "error connecting neuron {} with sensor {}, error: {e}", 
-                            neuron, 
+                            neuron_ptr.borrow(), 
                             element.borrow()
                         );
                     }
                 }
             } else {
                 let element = sensor.insert(key);
-                if let Err(e) = neuron.connect_bilateral_from(
-                    element.clone(), ConnectionKind::Defining
+                if let Err(e) = Element::connect_bilateral(
+                    element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
                 ) {
                     log::error!(
                         "error connecting neuron {} with sensor {}, error: {e}", 
-                        neuron, 
+                        neuron_ptr.borrow(), 
                         element.borrow()
                     );
                 }
@@ -206,13 +208,12 @@ where
         if let Some(key) = key {
             let element = sensor.insert(key);
             let neuron_ptr = neurons[i].clone();
-            let mut neuron = neuron_ptr.borrow_mut();
-            if let Err(e) = neuron.connect_bilateral_from(
-                element.clone(), ConnectionKind::Defining
+            if let Err(e) = Element::connect_bilateral(
+                element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
             ) {
                 log::error!(
                     "error connecting neuron {} with sensor {}, error: {e}", 
-                    neuron, 
+                    neuron_ptr.borrow(), 
                     element.borrow()
                 );
             }
@@ -338,7 +339,8 @@ mod tests {
         let neuron_1 = magds.neuron(1, iris_neuron_group_id).unwrap();
         println!("neuron_1 {}", neuron_1.borrow());
 
-        for (id, sensor) in &neuron_1.borrow().explain() {
+        for sensor in neuron_1.borrow().explain() {
+            let id = sensor.borrow().id();
             println!("sensor {id} {}", sensor.borrow().value());
             if id.parent_id == petal_length_sensor_id {
                 assert_eq!(sensor.borrow().value(), 1.4.into());
@@ -355,8 +357,9 @@ mod tests {
 
         let neuron_2 = magds.neuron(2, iris_neuron_group_id).unwrap();
         println!("neuron_2 {}", neuron_2.borrow());
-        for (id, sensor) in &neuron_2.borrow().explain() {
-            println!("{id}");
+        for sensor in neuron_2.borrow().explain() {
+            let id = sensor.borrow().id();
+            println!("sensor {id} {}", sensor.borrow().value());
             if id.parent_id == petal_length_sensor_id {
                 assert_eq!(sensor.borrow().value(), 1.4.into());
             } else if id.parent_id == petal_width_sensor_id {

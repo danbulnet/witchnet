@@ -2,17 +2,19 @@ use std::{
     fmt::{ Display, Formatter, Result as FmtResult },
     rc::{ Rc, Weak },
     cell::RefCell,
-    collections::HashMap,
-    marker::PhantomData
+    marker::PhantomData,
 };
 
+use anyhow::Result;
+
 use witchnet_common::{
-    neuron::{ Neuron, NeuronConnect, NeuronID },
-    connection::{ 
-        Connection, 
+    neuron::{ Neuron, NeuronConnect, NeuronID, NeuronConnectBilateral },
+    connection::{
         ConnectionKind,
-        ConnectionID,
-        defining_connection::DefiningConnection
+        collective::{
+            CollectiveConnections,
+            defining::DefiningConnections
+        }
     },
     sensor::SensorData,
     data::{ DataDeductor, DataCategory, DataTypeValue, DataType }
@@ -26,10 +28,9 @@ where Key: SensorData, [(); ORDER + 1]: {
     pub key: Key,
     pub counter: usize,
     pub activation: f32,
-    pub(crate) self_ptr: Weak<RefCell<Element<Key, ORDER>>>,
     pub next: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
-    pub definitions: HashMap<ConnectionID, Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>>,
+    pub definitions: DefiningConnections,
     pub(crate) data_type: PhantomData<Key>
 }
 
@@ -51,16 +52,14 @@ where
                     key: *dyn_clone::clone_box(key),
                     counter: 1,
                     activation: 0.0f32,
-                    self_ptr: Weak::new(), 
                     next: None,
                     prev: None,
-                    definitions: HashMap::new(),
+                    definitions: DefiningConnections::new(),
                     data_type: PhantomData
                 }
             )
         );
 
-        element_ptr.borrow_mut().self_ptr = Rc::downgrade(&element_ptr);
         element_ptr
     }
 
@@ -98,13 +97,12 @@ where
     pub fn fuzzy_activate(&mut self, signal: f32) -> Vec<(Rc<RefCell<dyn Neuron>>, f32)> {
         self.activation += signal;
 
-        let defining_neurons_len = self.defining_neurons().len();
         let mut neurons: Vec<(Rc<RefCell<dyn Neuron>>, f32)> = self
             .defining_neurons()
-            .values()
+            .into_iter()
             .map(|neuron| (
-                neuron.clone(), 
-                self.activation() / f32::max(defining_neurons_len as f32, 1.0f32)
+                neuron.clone(),
+                self.activation() * self.definitions.common_weight()
             ))
             .collect();
 
@@ -114,17 +112,15 @@ where
             let mut weight = next.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 element.borrow_mut().activate(element_activation * weight, false, false);
-                let defining_neurons_len = element.borrow().defining_neurons().len();
                 neurons.append(
                     &mut element.borrow()
                         .defining_neurons()
-                        .values()
+                        .into_iter()
                         .cloned()
                         .into_iter().map(
                             |neuron| (
-                                neuron.clone(), 
-                                element.borrow().activation() / 
-                                    f32::max(defining_neurons_len as f32, 1.0f32)
+                                neuron,
+                                element.borrow().definitions.output_signal(element.clone())
                             )
                         )
                         .collect()
@@ -148,17 +144,15 @@ where
             let mut weight = prev.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 element.borrow_mut().activate(element_activation * weight, false, false);
-                let defining_neurons_len = element.borrow().defining_neurons().len();
                 neurons.append(
                     &mut element.borrow()
                         .defining_neurons()
-                        .values()
+                        .into_iter()
                         .cloned()
                         .into_iter().map(
                             |neuron| (
-                                neuron.clone(), 
-                                element.borrow().activation() / 
-                                    f32::max(defining_neurons_len as f32, 1.0f32)
+                                neuron, 
+                                element.borrow().definitions.output_signal(element.clone())
                             )
                         )
                         .collect()
@@ -184,26 +178,17 @@ where
         &mut self, signal: f32
     )-> Vec<(Rc<RefCell<dyn Neuron>>, f32)> {
         self.activation += signal;
-        let defining_neurons_len = self.defining_neurons().len();
-        self.defining_neurons()
-            .values()
+        self.defining_neurons().into_iter()
             .cloned()
             .into_iter().map(|x| (
                 x.clone(), 
-                self.activation() / f32::max(defining_neurons_len as f32, 1.0f32)
+                self.activation() * self.definitions.common_weight()
             ))
             .collect()
     }
 
-    pub fn defining_neurons(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> {
-        let mut neurons = HashMap::new();
-        for (_id, definition) in &self.definitions {
-            let neuron = definition.borrow().to();
-            if !neuron.borrow().is_sensor() {
-                neurons.insert(neuron.borrow().id(), neuron.clone());
-            }
-        }
-        neurons
+    pub fn defining_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>] {
+        self.definitions.connected_neurons()
     }
 }
 
@@ -226,11 +211,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
     fn counter(&self) -> usize { self.counter }
     
-    fn explain(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> { 
-        HashMap::from(
-            [(self.id(), self.self_ptr.upgrade().unwrap() as Rc<RefCell<dyn Neuron>>)]
-        ) 
-    }
+    fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>] { &[] }
 
     fn explain_one(&self, _parent: u32) -> Option<DataTypeValue> {
         Some((*dyn_clone::clone_box(&self.key)).into())
@@ -238,7 +219,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32) {
+    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32) {
         let data_category: DataCategory = self.data_type.data_category();
         let is_fuzzy_ok = match data_category {
             DataCategory::Numerical | DataCategory::Ordinal => true,
@@ -250,16 +231,16 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
             self.simple_activate(signal)
         };
 
-        let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
+        let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
 
         let mut max_activation = 0.0f32;
         if propagate_vertical {
             for (neuron, activation) in &neurons_activation {
                 max_activation = f32::max(max_activation, *activation);
-                neurons.insert(neuron.borrow().id(), neuron.clone());
+                neurons.push(neuron.clone());
                 if !neuron.borrow().is_sensor() {
-                    neurons.extend(
-                        neuron.borrow_mut().activate(
+                    neurons.append(
+                        &mut neuron.borrow_mut().activate(
                             *activation, propagate_horizontal, propagate_vertical
                         ).0
                     );
@@ -275,7 +256,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
         let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
         if propagate_vertical {
-            neurons = self.defining_neurons().values().cloned().collect();
+            neurons = self.defining_neurons().into_iter().cloned().collect();
         }
 
         if propagate_horizontal{
@@ -285,7 +266,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
                     element.borrow_mut().activation = 0.0f32;
                     if propagate_vertical {
                         neurons.append(
-                            &mut element.borrow().defining_neurons().values().cloned().collect()
+                            &mut element.borrow().defining_neurons().into_iter().cloned().collect()
                         );
                     }
                     let new_element = match &element.borrow().next {
@@ -302,7 +283,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
                     element.borrow_mut().activation = 0.0f32;
                     if propagate_vertical {
                         neurons.append(
-                            &mut element.borrow().defining_neurons().values().cloned().collect()
+                            &mut element.borrow().defining_neurons().into_iter().cloned().collect()
                         );
                     };
                     let new_element = match &element.borrow().prev {
@@ -329,60 +310,49 @@ where
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
 {
-    fn connect_to(
-        &mut self, to: Rc<RefCell<dyn Neuron>>, kind: ConnectionKind
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String> {
+    fn connect_to<Other: Neuron + NeuronConnect + 'static>(
+        &mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                let connection = Rc::new(RefCell::new(DefiningConnection::new(
-                    self.self_ptr.upgrade().unwrap() as Rc<RefCell<dyn Neuron>>, 
-                    to.clone()
-                )));
-                let connection_id = ConnectionID { from: self.id(), to: to.borrow().id() };
-                self.definitions.insert(connection_id, connection.clone());
-                Ok(connection)
-            },
+                if to.borrow().is_sensor() {
+                    anyhow::bail!("only defining connection from sensor to neuron can be created")
+                }
+                self.definitions.add(to);
+                Ok(())
+            }
             _ => {
-                let msg = "only defining connection to element can be created for asa-graphs";
-                log::error!("{}", msg);
-                Err(msg.to_string())
+                anyhow::bail!("only defining connection to element can be created for asa-graphs")
             }
         }
     }
+}
 
-    fn connect_to_connection(
-        &mut self, to_connection: Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String> {
-        match to_connection.borrow().kind() {
+impl<Key, const ORDER: usize, Other: Neuron + NeuronConnect + 'static> 
+NeuronConnectBilateral<Other> for Element<Key, ORDER>
+where 
+    Key: SensorData, 
+    [(); ORDER + 1]:, 
+    PhantomData<Key>: DataDeductor,
+    DataTypeValue: From<Key>
+{
+    fn connect_bilateral(
+        from: Rc<RefCell<Self>>, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    ) -> Result<()> {
+        match kind {
             ConnectionKind::Defining => {
-                let to_neuron_ptr = to_connection.borrow().to().as_ptr();
-                let to_neuorn_id = unsafe { (&*to_neuron_ptr).id() };
-                let connection_id = ConnectionID { from: self.id(), to: to_neuorn_id };
-                self.definitions.insert(connection_id, to_connection.clone());
-                Ok(to_connection.clone())
-            },
+                if !to.borrow().is_sensor() {
+                    from.borrow_mut().connect_to(to.clone(), kind)?;
+                    to.borrow_mut().connect_to(from, ConnectionKind::Explanatory)?;
+                    Ok(())
+                } else {
+                    anyhow::bail!("connections between sensors are not allowed")    
+                }
+            }
             _ => {
-                let msg = "only defining connection to element can be created for asa-graphs";
-                log::error!("{}", msg);
-                Err(msg.to_string())
+                anyhow::bail!("only defining connection from Element to SimpleNeuron can be created")
             }
         }
-    }
-
-    fn connect_from(
-        &mut self, _from: Rc<RefCell<dyn Neuron>>, _kind: ConnectionKind
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String> {
-        let msg = "only defining connection to neuron can be created for asa-graphs element";
-        log::error!("{}", msg);
-        Err(msg.to_string())
-    }
-
-    fn connect_from_connection(
-        &mut self, _from_connection: Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String> {
-        let msg = "only defining connection to neuron can be created for asa-graphs element";
-        log::error!("{}", msg);
-        Err(msg.to_string())
     }
 }
 
@@ -487,64 +457,52 @@ mod tests {
         let graph_id = graph.borrow().id;
 
         let element_1_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, graph_id);
+        let mut element_1 = element_1_ptr.borrow_mut();
         let element_2_ptr: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, graph_id);
 
-        let element_1_id = element_1_ptr.borrow().id();
+        let element_1_id = element_1.id();
         assert_eq!(element_1_id.id.to_string(), 1.to_string());
         assert_eq!(element_1_id.parent_id.to_string(), graph.borrow().id.to_string());
         let element_2_id = element_2_ptr.borrow().id();
         assert_eq!(element_2_id.id.to_string(),2.to_string());
         assert_eq!(element_2_id.parent_id.to_string(), graph.borrow().id.to_string());
 
-        assert_eq!(element_1_ptr.borrow().is_sensor(), true);
+        assert_eq!(element_1.is_sensor(), true);
 
-        assert_eq!(element_1_ptr.borrow().activation(), 0.0f32);
+        assert_eq!(element_1.activation(), 0.0f32);
 
-        assert_eq!(element_1_ptr.borrow().counter(), 1usize);
-        
-        let connection = element_1_ptr
-            .borrow_mut().connect_to(element_2_ptr.clone(), ConnectionKind::Defining).unwrap();
-        
-        assert_eq!(
-            connection.borrow().from().as_ptr() as *const () as usize, 
-            element_1_ptr.as_ptr() as *const () as usize
-        );
-        assert_eq!(
-            connection.borrow().to().as_ptr() as *const () as usize, 
-            element_2_ptr.as_ptr() as *const () as usize
-        );
+        assert_eq!(element_1.counter(), 1usize);
 
-        let activated = element_1_ptr.borrow_mut().activate(1.0f32, true, true);
+        let activated = element_1.activate(1.0f32, true, true);
         assert_eq!(activated.0.len(), 0);
-        assert_eq!(element_1_ptr.borrow().activation(), 1.0f32);
+        assert_eq!(element_1.activation(), 1.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 
-        element_1_ptr.borrow_mut().activate(1.0f32, false, true);
-        assert_eq!(element_1_ptr.borrow().activation(), 2.0f32);
-        element_1_ptr.borrow_mut().deactivate(true, true);
-        assert_eq!(element_1_ptr.borrow().activation(), 0.0f32);
+        element_1.activate(1.0f32, false, true);
+        assert_eq!(element_1.activation(), 2.0f32);
+        element_1.deactivate(true, true);
+        assert_eq!(element_1.activation(), 0.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 
-        element_1_ptr.borrow_mut().activate(1.0f32, true, false);
-        assert_eq!(element_1_ptr.borrow().activation(), 1.0f32);
-        element_1_ptr.borrow_mut().deactivate(false, true);
-        assert_eq!(element_1_ptr.borrow().activation(), 0.0f32);
+        element_1.activate(1.0f32, true, false);
+        assert_eq!(element_1.activation(), 1.0f32);
+        element_1.deactivate(false, true);
+        assert_eq!(element_1.activation(), 0.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 
-        element_1_ptr.borrow_mut().activate(1.0f32, false, false);
-        assert_eq!(element_1_ptr.borrow().activation(), 1.0f32);
-        element_1_ptr.borrow_mut().deactivate(true, false);
-        assert_eq!(element_1_ptr.borrow().activation(), 0.0f32);
+        element_1.activate(1.0f32, false, false);
+        assert_eq!(element_1.activation(), 1.0f32);
+        element_1.deactivate(true, false);
+        assert_eq!(element_1.activation(), 0.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 
-        element_1_ptr.borrow_mut().activate(1.0f32, false, false);
-        assert_eq!(element_1_ptr.borrow().activation(), 1.0f32);
-        element_1_ptr.borrow_mut().deactivate(false, false);
-        assert_eq!(element_1_ptr.borrow().activation(), 0.0f32);
+        element_1.activate(1.0f32, false, false);
+        assert_eq!(element_1.activation(), 1.0f32);
+        element_1.deactivate(false, false);
+        assert_eq!(element_1.activation(), 0.0f32);
 
-        let exp_1 = element_1_ptr.borrow_mut().explain();
-        assert_eq!(exp_1.len(), 1);
-        assert_eq!(exp_1.keys().into_iter().next().unwrap(), &element_1_ptr.borrow().id());
+        let exp_1 = element_1.explain();
+        assert_eq!(exp_1.len(), 0);
     }
 
     #[test]
@@ -683,18 +641,8 @@ mod tests {
         let element_1: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
         let element_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, 1);
 
-        let er = element_1.borrow_mut().connect_from(element_2.clone(), ConnectionKind::Defining);
-        assert!(er.is_err());
-
         let ok = element_1.borrow_mut().connect_to(element_2.clone(), ConnectionKind::Defining);
-        assert!(ok.is_ok());
-        assert_eq!(element_1.borrow().defining_neurons().len(), 0);
-        let connection = ok.unwrap();
-        assert!(Rc::ptr_eq(&connection.borrow().to(), &(element_2 as Rc<RefCell<dyn Neuron>>)));
-
-        let er = element_1.borrow_mut().connect_to_connection(connection);
-        assert!(er.is_ok());
-
+        assert!(ok.is_err());
         assert_eq!(element_1.borrow().defining_neurons().len(), 0);
     }
 }

@@ -9,7 +9,7 @@ use ordered_float::OrderedFloat;
 
 use witchnet_common::{
     data::{ DataTypeValue, DataCategory, DataType },
-    neuron::{ Neuron, NeuronID },
+    neuron::Neuron,
     sensor::Sensor,
     polars::{ self as polars_common, DataVecOption },
     performance::{ SupervisedPerformance, DataProbability }
@@ -42,7 +42,7 @@ pub fn predict_weighted(
     target: u32,
     fuzzy: bool
 ) -> Option<DataProbability> {
-    let mut neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>> = HashMap::new();
+    let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
     let mut max_activation_sum = 0.0f32;
 
     for (id, value, weight) in features {
@@ -72,20 +72,20 @@ pub fn predict_weighted(
                 }
             }
         };
-        let (current_neurons, max_activation) = sensor.borrow_mut()
+        let (mut current_neurons, max_activation) = sensor.borrow_mut()
             .activate(*weight, fuzzy, true);
-        neurons.extend(current_neurons);
+        neurons.append(&mut current_neurons);
         max_activation_sum += max_activation;
     }
 
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
-    let neurons_activations: Vec<OrderedFloat<f32>> = neurons.values()
+    let neurons_activations: Vec<OrderedFloat<f32>> = (&neurons).into_iter()
         .cloned()
         .map(|neuron| OrderedFloat(neuron.borrow().activation()))
         .collect();
-    let neurons: Vec<Rc<RefCell<dyn Neuron>>> = neurons.values().cloned().collect();
+    // let neurons: Vec<Rc<RefCell<dyn Neuron>>> = neurons.values().cloned().collect();
 
     let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
         = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
@@ -188,14 +188,17 @@ pub fn prediction_score(
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
         let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
-        let sensors = neuron.borrow().explain();
+        let neuron_borrowed = neuron.borrow();
+        let sensors = neuron_borrowed.explain();
         let mut test_reference_value = DataTypeValue::Unknown;
         let mut should_skip = true;
 
-        for (sensor_id, sensor) in sensors {
+        for sensor in sensors {
+            let sensor_borrowed = sensor.borrow();
+            let sensor_id = sensor_borrowed.id();
             let feature_id = sensor_id.parent_id;
             let feature_name = test.sensor_name(feature_id).unwrap();
-            let feature_value = sensor.borrow().value();
+            let feature_value = sensor_borrowed.value();
             let feature_id_train = *train.sensor_ids(feature_name).unwrap().first().unwrap();
             
             if *feature_name == *target {

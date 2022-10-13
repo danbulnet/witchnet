@@ -5,7 +5,11 @@ use std::{
 
 use crate::{
     neuron::Neuron,
-    connection::{ Connection, ConnectionKind, ConnectionID }
+    connection::{
+        standalone::StandaloneConnection,
+        ConnectionKind, 
+        ConnectionID 
+    }
 };
 
 pub struct DefiningConnection<From: Neuron + ?Sized, To: Neuron + ?Sized> {
@@ -19,7 +23,7 @@ impl<From: Neuron + ?Sized, To: Neuron + ?Sized> DefiningConnection<From, To> {
     }
 }
 
-impl<From: Neuron + ?Sized, To: Neuron + ?Sized> Connection for DefiningConnection<From, To> {
+impl<From: Neuron + ?Sized, To: Neuron + ?Sized> StandaloneConnection for DefiningConnection<From, To> {
     type From = From;
     type To = To;
 

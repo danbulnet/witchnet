@@ -60,7 +60,7 @@ pub fn mutual_information<S1: Sensor<DataTypeValue>, S2: Sensor<DataTypeValue>>(
             s1_sensor_neuron.borrow_mut().activate(1.0f32, false, true);
         
         let s1_neurons_ids: HashSet<NeuronID> = HashSet::from_iter(
-            s1_defining_neurons.keys().cloned()
+            s1_defining_neurons.into_iter().map(|x| x.borrow().id())
         );
         
         for s2_sensor_neuron in s2.neurons() {
@@ -68,7 +68,7 @@ pub fn mutual_information<S1: Sensor<DataTypeValue>, S2: Sensor<DataTypeValue>>(
                 s2_sensor_neuron.borrow_mut().activate(1.0f32, false, true);
 
             let s2_neurons_ids: HashSet<NeuronID> = HashSet::from_iter(
-                s2_defining_neurons.keys().cloned()
+                s2_defining_neurons.into_iter().map(|x| x.borrow().id())
             );
             let coincidences = s1_neurons_ids.intersection(&s2_neurons_ids).count();
             

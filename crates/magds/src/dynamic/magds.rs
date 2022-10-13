@@ -5,6 +5,8 @@ use std::{
     fmt::{ Display, Formatter, Result as FmtResult }
 };
 
+use anyhow::Result;
+
 use asa_graphs::neural::graph::ASAGraph;
 use witchnet_common::{
     neuron::{ Neuron, NeuronID },
@@ -151,10 +153,10 @@ impl MAGDS {
         signal: f32,
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
+    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
         self.sensors
             .get_mut(&id)
-            .unwrap_or(Err(format!("sensor {} doesn't exists", id))?)
+            .unwrap_or(Err(anyhow::anyhow!("sensor {} doesn't exists", id))?)
             .borrow_mut()
             .activate(item, signal, propagate_horizontal, propagate_vertical)
     }
@@ -165,18 +167,18 @@ impl MAGDS {
         item: &DataTypeValue,
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         self.sensors
             .get_mut(&id)
-            .unwrap_or(Err(format!("sensor {} doesn't exists", id))?)
+            .unwrap_or(Err(anyhow::anyhow!("sensor {} doesn't exists", id))?)
             .borrow_mut()
             .deactivate(item, propagate_horizontal, propagate_vertical)
     }
 
-    pub fn deactivate_whole_sensor(&mut self, id: u32) -> Result<(), String> {
+    pub fn deactivate_whole_sensor(&mut self, id: u32) -> Result<()> {
         self.sensors
             .get_mut(&id)
-            .unwrap_or(Err(format!("sensor {} doesn't exists", id))?)
+            .unwrap_or(Err(anyhow::anyhow!("sensor {} doesn't exists", id))?)
             .borrow_mut()
             .deactivate_sensor();
         Ok(())

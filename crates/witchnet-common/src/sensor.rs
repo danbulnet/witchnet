@@ -4,10 +4,11 @@ use std::{
     fmt::Display,
     cmp::Ordering,
     any::Any,
-    collections::HashMap,
     marker::PhantomData,
     mem
 };
+
+use anyhow::Result;
 
 use num_traits::ToPrimitive;
 
@@ -15,7 +16,7 @@ use dyn_clone::DynClone;
 
 use crate::{
     data::{ DataCategory, DataType, DataTypeValue, DataDeductor, UnknownDataTypeMarker },
-    neuron::{ Neuron, NeuronID },
+    neuron::Neuron,
     distances::Distance
 };
 
@@ -149,11 +150,11 @@ pub trait Sensor<D: SensorData>: Any + Display {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String>;
+    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)>;
     
     fn deactivate(
         &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> Result<(), String>;
+    ) -> Result<()>;
 
     fn deactivate_sensor(&mut self);
 

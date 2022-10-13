@@ -2,12 +2,13 @@ use std::{
     rc::Rc, 
     cell::RefCell,
     hash::Hash,
-    collections::HashMap,
-    fmt::{ Display, Formatter, Result as FmtResult }
+    fmt::{ Debug, Display, Formatter, Result as FmtResult }
 };
 
+use anyhow::Result;
+
 use crate::{
-    connection::{ Connection, ConnectionKind }, 
+    connection::ConnectionKind, 
     data::{ DataTypeValue, DataType }
 };
 
@@ -42,7 +43,7 @@ pub trait Neuron {
 
     fn counter(&self) -> usize;
 
-    fn explain(&self) -> HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>;
+    fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>];
 
     fn explain_one(&self, parent: u32) -> Option<DataTypeValue>;
 
@@ -50,7 +51,7 @@ pub trait Neuron {
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32);
+    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32);
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
 }
@@ -66,28 +67,25 @@ impl Display for dyn Neuron {
     }
 }
 
-pub trait NeuronConnect {
-    fn connect_to(
-        &mut self, to: Rc<RefCell<dyn Neuron>>, kind: ConnectionKind
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
-
-    fn connect_to_connection(
-        &mut self, to_connection: Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
-
-    fn connect_from(
-        &mut self, from: Rc<RefCell<dyn Neuron>>, kind: ConnectionKind
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
-
-    fn connect_from_connection(
-        &mut self, from_connection: Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>
-    ) -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
+impl Debug for dyn Neuron {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(
+            f, "[{}|c:{}|a:{}]",
+            self.id(), 
+            self.counter(), 
+            self.activation()
+        )
+    }
 }
 
-pub trait NeuronConnectBilateral<Other: Neuron + NeuronConnect>: Neuron + NeuronConnect {
-    fn connect_bilateral_to(&mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind) 
-    -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
+pub trait NeuronConnect {
+    fn connect_to<Other: Neuron + NeuronConnect + 'static>(
+        &mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    ) -> Result<()>;
+}
 
-    fn connect_bilateral_from(&mut self, from: Rc<RefCell<Other>>, kind: ConnectionKind) 
-    -> Result<Rc<RefCell<dyn Connection<From = dyn Neuron, To = dyn Neuron>>>, String>;
+pub trait NeuronConnectBilateral<Other: Neuron + NeuronConnect>: Neuron + NeuronConnect {   
+    fn connect_bilateral(
+        from: Rc<RefCell<Self>>, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    ) -> Result<()>;
 }

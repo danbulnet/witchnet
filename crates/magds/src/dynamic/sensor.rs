@@ -1,14 +1,15 @@
 use std::{
     fmt::{ Display, Formatter, Result as FmtResult },
     rc::Rc,
-    cell::RefCell,
-    collections::HashMap
+    cell::RefCell
 };
+
+use anyhow::Result;
 
 use enum_as_inner::EnumAsInner;
 
 use witchnet_common::{
-    neuron::{ Neuron, NeuronID },
+    neuron::Neuron,
     sensor::Sensor,
     data::{ DataType, DataTypeValue, DataCategory }
 };
@@ -243,7 +244,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
+    ) -> Result<(Vec< Rc<RefCell<dyn Neuron>>>, f32)> {
         match self {
             SensorConatiner::Bool(v) => {
                 v.activate(
@@ -338,7 +339,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         item: &DataTypeValue, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         match self {
             SensorConatiner::Bool(v) => {
                 v.deactivate(

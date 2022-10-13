@@ -5,24 +5,28 @@ use std::{
 
 use crate::{
     neuron::Neuron,
-    connection::{ Connection, ConnectionKind, ConnectionID }
+    connection::{
+        standalone::StandaloneConnection,
+        ConnectionKind, 
+        ConnectionID 
+    }
 };
 
-pub struct SimilarityConnection<From: Neuron + ?Sized, To: Neuron + ?Sized> {
+pub struct InhibitoryConnection<From: Neuron + ?Sized, To: Neuron + ?Sized> {
     from: Rc<RefCell<From>>,
     to: Rc<RefCell<To>>,
     weight: f32
 }
 
-impl<From: Neuron + ?Sized, To: Neuron + ?Sized> SimilarityConnection<From, To> {
+impl<From: Neuron + ?Sized, To: Neuron + ?Sized> InhibitoryConnection<From, To> {
     pub fn new(
         from: Rc<RefCell<From>>, to: Rc<RefCell<To>>, weight: f32
-    ) -> SimilarityConnection<From, To> {
-        SimilarityConnection { from, to, weight }
+    ) -> InhibitoryConnection<From, To> {
+        InhibitoryConnection { from, to, weight }
     }
 }
 
-impl<From: Neuron + ?Sized, To: Neuron + ?Sized> Connection for SimilarityConnection<From, To> {
+impl<From: Neuron + ?Sized, To: Neuron + ?Sized> StandaloneConnection for InhibitoryConnection<From, To> {
     type From = From;
     type To = To;
 
@@ -34,7 +38,7 @@ impl<From: Neuron + ?Sized, To: Neuron + ?Sized> Connection for SimilarityConnec
     
     fn to(&self) -> Rc<RefCell<To>> { self.to.clone() }
 
-    fn kind(&self) -> ConnectionKind { ConnectionKind::Similarity }
+    fn kind(&self) -> ConnectionKind { ConnectionKind::Inhibitory }
     
     fn weight(&self) -> f32 { self.weight }
 }

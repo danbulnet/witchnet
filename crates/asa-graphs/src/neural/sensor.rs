@@ -1,13 +1,14 @@
 use std::{
     rc::Rc,
     cell::RefCell,
-    collections::HashMap,
     marker::PhantomData
 };
 
+use anyhow::Result;
+
 use witchnet_common::{
     data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
-    neuron::{ Neuron, NeuronID },
+    neuron::Neuron,
     sensor::{ Sensor, SensorData }
 };
 
@@ -43,7 +44,7 @@ where
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
+    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
         self.activate(item, signal, propagate_horizontal, propagate_vertical)
     }
 
@@ -52,7 +53,7 @@ where
         item: &Key, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         self.deactivate(item, propagate_horizontal, propagate_vertical)
     }
 

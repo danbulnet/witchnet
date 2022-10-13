@@ -1,15 +1,16 @@
 use std::{
     rc::Rc,
     cell::RefCell,
-    collections::HashMap,
     cmp::Ordering::*,
     marker::PhantomData,
     fmt::{ Display, Formatter, Result as FmtResult }
 };
 
+use anyhow::Result;
+
 use witchnet_common::{ 
     sensor::SensorData,
-    neuron::{ Neuron, NeuronID },
+    neuron::Neuron,
     data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
 };
 
@@ -39,9 +40,7 @@ where
     DataTypeValue: From<Key>
 {
     pub fn new(id: u32) -> ASAGraph<Key, ORDER> {
-        if ORDER < 3 {
-            panic!("Graph order must be >= 3");
-        }
+        if ORDER < 3 { panic!("Graph order must be >= 3") }
         ASAGraph {
             id,
             root: Rc::new(RefCell::new(Node::<Key, ORDER>::new(true, None))),
@@ -55,16 +54,10 @@ where
     }
 
     pub fn new_rc(id: u32) -> Rc<RefCell<ASAGraph<Key, ORDER>>> {
-        if ORDER < 3 {
-            panic!("Graph order must be >= 3");
-        }
         Rc::new(RefCell::new(ASAGraph::new(id)))
     }
 
     pub fn new_box(id: u32) -> Box<ASAGraph<Key, ORDER>> {
-        if ORDER < 3 {
-            panic!("Graph order must be >= 3");
-        }
         Box::new(ASAGraph::new(id))
     }
 
@@ -246,8 +239,6 @@ where
         Some((key_min, key_max))
     }
 
-    fn unbox<T>(value: Box<T>) -> T { Box::into_inner(value) }
-
     fn insert_first_element(
         &mut self, node: &Rc<RefCell<Node<Key, ORDER>>>,  key: &Key
     ) -> Rc<RefCell<Element<Key, ORDER>>> {
@@ -376,16 +367,13 @@ where
 
     pub fn activate(
         &mut self, key: &Key, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> Result<(HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>, f32), String> {
+    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
         let element = match self.search(key) {
             Some(e) => e,
             None => { 
                 match self.data_category() {
                     DataCategory::Categorical => {
-                        log::error!("activating missing categorical sensory neuron {}", key);
-                        return Err(
-                            format!("activating missing categorical sensory neuron {}", key)
-                        )
+                        anyhow::bail!("activating missing categorical sensory neuron {}", key)
                     },
                     DataCategory::Numerical | DataCategory::Ordinal => {
                         if propagate_horizontal {
@@ -395,31 +383,29 @@ where
                             );
                             self.insert(&key)
                         } else {
-                            log::error!(
+                            anyhow::bail!(
                                 "activating missing non-categorical sensory neuron {} with {}",
-                                key, "propagate_horizontal=false"
-                            );
-                            return Err(format!(
-                                "activating missing non-categorical sensory neuron {} with {}",
-                                key, "propagate_horizontal=false"
-                            ))
+                                key, 
+                                "propagate_horizontal=false"
+                            )
                         }
                     }
                 }
             }
         };
 
-        Ok(element.clone().borrow_mut().activate(signal, propagate_horizontal, propagate_vertical))
+        Ok(element.clone().borrow_mut().activate(
+            signal, propagate_horizontal, propagate_vertical
+        ))
     }
 
     pub fn deactivate(
         &mut self, key: &Key, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> Result<(), String> {
+    ) -> Result<()> {
         let element = match self.search(key) {
             Some(e) => e,
             None => {
-                log::error!("deactivating non-existing sensory neuron {}", key);
-                return Err(format!("deactivating non-existing sensory neuron {}", key))
+                anyhow::bail!("deactivating non-existing sensory neuron {}", key)
             }
         };
 
@@ -432,7 +418,7 @@ where
         let mut element = match &self.element_min {
             Some(e) => e.clone(),
             None => { log::warn!("no element_min in asa-graph"); return }
-            };
+        };
 
         loop {
             element.borrow_mut().deactivate(false, false);
