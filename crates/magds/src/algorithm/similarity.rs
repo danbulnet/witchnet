@@ -79,7 +79,7 @@ pub fn mutual_information<S1: Sensor<DataTypeValue>, S2: Sensor<DataTypeValue>>(
                 let p_x = s1_sensor_neuron.borrow().counter() as f64 / total_counter;
                 let p_y = s2_sensor_neuron.borrow().counter() as f64 / total_counter;
                 let mi = if normalized {
-                    2f64 * (p_xy * f64::log2(p_xy / (p_x * p_y))) / (s1_entropy * s2_entropy) 
+                    2f64 * (p_xy * f64::log2(p_xy / (p_x * p_y))) / (s1_entropy * s2_entropy)
                 } else {
                     p_xy * f64::log2(p_xy / (p_x * p_y))
                 };
@@ -110,9 +110,13 @@ pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<
     let mut ret = HashMap::new();
     for id in features_ids {
         let sensor = magds.sensor(id).context("error getting sensor id {id}")?;
-        let similarity = similarity::mutual_information(
-            &*sensor.borrow(), &*target_sensor.borrow(), true
-        )?;
+        let similarity = if sensor.borrow().data_category().is_numerical() {
+            1.0f64
+        } else {
+            similarity::mutual_information(
+                &*sensor.borrow(), &*target_sensor.borrow(), true
+            )?
+        };
         ret.insert(id, similarity);
     }
 
