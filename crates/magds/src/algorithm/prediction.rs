@@ -81,21 +81,26 @@ pub fn predict_weighted(
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
-    let neurons_activations: Vec<OrderedFloat<f32>> = (&neurons).into_iter()
-        .cloned()
-        .map(|neuron| OrderedFloat(neuron.borrow().activation()))
-        .collect();
-    // let neurons: Vec<Rc<RefCell<dyn Neuron>>> = neurons.values().cloned().collect();
+    // let neurons_activations: Vec<OrderedFloat<f32>> = (&neurons).into_iter()
+    //     .cloned()
+    //     .map(|neuron| OrderedFloat(neuron.borrow().activation()))
+    //     .collect();
+    // let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
+    //     = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
 
-    let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
-        = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
+    let winners_limit = usize::min(25usize, neurons_len);
+
+    let mut neurons_sorted: Vec<(f32, &Rc<RefCell<dyn Neuron>>)> = (&neurons).into_iter()
+        .map(|neuron| (neuron.borrow().activation(), neuron))
+        .collect();
+    neurons_sorted.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    let neurons_sorted = &neurons_sorted[(neurons_len - winners_limit)..neurons_len];
 
     let target_data_category = match magds.sensor(target) {
         Some(s) => s.borrow().data_category(),
         None => { log::error!("error getting sensor {target}"); return None }
     };
     let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
-    let winners_limit = 12usize;
     match target_data_category {
         DataCategory::Numerical => {
             let mut targets_weighted: Vec<f64> = Vec::new();
@@ -103,12 +108,12 @@ pub fn predict_weighted(
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
             let mut winners_counter = 0;
-            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+            for (neuron_activation, neuron) in (neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
-                    current_weight /= 2.0f32;
+                    current_weight /= 1.25f32;
 
                     winners_counter += 1;
                     if winners_counter >= winners_limit { break }
@@ -141,7 +146,7 @@ pub fn predict_weighted(
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
             let mut winners_counter = 0;
-            for (neuron_activation, neuron) in (&neurons_sorted).into_iter().rev() {
+            for (neuron_activation, neuron) in (neurons_sorted).into_iter().rev() {
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     let target_value = target_value.to_string();
                     if values.contains_key(&target_value) {
@@ -152,7 +157,7 @@ pub fn predict_weighted(
                     }
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
-                    current_weight /= 2.0f32;
+                    current_weight /= 1.25f32;
 
                     winners_counter += 1;
                     if winners_counter >= winners_limit { break }

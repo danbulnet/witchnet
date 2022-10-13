@@ -16,19 +16,20 @@ fn main() {
     let train_file_path = format!(
         "{}/{}", 
         "crates/magds/examples/carscom/data", 
+        // "carscom_full_1m_18_08_2022_prepared_train.csv"
         // "carscom_full_1m_18_08_2022_prepared_train_mid.csv"
         "carscom_full_1m_18_08_2022_prepared_train_small.csv"
     );
     let test_file_path = format!(
         "{}/{}", 
         "crates/magds/examples/carscom/data", 
+        // "carscom_full_1m_18_08_2022_prepared_test.csv"
         // "carscom_full_1m_18_08_2022_prepared_test_mid.csv"
         "carscom_full_1m_18_08_2022_prepared_test_small.csv"
     );
-
-    // let skip_list = vec![];
-    // let skip_list = vec!["vin", "seller"];
-    let skip_list = vec!["vin", "seller", "features"];
+// 
+    // let skip_list = vec!["vin"];
+    let skip_list = vec!["vin", "features"];
 
     let train_df = polars_common::csv_to_dataframe(&train_file_path, &skip_list).unwrap();
     println!("train set shape {:?}", train_df.shape());
@@ -42,7 +43,7 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "price".into(), true, true
+            &mut magds_train, &test_df, "price".into(), true, false
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();

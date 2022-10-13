@@ -104,7 +104,7 @@ impl SimpleNeuron {
             .into_iter()
             .cloned()
             .collect();
-        let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = neurons_activation.clone();
+        let mut neurons = neurons_activation.clone();
         
         if propagate_vertical {
             for neuron in &neurons_activation {

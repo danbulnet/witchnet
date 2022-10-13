@@ -402,12 +402,14 @@ mod tests {
         assert_eq!(sl57.borrow().activation(), 0.0_f32);
         assert_eq!(sl58.borrow().activation(), 1.0_f32);
         assert_eq!(sl59.borrow().activation(), 0.0_f32);
-        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
+        // assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
+        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 1_f32);
         assert_eq!(neuron_16.borrow().activation(), 0.0_f32);
 
         sl58.borrow_mut().deactivate(false, false);
         assert_eq!(sl58.borrow().activation(), 0.0_f32);
-        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
+        // assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
+        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 1_f32);
 
         sl58.borrow_mut().deactivate(false, true);
         assert_eq!(sl58.borrow().activation(), 0.0_f32);
@@ -419,8 +421,10 @@ mod tests {
         assert_eq!(sl58.borrow().activation(), 1.0_f32);
         assert_eq!(sl59.borrow().activation(), 0.9722222_f32);
         assert_eq!(sl79.borrow().activation(), 0.0_f32);
-        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
-        assert_eq!(neuron_16.borrow().activation(), 0.9722222_f32 / 8_f32);
+        // assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
+        assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 1_f32);
+        // assert_eq!(neuron_16.borrow().activation(), 0.9722222_f32 / 8_f32);
+        assert_eq!(neuron_16.borrow().activation(), 0.9722222_f32 / 1_f32);
 
         sl58.borrow_mut().deactivate(true, true);
         assert_eq!(sl43.borrow().activation(), 0.0_f32);
