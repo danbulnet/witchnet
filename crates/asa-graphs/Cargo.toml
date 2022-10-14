@@ -9,14 +9,14 @@ license.workspace = true
 readme.workspace = true
 categories = ["science", "database", "data-structures"]
 keywords = ["data-structure", "algorithm", "associative", "graph"]
-default-run = "asa_graphs"
+default-run = "asa-graphs"
 
 [lib]
 name = "asa_graphs"
 path = "src/lib.rs"
 
 [[bin]]
-name = "asa_graphs"
+name = "asa-graphs"
 path = "src/bin/main.rs"
 
 [dependencies]

@@ -9,14 +9,14 @@ license.workspace = true
 readme.workspace = true
 categories.workspace = true
 keywords = ["gui", "visualization", "simulation", "associative", "graph"]
-default-run = "witchnet_gui"
+default-run = "witchnet-gui"
 
 [lib]
 name = "witchnet_gui"
 path = "src/lib.rs"
 
 [[bin]]
-name = "witchnet_gui"
+name = "witchnet-gui"
 path = "src/bin/main.rs"
 
 [dependencies]
