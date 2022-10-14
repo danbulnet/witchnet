@@ -1,11 +1,9 @@
 use std::{
-    collections::{ HashMap, BTreeMap },
+    collections::HashMap,
     rc::Rc,
     cell::RefCell,
     str::FromStr
 };
-
-use ordered_float::OrderedFloat;
 
 use witchnet_common::{
     data::{ DataTypeValue, DataCategory, DataType },
@@ -81,13 +79,6 @@ pub fn predict_weighted(
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
-    // let neurons_activations: Vec<OrderedFloat<f32>> = (&neurons).into_iter()
-    //     .cloned()
-    //     .map(|neuron| OrderedFloat(neuron.borrow().activation()))
-    //     .collect();
-    // let neurons_sorted: BTreeMap<OrderedFloat<f32>, Rc<RefCell<dyn Neuron>>> 
-    //     = BTreeMap::from_iter(neurons_activations.into_iter().zip(neurons));
-
     let winners_limit = usize::min(25usize, neurons_len);
 
     let mut neurons_sorted: Vec<(f32, &Rc<RefCell<dyn Neuron>>)> = (&neurons).into_iter()
@@ -141,7 +132,7 @@ pub fn predict_weighted(
             Some(DataProbability(predicted_value.into(), proba))
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
-            let mut values: HashMap<String, OrderedFloat<f32>> = HashMap::new();
+            let mut values: HashMap<String, f32> = HashMap::new();
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
             let mut current_weight = 1.0f32;
@@ -153,7 +144,7 @@ pub fn predict_weighted(
                         let current_value = values.get_mut(&target_value).unwrap();
                         *current_value += current_weight;
                     } else {
-                        values.insert(target_value, OrderedFloat(current_weight));
+                        values.insert(target_value, current_weight);
                     }
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
@@ -163,11 +154,15 @@ pub fn predict_weighted(
                     if winners_counter >= winners_limit { break }
                 }
             }
-            let values_sorted: BTreeMap<OrderedFloat<f32>, &str> 
-                = BTreeMap::from_iter(values.values().map(|x| *x).zip(values.keys().map(|x| x as &str)));
-            let predicted_value_str = values_sorted.into_iter().next_back()?.1;
+
+            let mut values_sorted: Vec<(String, f32)> = values.into_iter()
+                .map(|(name, value)| (name, value))
+                .collect();
+            values_sorted.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
+            let predicted_value_str = values_sorted.into_iter().next_back()?.0;
             let predicted_value: DataTypeValue = match target_data_type {
-                DataType::Bool => bool::from_str(predicted_value_str).ok()?.into(),
+                DataType::Bool => bool::from_str(&predicted_value_str).ok()?.into(),
                 DataType::RcStr => Rc::<str>::from(predicted_value_str).into(),
                 DataType::String => predicted_value_str.to_string().into(),
                 _ => { log::error!("classified as not numerical data so shouldn't be here"); return None }
