@@ -93,7 +93,7 @@ pub fn predict_weighted(
     let mut neurons_sorted: Vec<(f32, &Rc<RefCell<dyn Neuron>>)> = (&neurons).into_iter()
         .map(|neuron| (neuron.borrow().activation(), neuron))
         .collect();
-    neurons_sorted.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    neurons_sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     let neurons_sorted = &neurons_sorted[(neurons_len - winners_limit)..neurons_len];
 
     let target_data_category = match magds.sensor(target) {
