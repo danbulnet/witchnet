@@ -3,6 +3,7 @@ use crate::{
     distances::Distance
 };
 
+#[derive(Debug, Clone)]
 pub struct DataProbability(pub DataTypeValue, pub f32);
 
 pub enum SupervisedPerformance {

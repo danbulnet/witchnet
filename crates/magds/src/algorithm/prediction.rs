@@ -40,7 +40,6 @@ pub fn predict_weighted(
     target: u32,
     fuzzy: bool
 ) -> Option<DataProbability> {
-    let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
     let mut max_activation_sum = 0.0f32;
 
     for (id, value, weight) in features {
@@ -70,19 +69,20 @@ pub fn predict_weighted(
                 }
             }
         };
-        let (mut current_neurons, max_activation) = sensor.borrow_mut()
+        let (_current_neurons, max_activation) = sensor.borrow_mut()
             .activate(*weight, fuzzy, true);
-        neurons.append(&mut current_neurons);
         max_activation_sum += max_activation;
     }
+
+    let neurons = magds.neurons.values();
 
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
-    let winners_limit = usize::min(25usize, neurons_len);
+    let winners_limit = usize::min(12usize, neurons_len);
 
-    let mut neurons_sorted: Vec<(f32, &Rc<RefCell<dyn Neuron>>)> = (&neurons).into_iter()
-        .map(|neuron| (neuron.borrow().activation(), neuron))
+    let mut neurons_sorted: Vec<(f32, Rc<RefCell<dyn Neuron>>)> = neurons
+        .map(|neuron| (neuron.borrow().activation(), neuron.clone() as Rc<RefCell<dyn Neuron>>))
         .collect();
     neurons_sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     let neurons_sorted = &neurons_sorted[(neurons_len - winners_limit)..neurons_len];
@@ -92,6 +92,9 @@ pub fn predict_weighted(
         None => { log::error!("error getting sensor {target}"); return None }
     };
     let target_data_type = magds.sensor(target).unwrap().borrow().data_type();
+
+    let weight_ratio = f32::ln(features.len() as f32);
+
     match target_data_category {
         DataCategory::Numerical => {
             let mut targets_weighted: Vec<f64> = Vec::new();
@@ -104,7 +107,7 @@ pub fn predict_weighted(
                     targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
-                    current_weight /= 1.25f32;
+                    current_weight /= weight_ratio;
 
                     winners_counter += 1;
                     if winners_counter >= winners_limit { break }
@@ -148,7 +151,7 @@ pub fn predict_weighted(
                     }
                     weights += current_weight;
                     probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
-                    current_weight /= 1.25f32;
+                    current_weight /= weight_ratio;
 
                     winners_counter += 1;
                     if winners_counter >= winners_limit { break }
