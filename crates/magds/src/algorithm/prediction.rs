@@ -177,7 +177,11 @@ pub fn predict_weighted(
 }
 
 pub fn prediction_score(
-    train: &mut MAGDS, test: &mut MAGDS, target: Rc<str>, fuzzy: bool
+    train: &mut MAGDS, 
+    test: &mut MAGDS, 
+    target: Rc<str>, 
+    fuzzy: bool,
+    weighted: bool
 ) -> anyhow::Result<SupervisedPerformance> {
     let y_len = test.neurons.len();
     let n_features = test.sensors.len();
@@ -187,10 +191,15 @@ pub fn prediction_score(
 
     let target_id = *train.sensor_ids(&target).unwrap().first().unwrap();
 
+    let mut similarities: HashMap<u32, f64> = HashMap::new();
+    if weighted {
+        similarities = similarity::features_target_weights(train, target_id)?;
+    }
+
     for (i, (_neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
-        let mut features: Vec<(u32, DataTypeValue)> = Vec::with_capacity(n_features);
+        let mut features: Vec<(u32, DataTypeValue, f32)> = Vec::with_capacity(n_features);
         let neuron_borrowed = neuron.borrow();
         let sensors = neuron_borrowed.explain();
         let mut test_reference_value = DataTypeValue::Unknown;
@@ -208,7 +217,8 @@ pub fn prediction_score(
                 test_reference_value = feature_value;
                 should_skip = false;
             } else {
-                features.push((feature_id_train, feature_value));
+                let weight = if weighted { similarities[&feature_id] as f32 } else { 1.0f32 };
+                features.push((feature_id_train, feature_value, weight));
             }
         }
 
@@ -217,7 +227,7 @@ pub fn prediction_score(
             anyhow::bail!("test_reference_value shouldn't be unknown");
         }
 
-        let data_proba = match predict(train, &features, target_id, fuzzy) {
+        let data_proba = match predict_weighted(train, &features, target_id, fuzzy) {
             Some(dp) => dp,
             None => { train.deactivate(); continue }
         };
@@ -353,7 +363,16 @@ mod tests {
         let mut magds_test = parser::magds_from_csv("iris_test", test_file, &vec![]).unwrap();
 
         let performance = prediction::prediction_score(
-            &mut magds_train, &mut magds_test, "variety".into(), true
+            &mut magds_train, &mut magds_test, "variety".into(), true, false
+        ).unwrap();
+        let accuracy = performance.accuracy().unwrap();
+        let proba = performance.mean_probability().unwrap();
+        println!("accuracy: {accuracy} proba: {proba}");
+        assert!(accuracy > 0.90);
+        assert!(proba > 0.0);
+
+        let performance = prediction::prediction_score(
+            &mut magds_train, &mut magds_test, "variety".into(), true, true
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
