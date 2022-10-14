@@ -56,16 +56,16 @@ pub fn mutual_information<S1: Sensor<DataTypeValue>, S2: Sensor<DataTypeValue>>(
     }
 
     for s1_sensor_neuron in s1.neurons() {
-        let (s1_defining_neurons, _) = 
-            s1_sensor_neuron.borrow_mut().activate(1.0f32, false, true);
+        let s1_sensor_neuron_borrowed = s1_sensor_neuron.borrow();
+        let s1_defining_neurons = s1_sensor_neuron_borrowed.defined_neurons();
         
         let s1_neurons_ids: HashSet<NeuronID> = HashSet::from_iter(
             s1_defining_neurons.into_iter().map(|x| x.borrow().id())
         );
         
         for s2_sensor_neuron in s2.neurons() {
-            let (s2_defining_neurons, _) = 
-                s2_sensor_neuron.borrow_mut().activate(1.0f32, false, true);
+            let s2_sensor_neuron_borrowed = s2_sensor_neuron.borrow();
+            let s2_defining_neurons = s2_sensor_neuron_borrowed.defined_neurons();
 
             let s2_neurons_ids: HashSet<NeuronID> = HashSet::from_iter(
                 s2_defining_neurons.into_iter().map(|x| x.borrow().id())

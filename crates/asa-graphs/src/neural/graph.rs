@@ -367,7 +367,7 @@ where
 
     pub fn activate(
         &mut self, key: &Key, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
+    ) -> Result<f32> {
         let element = match self.search(key) {
             Some(e) => e,
             None => { 

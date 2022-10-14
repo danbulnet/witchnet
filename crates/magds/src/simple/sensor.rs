@@ -247,7 +247,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
+    ) -> Result<f32> {
         match self {
             SensorConatiner::Bool(v) => {
                 v.activate(

@@ -44,7 +44,7 @@ where
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
+    ) -> Result<f32> {
         self.activate(item, signal, propagate_horizontal, propagate_vertical)
     }
 
@@ -88,9 +88,9 @@ mod tests {
         assert_eq!(graph.id(), 1);
         assert_eq!(graph.data_category(), DataCategory::Numerical);
 
-        let neurons = graph.activate(&5, 1.0f32, true, true);
-        assert!(neurons.is_ok());
-        assert_eq!(neurons.unwrap().0.len(), 0);
+        let max_activation = graph.activate(&5, 1.0f32, true, true);
+        assert!(max_activation.is_ok());
+        assert_eq!(max_activation.unwrap(), 0.0f32);
         
         if threshold == 0.8f32 {
             for (i, element) in graph.into_iter().enumerate() {
@@ -138,11 +138,11 @@ mod tests {
                 assert_eq!(activation, 0.0f32)
             }
 
-            let neurons = graph.activate(&5, 1.0f32, false, false);
-            assert!(neurons.is_ok());
-            let neurons = graph.activate(&8, 1.0f32, false, false);
-            assert!(neurons.is_ok());
-            assert_eq!(neurons.unwrap().0.len(), 0);
+            let max_activation = graph.activate(&5, 1.0f32, false, false);
+            assert!(max_activation.is_ok());
+            let max_activation = graph.activate(&8, 1.0f32, false, false);
+            assert!(max_activation.is_ok());
+            assert!(max_activation.unwrap() > 0.0f32);
             for (i, element) in graph.into_iter().enumerate() {
                 let activation = element.borrow().activation();
                 match i + 1 {

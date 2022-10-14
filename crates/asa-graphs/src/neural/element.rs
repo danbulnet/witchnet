@@ -217,9 +217,13 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
         Some((*dyn_clone::clone_box(&self.key)).into())
     }
 
+    fn defined_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>] {
+        &self.definitions.connected_neurons()
+    }
+
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32) {
+    ) -> f32 {
         let data_category: DataCategory = self.data_type.data_category();
         let is_fuzzy_ok = match data_category {
             DataCategory::Numerical | DataCategory::Ordinal => true,
@@ -231,24 +235,17 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
             self.simple_activate(signal)
         };
 
-        let mut neurons: Vec<Rc<RefCell<dyn Neuron>>> = Vec::new();
-
         let mut max_activation = 0.0f32;
         if propagate_vertical {
             for (neuron, activation) in &neurons_activation {
                 max_activation = f32::max(max_activation, *activation);
-                neurons.push(neuron.clone());
-                if !neuron.borrow().is_sensor() {
-                    neurons.append(
-                        &mut neuron.borrow_mut().activate(
-                            *activation, propagate_horizontal, propagate_vertical
-                        ).0
-                    );
-                }
+                neuron.borrow_mut().activate(
+                    *activation, propagate_horizontal, propagate_vertical
+                );
             }
         }
 
-        (neurons, max_activation)
+        max_activation
     }
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
@@ -474,7 +471,7 @@ mod tests {
         assert_eq!(element_1.counter(), 1usize);
 
         let activated = element_1.activate(1.0f32, true, true);
-        assert_eq!(activated.0.len(), 0);
+        assert_eq!(activated, 0.0f32);
         assert_eq!(element_1.activation(), 1.0f32);
         assert_eq!(element_2_ptr.borrow().activation(), 0.0f32);
 

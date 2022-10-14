@@ -152,7 +152,7 @@ impl MAGDS {
         signal: f32,
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)> {
+    ) -> Result<f32> {
         self.sensors
             .get_mut(&id)
             .unwrap_or(Err(anyhow::anyhow!("sensor {} doesn't exists", id))?)

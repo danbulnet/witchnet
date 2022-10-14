@@ -96,32 +96,30 @@ impl SimpleNeuron {
 
     pub fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32) {
+    ) -> f32 {
         self.activation += signal;
 
         let mut max_activation = 0.0f32;
-        let neurons_activation: Vec<Rc<RefCell<dyn Neuron>>> = self.defined_neurons()
-            .into_iter()
-            .cloned()
-            .collect();
-        let mut neurons = neurons_activation.clone();
+        // let neurons_activation: Vec<Rc<RefCell<dyn Neuron>>> = self.defined_neurons()
+        //     .into_iter()
+        //     .cloned()
+        //     .collect();
         
         if propagate_vertical {
-            for neuron in &neurons_activation {
+            for neuron in self.defined_neurons() {
                 if !neuron.borrow().is_sensor() {
-                    let output_signal = self.activation /
-                        f32::max(self.defined_neurons().len() as f32, 1.0f32);
+                    let output_signal = self.activation / self.defined_neurons.common_weight();
+                    // let output_signal = self.activation /
+                    //     f32::max(self.defined_neurons().len() as f32, 1.0f32);
                     max_activation = f32::max(max_activation, output_signal);
-                    neurons.append(
-                        &mut neuron.borrow_mut().activate(
-                            output_signal, propagate_horizontal, propagate_vertical
-                        ).0
+                    neuron.borrow_mut().activate(
+                        output_signal, propagate_horizontal, propagate_vertical
                     );
                 }
             }
         }
 
-        (neurons, max_activation)
+        max_activation
     }
 
     pub fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
@@ -156,9 +154,13 @@ impl Neuron for SimpleNeuron {
         self.explain_one(parent)
     }
 
+    fn defined_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>] {
+        &self.defined_neurons.connected_neurons()
+    }
+
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32) {
+    ) -> f32 {
         self.activate(signal, propagate_horizontal, propagate_vertical)
     }
 
@@ -282,8 +284,8 @@ mod tests {
             neuron_2.clone(), ConnectionKind::Defining
         ).unwrap();
 
-        let activated = neuron_1.borrow_mut().activate(1.0f32, true, true);
-        assert_eq!(activated.0.len(), 1);
+        let max_activation = neuron_1.borrow_mut().activate(1.0f32, true, true);
+        assert!(max_activation > 0.0f32);
         assert_eq!(neuron_1.borrow().activation(), 1.0f32);
         assert_eq!(neuron_2.borrow().activation(), 1.0f32);
 

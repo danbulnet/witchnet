@@ -47,11 +47,11 @@ pub trait Neuron {
 
     fn explain_one(&self, parent: u32) -> Option<DataTypeValue>;
 
-    // fn connected_neuron_ids(&self) -> &[u32];
+    fn defined_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>];
 
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
-    ) -> (Vec<Rc<RefCell<dyn Neuron>>>, f32);
+    ) -> f32;
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
 }

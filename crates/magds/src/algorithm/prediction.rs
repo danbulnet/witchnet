@@ -69,8 +69,7 @@ pub fn predict_weighted(
                 }
             }
         };
-        let (_current_neurons, max_activation) = sensor.borrow_mut()
-            .activate(*weight, fuzzy, true);
+        let max_activation = sensor.borrow_mut().activate(*weight, fuzzy, true);
         max_activation_sum += max_activation;
     }
 

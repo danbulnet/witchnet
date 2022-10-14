@@ -150,7 +150,7 @@ pub trait Sensor<D: SensorData>: Any + Display {
         signal: f32, 
         propagate_horizontal: bool, 
         propagate_vertical: bool
-    ) -> Result<(Vec<Rc<RefCell<dyn Neuron>>>, f32)>;
+    ) -> Result<f32>;
     
     fn deactivate(
         &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool
