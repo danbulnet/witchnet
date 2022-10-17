@@ -19,6 +19,10 @@ path = "src/lib.rs"
 name = "witchnet-gui"
 path = "src/bin/main.rs"
 
+[[bin]]
+name = "witchnet-gui-example"
+path = "src/bin/example.rs"
+
 [dependencies]
 bevy = "0.8.1"
 bevy_egui = "0.16.1"
