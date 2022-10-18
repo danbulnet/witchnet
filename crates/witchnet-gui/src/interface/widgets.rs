@@ -1,6 +1,8 @@
 use bevy::prelude::Color;
 
-use bevy_egui::egui::{ self, Ui, Widget };
+use bevy_egui::egui::{ self, Ui, Widget, Rgba };
+
+use crate::utils;
 
 pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
     ui.horizontal(|ui| {
@@ -20,13 +22,7 @@ pub fn slider_row(
 }
 
 pub fn color_picker(ui: &mut egui::Ui, color: &mut Color) -> egui::Response {
-    let [r, g, b, a] = color.as_rgba_f32();
-    let mut egui_color: egui::Rgba = egui::Rgba::from_srgba_unmultiplied(
-        (r * 255.0) as u8,
-        (g * 255.0) as u8,
-        (b * 255.0) as u8,
-        (a * 255.0) as u8,
-    );
+    let mut egui_color = Rgba::from(utils::color_bevy_to_egui(&color));
     let res = egui::widgets::color_picker::color_edit_button_rgba(
         ui,
         &mut egui_color,

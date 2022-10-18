@@ -2,6 +2,8 @@ use std::default::Default;
 
 use bevy::prelude::*;
 
+use bevy_egui::egui::Color32;
+
 pub struct NeuronAppearance {
     pub show: bool,
     pub show_text: bool,
