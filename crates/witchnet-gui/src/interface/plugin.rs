@@ -3,12 +3,12 @@ use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use crate::{
     resources::appearance::{ NeuronAppearance, SensorAppearance, ConnectionAppearance },
-    ui::systems
+    interface::systems
 };
 
-pub struct UI;
+pub struct Interface;
 
-impl Plugin for UI {
+impl Plugin for Interface {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins)
             .insert_resource(NeuronAppearance::default())
