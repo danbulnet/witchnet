@@ -22,7 +22,7 @@ pub struct MAGDS {
     pub(crate) sensors: HashMap<u32, Rc<RefCell<SensorConatiner>>>,
     pub(crate) sensor_names: HashMap<u32, Rc<str>>,
     pub(crate) sensor_ids: HashMap<Rc<str>, Vec<u32>>,
-    pub(crate) neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>,
+    pub(crate) neurons: Vec<Rc<RefCell<dyn Neuron>>>,
     pub(crate) neuron_group_names: HashMap<u32, Rc<str>>,
     pub(crate) neuron_group_ids: HashMap<Rc<str>, Vec<u32>>
 }
@@ -33,7 +33,7 @@ impl MAGDS {
             sensors: HashMap::new(),
             sensor_names: HashMap::new(),
             sensor_ids: HashMap::new(),
-            neurons: HashMap::new(),
+            neurons: Vec::new(),
             neuron_group_names: HashMap::new(),
             neuron_group_ids: HashMap::new()
         }
@@ -45,7 +45,7 @@ impl MAGDS {
                 sensors: HashMap::new(),
                 sensor_names: HashMap::new(),
                 sensor_ids: HashMap::new(),
-                neurons: HashMap::new(),
+                neurons: Vec::new(),
                 neuron_group_names: HashMap::new(),
                 neuron_group_ids: HashMap::new()
             }
@@ -186,40 +186,36 @@ impl MAGDS {
     
     pub fn create_neuron(
         &mut self, id: NeuronID
-    ) -> Option<Rc<RefCell<dyn Neuron>>> {
+    ) -> Rc<RefCell<dyn Neuron>> {
         let neuron = SimpleNeuron::new(id) as Rc<RefCell<dyn Neuron>>;
-        let neuron_id = neuron.borrow().id().clone();
-        if let Err(_) = self.neurons.try_insert(neuron_id.clone(), neuron.clone()) {
-            log::error!("neuron id: {:?} already exsists in magds, skipping", neuron_id);
-            None
-        } else {
-            Some(neuron)
-        }
+        self.neurons.push(neuron.clone());
+        neuron
     }
     
     pub fn add_neuron(
         &mut self, neuron: Rc<RefCell<dyn Neuron>>
-    ) -> Option<Rc<RefCell<dyn Neuron>>> {
-        let neuron_id = neuron.borrow().id().clone();
-        if let Err(_) = self.neurons.try_insert(neuron_id.clone(), neuron.clone()) {
-            log::error!("neuron id: {:?} already exsists in magds, skipping", neuron_id);
-            None
-        } else {
-            Some(neuron)
-        }
+    ) {
+        self.neurons.push(neuron.clone());
     }
 
     pub fn neuron_from_id(&self, id: &NeuronID) -> Option<Rc<RefCell<dyn Neuron>>> {
-        Some(self.neurons.get(id)?.clone())
+        for neuron in &self.neurons {
+            if neuron.borrow().id() == *id { return Some(neuron.clone()) }
+        }
+        None
     }
 
     pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Rc<RefCell<dyn Neuron>>> {
-        Some(self.neurons.get(&NeuronID::new(id, parent_id))?.clone())
+        let neuron_id = NeuronID::new(id, parent_id);
+        for neuron in &self.neurons {
+            if neuron.borrow().id() == neuron_id { return Some(neuron.clone()) }
+        }
+        None
     }
 
     pub fn deactivate(&mut self) {
         for sensor in &mut self.sensors.values() { sensor.borrow_mut().deactivate_sensor(); }
-        for neuron in &mut self.neurons.values() { neuron.borrow_mut().deactivate(false, false); }
+        for neuron in &mut self.neurons { neuron.borrow_mut().deactivate(false, false); }
     }
 
     pub fn add_neuron_group(&mut self, group_name: &str, group_id: u32) {
@@ -258,7 +254,7 @@ impl Display for MAGDS {
 
         let mut number = 1;
         writeln!(f, "========== neurons ==========")?;
-        for (_id, neuron) in &self.neurons {
+        for neuron in &self.neurons {
             writeln!(f, "{number}: {}", neuron.borrow())?;
             number += 1;
         }

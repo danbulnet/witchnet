@@ -1,15 +1,15 @@
 use bevy::prelude::*;
 
 use bevy_egui::{ EguiPlugin, EguiContext };
+
+// use magds::asynchronous::magds::MAGDS;
+
 use crate::{
     resources::{
         appearance::{ NeuronAppearance, SensorAppearance, ConnectionAppearance },
         data::{ DataFilePath, DataFileName }
     },
-    interface::{
-        appearance,
-        data
-    }
+    interface::{ appearance, data }
 };
 
 pub struct Interface;
@@ -17,6 +17,7 @@ pub struct Interface;
 impl Plugin for Interface {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins)
+            // .insert_resource(MAGDS::new())
             .insert_resource(DataFilePath::default())
             .insert_resource(DataFileName::default())
             .insert_resource(NeuronAppearance::default())

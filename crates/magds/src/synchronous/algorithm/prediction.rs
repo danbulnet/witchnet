@@ -75,14 +75,14 @@ pub fn predict_weighted(
         max_activation_sum += max_activation;
     }
 
-    let neurons = magds.neurons.values();
+    let neurons = &magds.neurons;
 
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
     let winners_limit = usize::min(12usize, neurons_len);
 
-    let mut neurons_sorted: Vec<(f32, Rc<RefCell<dyn Neuron>>)> = neurons
+    let mut neurons_sorted: Vec<(f32, Rc<RefCell<dyn Neuron>>)> = neurons.into_iter()
         .map(|neuron| (neuron.borrow().activation(), neuron.clone() as Rc<RefCell<dyn Neuron>>))
         .collect();
     neurons_sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
@@ -197,7 +197,7 @@ pub fn prediction_score(
         similarities = similarity::features_target_weights(train, target_id)?;
     }
 
-    for (i, (_neuron_id, neuron)) in &mut test.neurons.iter().enumerate() {
+    for (i, neuron) in &mut test.neurons.iter().enumerate() {
         if i % 100 == 0 { log::info!("prediction iteration: {i}"); }
 
         let mut features: Vec<(u32, DataTypeValue, f32)> = Vec::with_capacity(n_features);

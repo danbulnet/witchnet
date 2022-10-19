@@ -239,7 +239,7 @@ pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
             NeuronID{ id: i as u32, parent_id: neuron_group_id }
         );
         neurons.push(neuron.clone());
-        magds.add_neuron(neuron as Rc<RefCell<dyn Neuron>>).unwrap();
+        magds.add_neuron(neuron as Rc<RefCell<dyn Neuron>>);
     }
     magds.add_neuron_group(df_name, neuron_group_id);
 
