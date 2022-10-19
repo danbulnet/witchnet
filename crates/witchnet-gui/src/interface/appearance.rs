@@ -5,35 +5,27 @@ use bevy_egui::{
         self, 
         Ui,
         Window,
-        Pos2,
         Align2,
-        Rect,
-        Grid
+        Grid,
+        Vec2
     }, 
     EguiContext 
 };
 
 use crate::{
-    resources::appearance::{
-        NeuronAppearance,
-        SensorAppearance,
-        ConnectionAppearance
+    resources::{
+        appearance::{
+            NeuronAppearance,
+            SensorAppearance,
+            ConnectionAppearance,
+            APPEARANCE_X,
+            MIN_APPEARANCE_WIDTH
+        },
+        common::INTERFACE_PADDING
     },
     interface::widgets as w,
     utils
 };
-
-pub(crate) fn setup(
-    mut egui_ctx: ResMut<EguiContext>,
-    mut windows: ResMut<Windows>,
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut images: ResMut<Assets<Image>>,
-) {
-    let window = windows.get_primary_mut().unwrap();
-    window.set_maximized(true);
-}
 
 pub(crate) fn appearance_window(
     mut egui_context: ResMut<EguiContext>,
@@ -43,13 +35,15 @@ pub(crate) fn appearance_window(
     connection_appearance: ResMut<ConnectionAppearance>
 ) {
     let window = windows.get_primary_mut().unwrap();
-    let max_height = 2f32 * window.height() - 50f32;
+    let max_height = window.height();
 
     Window::new("appearance")
-        .anchor(Align2::LEFT_TOP, [150f32, 25f32])
+        .anchor(Align2::LEFT_TOP, [APPEARANCE_X, INTERFACE_PADDING])
         .scroll2([false, true])
-        .fixed_size([100f32, max_height])
+        .fixed_size([MIN_APPEARANCE_WIDTH, max_height])
         .show(egui_context.ctx_mut(), |ui| {
+            ui.set_min_width(MIN_APPEARANCE_WIDTH);
+
             sensor_settings(ui, sensor_appearance);
             ui.separator(); ui.end_row();
 
@@ -57,24 +51,6 @@ pub(crate) fn appearance_window(
             ui.separator(); ui.end_row();
 
             connection_settings(ui, connection_appearance);
-        });
-}
-
-pub(crate) fn data_window(
-    mut egui_context: ResMut<EguiContext>, mut windows: ResMut<Windows>
-) {
-    let window = windows.get_primary_mut().unwrap();
-    let max_height = 2f32 * window.height() - 50f32;
-
-    Window::new("data")
-        .anchor(Align2::LEFT_TOP, [25f32, 25f32])
-        .scroll2([false, true])
-        .fixed_size([100f32, max_height])
-        .show(egui_context.ctx_mut(), |ui| {
-            let load_data_button = ui.button("load data");
-            if load_data_button.clicked() {
-                println!("load_data_button clicked");
-            }
         });
 }
 

@@ -2,7 +2,8 @@ use std::default::Default;
 
 use bevy::prelude::*;
 
-use bevy_egui::egui::Color32;
+pub const MIN_APPEARANCE_WIDTH: f32 = 150f32;
+pub const APPEARANCE_X: f32 = 200f32;
 
 pub struct NeuronAppearance {
     pub show: bool,

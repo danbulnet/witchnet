@@ -1,8 +1,72 @@
-use bevy::prelude::Color;
+use std::{
+    path::{ PathBuf, Path },
+    env
+};
 
-use bevy_egui::egui::{ self, Ui, Widget, Rgba };
+use bevy::prelude::*;
 
-use crate::utils;
+use bevy_egui::egui::{ self, Ui, Widget, Rgba, Color32 };
+
+use rfd::FileDialog;
+
+use crate::{
+    resources::data::{ DataFilePath, DataFileName },
+    utils
+};
+
+pub fn file_button_row(
+    ui: &mut Ui, 
+    label: &str,
+    extensions: &[&str],
+    file_path_res: &mut ResMut<DataFilePath>,
+    file_name_res: &mut ResMut<DataFileName>,
+    file_name_color: Color32
+) {
+    ui.horizontal(|ui| {
+        let load_data_button = ui.button(label);
+        if load_data_button.clicked() {
+            let file_path = FileDialog::new()
+                .add_filter("", extensions)
+                .set_directory(env::current_dir().unwrap())
+                .pick_file();
+
+            let file_name = match &file_path {
+                Some(file_path) => {
+                    match file_path.file_name() {
+                        Some(file_name) => file_name.to_os_string().into_string().ok(),
+                        None => None
+                    }
+                }
+                None => None
+            };
+
+            if let Some(file_name) = file_name {
+                let prepared = if file_name.chars().count() <= 18 {
+                    file_name
+                } else {
+                    let mut file_name = file_name[..file_name.char_indices()
+                        .nth(15).unwrap().0].to_string();
+                    file_name.push_str("...");
+                    file_name
+                };
+                file_path_res.0 = file_path;
+                file_name_res.0 = Some(prepared.to_string());
+            } else {
+                file_path_res.0 = None;
+                file_name_res.0 = None;
+            }
+        }
+        match &file_name_res.0 {
+            Some(file_name) => ui.label(
+                egui::RichText::new(file_name).monospace().size(11f32).color(file_name_color)
+            ),
+            None => ui.label(
+                egui::RichText::new("select csv file").monospace().size(11f32).color(Color32::GRAY)
+            ),
+        };
+    });
+    ui.end_row();
+}
 
 pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
     ui.horizontal(|ui| {
