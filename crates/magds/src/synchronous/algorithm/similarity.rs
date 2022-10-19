@@ -9,8 +9,10 @@ use witchnet_common::{
 };
 
 use crate::{
-    simple::magds::MAGDS,
-    algorithm::similarity
+    synchronous::{
+        algorithm::similarity,
+        magds::MAGDS
+    }
 };
 
 pub fn entropy<S: Sensor<DataTypeValue>>(sensor: &S) -> Result<f64> {
@@ -126,7 +128,7 @@ pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<
 
 #[allow(unused_imports)]
 mod tests {
-    use crate::simple::parser;
+    use crate::synchronous::parser;
 
     #[test]
     fn features_target_weights() {

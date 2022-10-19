@@ -1,8 +1,10 @@
 use env_logger;
 
 use magds::{
-    simple::parser,
-    algorithm::prediction
+    synchronous::{
+        algorithm::prediction,
+        parser
+    }
 };
 
 use witchnet_common::{

@@ -24,7 +24,7 @@ use witchnet_common::{
 
 use crate::{
     neuron::simple_neuron::SimpleNeuron,
-    dynamic::{
+    synchronous::{
         magds::MAGDS,
         sensor::SensorConatiner
     }
@@ -276,7 +276,7 @@ mod tests {
         data::DataTypeValue
     };
 
-    use crate::dynamic::magds::MAGDS;
+    use crate::synchronous::magds::MAGDS;
 
     #[test]
     fn vec_parse() {

@@ -11,31 +11,28 @@ use enum_as_inner::EnumAsInner;
 use witchnet_common::{
     neuron::Neuron,
     sensor::Sensor,
-    // sensor_container::SensorContainer
     data::{ DataType, DataTypeValue, DataCategory }
 };
 
-use asa_graphs::neural::graph::ASAGraph;
-
 #[derive(EnumAsInner)]
 pub enum SensorConatiner {
-    Bool(ASAGraph<bool>),
-    U8(ASAGraph<u8>),
-    U16(ASAGraph<u16>),
-    U32(ASAGraph<u32>),
-    U64(ASAGraph<u64>),
-    U128(ASAGraph<u128>),
-    USize(ASAGraph<usize>),
-    I8(ASAGraph<i8>),
-    I16(ASAGraph<i16>),
-    I32(ASAGraph<i32>),
-    I64(ASAGraph<i64>),
-    I128(ASAGraph<i128>),
-    ISize(ASAGraph<isize>),
-    F32(ASAGraph<f32>),
-    F64(ASAGraph<f64>),
-    RcStr(ASAGraph<Rc<str>>),
-    String(ASAGraph<String>)
+    Bool(Box<dyn Sensor<bool>>),
+    U8(Box<dyn Sensor<u8>>),
+    U16(Box<dyn Sensor<u16>>),
+    U32(Box<dyn Sensor<u32>>),
+    U64(Box<dyn Sensor<u64>>),
+    U128(Box<dyn Sensor<u128>>),
+    USize(Box<dyn Sensor<usize>>),
+    I8(Box<dyn Sensor<i8>>),
+    I16(Box<dyn Sensor<i16>>),
+    I32(Box<dyn Sensor<i32>>),
+    I64(Box<dyn Sensor<i64>>),
+    I128(Box<dyn Sensor<i128>>),
+    ISize(Box<dyn Sensor<isize>>),
+    F32(Box<dyn Sensor<f32>>),
+    F64(Box<dyn Sensor<f64>>),
+    RcStr(Box<dyn Sensor<Rc<str>>>),
+    String(Box<dyn Sensor<String>>)
 }
 
 impl Display for SensorConatiner {
@@ -188,55 +185,55 @@ impl Sensor<DataTypeValue> for SensorConatiner {
     fn search(&self, item: &DataTypeValue) -> Option<Rc<RefCell<dyn Neuron>>> {
         match self {
             SensorConatiner::Bool(v) => {
-                Some(v.search(item.as_bool()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_bool()?)
+            },
             SensorConatiner::U8(v) => {
-                Some(v.search(item.as_u8()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u8()?)
+            },
             SensorConatiner::U16(v) => {
-                Some(v.search(item.as_u16()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u16()?)
+            },
             SensorConatiner::U32(v) => {
-                Some(v.search(item.as_u32()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u32()?)
+            },
             SensorConatiner::U64(v) => {
-                Some(v.search(item.as_u64()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u64()?)
+            },
             SensorConatiner::U128(v) => {
-                Some(v.search(item.as_u128()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u128()?)
+            },
             SensorConatiner::USize(v) => {
-                Some(v.search(item.as_u_size()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_u_size()?)
+            },
             SensorConatiner::I8(v) => {
-                Some(v.search(item.as_i8()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i8()?)
+            },
             SensorConatiner::I16(v) => {
-                Some(v.search(item.as_i16()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i16()?)
+            },
             SensorConatiner::I32(v) => {
-                Some(v.search(item.as_i32()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i32()?)
+            },
             SensorConatiner::I64(v) => {
-                Some(v.search(item.as_i64()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i64()?)
+            },
             SensorConatiner::I128(v) => {
-                Some(v.search(item.as_i128()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i128()?)
+            },
             SensorConatiner::ISize(v) => {
-                Some(v.search(item.as_i_size()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_i_size()?)
+            },
             SensorConatiner::F32(v) => {
-                Some(v.search(item.as_f32()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_f32()?)
+            },
             SensorConatiner::F64(v) => {
-                Some(v.search(item.as_f64()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_f64()?)
+            },
             SensorConatiner::RcStr(v) => {
-                Some(v.search(item.as_rc_str()?)? as Rc<RefCell<dyn Neuron>>)
-            }
+                v.search(item.as_rc_str()?)
+            },
             SensorConatiner::String(v) => {
-                Some(v.search(item.as_string()?)? as Rc<RefCell<dyn Neuron>>)
+                v.search(item.as_string()?)
             }
         }
     }
@@ -499,104 +496,104 @@ impl Sensor<DataTypeValue> for SensorConatiner {
     }
 }
 
-impl From<ASAGraph<bool>> for SensorConatiner {
-    fn from(sensor: ASAGraph<bool>) -> SensorConatiner {
+impl From<Box<dyn Sensor<bool>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<bool>>) -> SensorConatiner {
         SensorConatiner::Bool(sensor)
     }
 }
 
-impl From<ASAGraph<i8>> for SensorConatiner {
-    fn from(sensor: ASAGraph<i8>) -> SensorConatiner {
+impl From<Box<dyn Sensor<i8>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<i8>>) -> SensorConatiner {
         SensorConatiner::I8(sensor)
     }
 }
 
-impl From<ASAGraph<i16>> for SensorConatiner {
-    fn from(sensor: ASAGraph<i16>) -> SensorConatiner {
+impl From<Box<dyn Sensor<i16>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<i16>>) -> SensorConatiner {
         SensorConatiner::I16(sensor)
     }
 }
 
-impl From<ASAGraph<i32>> for SensorConatiner {
-    fn from(sensor: ASAGraph<i32>) -> SensorConatiner {
+impl From<Box<dyn Sensor<i32>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<i32>>) -> SensorConatiner {
         SensorConatiner::I32(sensor)
     }
 }
 
-impl From<ASAGraph<i64>> for SensorConatiner {
-    fn from(sensor: ASAGraph<i64>) -> SensorConatiner {
+impl From<Box<dyn Sensor<i64>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<i64>>) -> SensorConatiner {
         SensorConatiner::I64(sensor)
     }
 }
 
-impl From<ASAGraph<i128>> for SensorConatiner {
-    fn from(sensor: ASAGraph<i128>) -> SensorConatiner {
+impl From<Box<dyn Sensor<i128>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<i128>>) -> SensorConatiner {
         SensorConatiner::I128(sensor)
     }
 }
 
-impl From<ASAGraph<isize>> for SensorConatiner {
-    fn from(sensor: ASAGraph<isize>) -> SensorConatiner {
+impl From<Box<dyn Sensor<isize>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<isize>>) -> SensorConatiner {
         SensorConatiner::ISize(sensor)
     }
 }
 
-impl From<ASAGraph<u8>> for SensorConatiner {
-    fn from(sensor: ASAGraph<u8>) -> SensorConatiner {
+impl From<Box<dyn Sensor<u8>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<u8>>) -> SensorConatiner {
         SensorConatiner::U8(sensor)
     }
 }
 
-impl From<ASAGraph<u16>> for SensorConatiner {
-    fn from(sensor: ASAGraph<u16>) -> SensorConatiner {
+impl From<Box<dyn Sensor<u16>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<u16>>) -> SensorConatiner {
         SensorConatiner::U16(sensor)
     }
 }
 
-impl From<ASAGraph<u32>> for SensorConatiner {
-    fn from(sensor: ASAGraph<u32>) -> SensorConatiner {
+impl From<Box<dyn Sensor<u32>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<u32>>) -> SensorConatiner {
         SensorConatiner::U32(sensor)
     }
 }
 
-impl From<ASAGraph<u64>> for SensorConatiner {
-    fn from(sensor: ASAGraph<u64>) -> SensorConatiner {
+impl From<Box<dyn Sensor<u64>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<u64>>) -> SensorConatiner {
         SensorConatiner::U64(sensor)
     }
 }
 
-impl From<ASAGraph<u128>> for SensorConatiner {
-    fn from(sensor: ASAGraph<u128>) -> SensorConatiner {
+impl From<Box<dyn Sensor<u128>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<u128>>) -> SensorConatiner {
         SensorConatiner::U128(sensor)
     }
 }
 
-impl From<ASAGraph<usize>> for SensorConatiner {
-    fn from(sensor: ASAGraph<usize>) -> SensorConatiner {
+impl From<Box<dyn Sensor<usize>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<usize>>) -> SensorConatiner {
         SensorConatiner::USize(sensor)
     }
 }
 
-impl From<ASAGraph<f32>> for SensorConatiner {
-    fn from(sensor: ASAGraph<f32>) -> SensorConatiner {
+impl From<Box<dyn Sensor<f32>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<f32>>) -> SensorConatiner {
         SensorConatiner::F32(sensor)
     }
 }
 
-impl From<ASAGraph<f64>> for SensorConatiner {
-    fn from(sensor: ASAGraph<f64>) -> SensorConatiner {
+impl From<Box<dyn Sensor<f64>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<f64>>) -> SensorConatiner {
         SensorConatiner::F64(sensor)
     }
 }
 
-impl From<ASAGraph<Rc<str>>> for SensorConatiner {
-    fn from(sensor: ASAGraph<Rc<str>>) -> SensorConatiner {
+impl From<Box<dyn Sensor<Rc<str>>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<Rc<str>>>) -> SensorConatiner {
         SensorConatiner::RcStr(sensor)
     }
 }
 
-impl From<ASAGraph<String>> for SensorConatiner {
-    fn from(sensor: ASAGraph<String>) -> SensorConatiner {
+impl From<Box<dyn Sensor<String>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<String>>) -> SensorConatiner {
         SensorConatiner::String(sensor)
     }
 }

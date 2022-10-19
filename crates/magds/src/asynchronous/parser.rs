@@ -9,21 +9,22 @@ use regex::Regex;
 
 use polars::prelude::*;
 
-use asa_graphs::neural::graph::ASAGraph;
+use asa_graphs::neural::{
+    element::Element,
+    graph::ASAGraph
+};
 
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
-    neuron::{ NeuronID, NeuronConnectBilateral },
+    neuron::{ Neuron, NeuronID, NeuronConnectBilateral },
     connection::ConnectionKind,
-    sensor::SensorData,
+    sensor::{ Sensor, SensorData },
     data::{ DataDeductor, DataTypeValue }
 };
 
-use asa_graphs::neural::element::Element;
-
 use crate::{
     neuron::simple_neuron::SimpleNeuron,
-    simple::{
+    synchronous::{
         magds::MAGDS,
         sensor::SensorConatiner
     }
@@ -39,51 +40,63 @@ pub(crate) fn sensor_from_datavec(
             panic!("can't parse vec data type for sensor {name}")
         }
         DataVec::BoolVec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<bool>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt8Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<u8>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt16Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<u16>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<u32>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::UInt64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<u64>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int8Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<i8>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int16Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<i16>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<i32>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Int64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<i64>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Float32Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<f32>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Float64Vec(vec) => {
-            let graph = ASAGraph::<_>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<f64>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
         DataVec::Utf8Vec(vec) => {
-            let graph = ASAGraph::<String>::new_from_vec(new_id, vec);
+            let graph = 
+                ASAGraph::<String>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<String>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
     }
@@ -121,15 +134,15 @@ fn connector_string(
 ) -> (Rc<RefCell<SensorConatiner>>, u32) 
 where 
     PhantomData<String>: DataDeductor, 
-    SensorConatiner: From<ASAGraph<String>>,
+    SensorConatiner: From<Box<dyn Sensor<String>>>,
     DataTypeValue: From<String>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<String>::new(id);
+    let mut sensor = ASAGraph::<String>::new_box(id);
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
             if key == "" { continue }
-
+            
             let neuron_ptr = neurons[i].clone();
 
             if key.starts_with("[") && key.ends_with("]") {
@@ -172,7 +185,9 @@ where
             continue
         }
     }
-    magds.add_sensor(name, Rc::new(RefCell::new(sensor.into())))
+    magds.add_sensor(
+        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<String>>).into()))
+    )
 }
 
 fn connector<T: SensorData>(
@@ -184,15 +199,15 @@ fn connector<T: SensorData>(
 ) -> (Rc<RefCell<SensorConatiner>>, u32)
 where 
     PhantomData<T>: DataDeductor, 
-    SensorConatiner: From<ASAGraph<T>>,
+    SensorConatiner: From<Box<dyn Sensor<T>>>,
     DataTypeValue: From<T>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<T>::new(id);
+    let mut sensor = ASAGraph::<T>::new_box(id);
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
-            let neuron_ptr = neurons[i].clone();
             let element = sensor.insert(key);
+            let neuron_ptr = neurons[i].clone();
             if let Err(e) = Element::connect_bilateral(
                 element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
             ) {
@@ -206,7 +221,9 @@ where
             continue
         }
     }
-    magds.add_sensor(name, Rc::new(RefCell::new(sensor.into())))
+    magds.add_sensor(
+        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<T>>).into()))
+    )
 }
 
 pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
@@ -218,10 +235,11 @@ pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
     let neuron_group_id: u32 = *magds.neuron_group_names.keys().max().unwrap_or(&0) + 1;
     let mut neurons: Vec<Rc<RefCell<SimpleNeuron>>> = Vec::new();
     for i in 1..=df.height() {
-        let neuron = magds.create_neuron(
+        let neuron = SimpleNeuron::new(
             NeuronID{ id: i as u32, parent_id: neuron_group_id }
-        ).unwrap();
-        neurons.push(neuron);
+        );
+        neurons.push(neuron.clone());
+        magds.add_neuron(neuron as Rc<RefCell<dyn Neuron>>).unwrap();
     }
     magds.add_neuron_group(df_name, neuron_group_id);
 
@@ -258,7 +276,7 @@ mod tests {
         data::DataTypeValue
     };
 
-    use crate::simple::magds::MAGDS;
+    use crate::synchronous::magds::MAGDS;
 
     #[test]
     fn vec_parse() {

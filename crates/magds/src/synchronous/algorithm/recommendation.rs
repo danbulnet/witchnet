@@ -3,7 +3,7 @@ use witchnet_common::{
     neuron::Neuron
 };
 
-use crate::simple::magds::MAGDS;
+use crate::synchronous::magds::MAGDS;
 
 pub fn recommend(
     magds: &mut MAGDS, 
@@ -76,8 +76,10 @@ mod tests {
     use witchnet_common::data::DataTypeValue;
 
     use crate::{
-        algorithm::{ recommendation, prediction },
-        simple::parser
+        synchronous::{
+            parser,
+            algorithm::{ recommendation, prediction }
+        }
     };
 
     #[test]

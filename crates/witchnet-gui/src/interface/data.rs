@@ -8,7 +8,7 @@ use bevy_egui::{
     EguiContext 
 };
 
-use magds::simple::magds::MAGDS;
+use magds::synchronous::magds::MAGDS;
 
 use crate::{
     interface::widgets,

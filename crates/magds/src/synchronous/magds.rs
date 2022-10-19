@@ -12,7 +12,7 @@ use witchnet_common::{
     neuron::{ Neuron, NeuronID },
     data::{ DataType, DataTypeValue, DataCategory },
     sensor::Sensor
-};
+    };
 
 use crate::neuron::simple_neuron::SimpleNeuron;
 
@@ -22,7 +22,7 @@ pub struct MAGDS {
     pub(crate) sensors: HashMap<u32, Rc<RefCell<SensorConatiner>>>,
     pub(crate) sensor_names: HashMap<u32, Rc<str>>,
     pub(crate) sensor_ids: HashMap<Rc<str>, Vec<u32>>,
-    pub(crate) neurons: HashMap<NeuronID, Rc<RefCell<SimpleNeuron>>>,
+    pub(crate) neurons: HashMap<NeuronID, Rc<RefCell<dyn Neuron>>>,
     pub(crate) neuron_group_names: HashMap<u32, Rc<str>>,
     pub(crate) neuron_group_ids: HashMap<Rc<str>, Vec<u32>>
 }
@@ -59,25 +59,26 @@ impl MAGDS {
         let new_id: u32 = *self.sensors.keys().max().unwrap_or(&0) + 1;
 
         let sensor = match data_type {
-            DataType::Bool => SensorConatiner::Bool(ASAGraph::<bool>::new(new_id)),
-            DataType::U8 => SensorConatiner::U8(ASAGraph::<u8>::new(new_id)),
-            DataType::U16 => SensorConatiner::U16(ASAGraph::<u16>::new(new_id)),
-            DataType::U32 => SensorConatiner::U32(ASAGraph::<u32>::new(new_id)),
-            DataType::U64 => SensorConatiner::U64(ASAGraph::<u64>::new(new_id)),
-            DataType::U128 => SensorConatiner::U128(ASAGraph::<u128>::new(new_id)),
-            DataType::USize => SensorConatiner::USize(ASAGraph::<usize>::new(new_id)),
-            DataType::I8 => SensorConatiner::I8(ASAGraph::<i8>::new(new_id)),
-            DataType::I16 => SensorConatiner::I16(ASAGraph::<i16>::new(new_id)),
-            DataType::I32 => SensorConatiner::I32(ASAGraph::<i32>::new(new_id)),
-            DataType::I64 => SensorConatiner::I64(ASAGraph::<i64>::new(new_id)),
-            DataType::I128 => SensorConatiner::I128(ASAGraph::<i128>::new(new_id)),
-            DataType::ISize => SensorConatiner::ISize(ASAGraph::<isize>::new(new_id)),
-            DataType::F32 => SensorConatiner::F32(ASAGraph::<f32>::new(new_id)),
-            DataType::F64 => SensorConatiner::F64(ASAGraph::<f64>::new(new_id)),
-            DataType::RcStr => SensorConatiner::RcStr(ASAGraph::<Rc<str>>::new(new_id)),
-            DataType::String => SensorConatiner::String(ASAGraph::<String>::new(new_id)),
+            DataType::Bool => SensorConatiner::Bool(ASAGraph::<bool>::new_box(new_id)),
+            DataType::U8 => SensorConatiner::U8(ASAGraph::<u8>::new_box(new_id)),
+            DataType::U16 => SensorConatiner::U16(ASAGraph::<u16>::new_box(new_id)),
+            DataType::U32 => SensorConatiner::U32(ASAGraph::<u32>::new_box(new_id)),
+            DataType::U64 => SensorConatiner::U64(ASAGraph::<u64>::new_box(new_id)),
+            DataType::U128 => SensorConatiner::U128(ASAGraph::<u128>::new_box(new_id)),
+            DataType::USize => SensorConatiner::USize(ASAGraph::<usize>::new_box(new_id)),
+            DataType::I8 => SensorConatiner::I8(ASAGraph::<i8>::new_box(new_id)),
+            DataType::I16 => SensorConatiner::I16(ASAGraph::<i16>::new_box(new_id)),
+            DataType::I32 => SensorConatiner::I32(ASAGraph::<i32>::new_box(new_id)),
+            DataType::I64 => SensorConatiner::I64(ASAGraph::<i64>::new_box(new_id)),
+            DataType::I128 => SensorConatiner::I128(ASAGraph::<i128>::new_box(new_id)),
+            DataType::ISize => SensorConatiner::ISize(ASAGraph::<isize>::new_box(new_id)),
+            DataType::F32 => SensorConatiner::F32(ASAGraph::<f32>::new_box(new_id)),
+            DataType::F64 => SensorConatiner::F64(ASAGraph::<f64>::new_box(new_id)),
+            DataType::RcStr => SensorConatiner::RcStr(ASAGraph::<Rc<str>>::new_box(new_id)),
+            DataType::String => SensorConatiner::String(ASAGraph::<String>::new_box(new_id)),
             DataType::Unknown => panic!("unknown data type sensor is not allowed")
         };
+
         let sensor_ptr = Rc::new(RefCell::new(sensor));
         self.sensors.insert(new_id, sensor_ptr.clone());
 
@@ -182,11 +183,11 @@ impl MAGDS {
             .deactivate_sensor();
         Ok(())
     }
-
+    
     pub fn create_neuron(
         &mut self, id: NeuronID
-    ) -> Option<Rc<RefCell<SimpleNeuron>>> {
-        let neuron = SimpleNeuron::new(id);
+    ) -> Option<Rc<RefCell<dyn Neuron>>> {
+        let neuron = SimpleNeuron::new(id) as Rc<RefCell<dyn Neuron>>;
         let neuron_id = neuron.borrow().id().clone();
         if let Err(_) = self.neurons.try_insert(neuron_id.clone(), neuron.clone()) {
             log::error!("neuron id: {:?} already exsists in magds, skipping", neuron_id);
@@ -197,8 +198,8 @@ impl MAGDS {
     }
     
     pub fn add_neuron(
-        &mut self, neuron: Rc<RefCell<SimpleNeuron>>
-    ) -> Option<Rc<RefCell<SimpleNeuron>>> {
+        &mut self, neuron: Rc<RefCell<dyn Neuron>>
+    ) -> Option<Rc<RefCell<dyn Neuron>>> {
         let neuron_id = neuron.borrow().id().clone();
         if let Err(_) = self.neurons.try_insert(neuron_id.clone(), neuron.clone()) {
             log::error!("neuron id: {:?} already exsists in magds, skipping", neuron_id);
@@ -208,11 +209,11 @@ impl MAGDS {
         }
     }
 
-    pub fn neuron_from_id(&self, id: &NeuronID) -> Option<Rc<RefCell<SimpleNeuron>>> {
+    pub fn neuron_from_id(&self, id: &NeuronID) -> Option<Rc<RefCell<dyn Neuron>>> {
         Some(self.neurons.get(id)?.clone())
     }
 
-    pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Rc<RefCell<SimpleNeuron>>> {
+    pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Rc<RefCell<dyn Neuron>>> {
         Some(self.neurons.get(&NeuronID::new(id, parent_id))?.clone())
     }
 
@@ -294,10 +295,10 @@ mod tests {
     fn create_magds() {
         let mut magds = MAGDS::new();
 
-        let mut sensor_1 = ASAGraph::<i32>::new(1);
+        let mut sensor_1 = ASAGraph::<i32>::new_box(1) as Box<dyn Sensor<i32>>;
         for i in 1..=9 { sensor_1.insert(&i); }
 
-        let mut sensor_2 = ASAGraph::<String>::new(2);
+        let mut sensor_2 = ASAGraph::<String, 3>::new_box(2) as Box<dyn Sensor<String>>;
         for i in 1..=9 { sensor_2.insert(&i.to_string()); }
 
         let parent_id = 1u32;
@@ -408,8 +409,8 @@ mod tests {
 
         sl58.borrow_mut().deactivate(false, false);
         assert_eq!(sl58.borrow().activation(), 0.0_f32);
-        // assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
         assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 1_f32);
+        // assert_eq!(neuron_15.borrow().activation(), 1.0_f32 / 7_f32);
 
         sl58.borrow_mut().deactivate(false, true);
         assert_eq!(sl58.borrow().activation(), 0.0_f32);

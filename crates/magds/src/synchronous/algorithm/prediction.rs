@@ -18,8 +18,10 @@ use polars::{
 };
 
 use crate::{
-    simple::magds::MAGDS,
-    algorithm::similarity
+    synchronous::{
+        algorithm::similarity,
+        magds::MAGDS
+    }
 };
 
 pub fn predict(
@@ -348,9 +350,9 @@ mod tests {
     use test_log::test;
 
     #[allow(unused_imports)]
-    use crate::{
+    use crate::synchronous::{
         algorithm::prediction,
-        simple::parser
+        parser
     };
 
     #[test]

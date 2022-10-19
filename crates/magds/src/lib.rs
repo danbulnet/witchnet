@@ -3,9 +3,8 @@
 #![feature(map_try_insert)]
 
 pub mod neuron;
-pub mod dynamic;
-pub mod simple;
-pub mod algorithm;
+pub mod synchronous;
+pub mod asynchronous;
 
 #[cfg(test)]
 mod tests {
