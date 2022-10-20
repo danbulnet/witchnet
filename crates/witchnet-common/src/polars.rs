@@ -1,4 +1,7 @@
-use std::fs::File;
+use std::{
+    fs::File,
+    sync::Arc
+};
 
 use polars::prelude::*;
 
@@ -16,7 +19,7 @@ pub enum DataVec {
     Int64Vec(Vec<i64>),
     Float32Vec(Vec<f32>),
     Float64Vec(Vec<f64>),
-    Utf8Vec(Vec<String>),
+    Utf8Vec(Vec<Arc<str>>),
     Unknown
 }
 
@@ -64,7 +67,7 @@ pub enum DataVecOption {
     Int64Vec(Vec<Option<i64>>),
     Float32Vec(Vec<Option<f32>>),
     Float64Vec(Vec<Option<f64>>),
-    Utf8Vec(Vec<Option<String>>),
+    Utf8Vec(Vec<Option<Arc<str>>>),
     Unknown
 }
 
@@ -156,7 +159,7 @@ pub fn series_to_datavec_skipna(series: &Series) -> PolarsResult<DataVec> {
         )),
         DataType::Utf8 => Ok(DataVec::Utf8Vec(
             series.utf8()?.into_iter()
-                .filter(|x| x.is_some()).map(|x| x.unwrap().to_string()).collect()
+                .filter(|x| x.is_some()).map(|x| Arc::from(x.unwrap())).collect()
         )),
         _ => Ok(DataVec::Unknown)
     }
@@ -176,7 +179,7 @@ pub fn series_to_datavec(series: &Series) -> PolarsResult<DataVecOption> {
         DataType::Float64 => Ok(DataVecOption::Float64Vec(series.f64()?.into_iter().collect())),
         DataType::Utf8 => Ok(DataVecOption::Utf8Vec(
             series.utf8()?.into_iter()
-                .map(|x| match x { Some(y) => Some(y.to_string()), None => None })
+                .map(|x| match x { Some(y) => Some(Arc::from(y)), None => None })
                 .collect()
         )),
         _ => Ok(DataVecOption::Unknown)

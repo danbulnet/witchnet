@@ -1,4 +1,5 @@
 use std::{
+    sync::Arc,
     rc::Rc,
     cell::RefCell,
     marker::PhantomData,
@@ -96,7 +97,7 @@ pub(crate) fn sensor_from_datavec(
         }
         DataVec::Utf8Vec(vec) => {
             let graph = 
-                ASAGraph::<String>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<String>>;
+                ASAGraph::<Arc<str>>::new_box_from_vec(new_id, vec) as Box<dyn Sensor<Arc<str>>>;
             magds.add_sensor(name, Rc::new(RefCell::new(graph.into())))
         }
     }
@@ -129,19 +130,19 @@ fn connector_string(
     magds: &mut MAGDS, 
     name: &str,
     id: u32,
-    vec: &[Option<String>], 
+    vec: &[Option<Arc<str>>], 
     neurons: &[Rc<RefCell<SimpleNeuron>>]
 ) -> (Rc<RefCell<SensorConatiner>>, u32) 
 where 
     PhantomData<String>: DataDeductor, 
-    SensorConatiner: From<Box<dyn Sensor<String>>>,
-    DataTypeValue: From<String>
+    SensorConatiner: From<Box<dyn Sensor<Arc<str>>>>,
+    DataTypeValue: From<Arc<str>>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<String>::new_box(id);
+    let mut sensor = ASAGraph::<Arc<str>>::new_box(id);
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
-            if key == "" { continue }
+            if key.as_ref() == "" { continue }
             
             let neuron_ptr = neurons[i].clone();
 
@@ -151,11 +152,12 @@ where
                     .unwrap()
                     .split(key)
                     .map(|x| {
-                        Regex::new(r#"["']+"#).unwrap()
-                            .split(x)
-                            .filter(|x| *x != "")
-                            .next().unwrap()
-                            .to_string()
+                        Arc::<str>::from(
+                            Regex::new(r#"["']+"#).unwrap()
+                                .split(x)
+                                .filter(|x| *x != "")
+                                .next().unwrap()
+                        )
                     }).collect();
                 for key in key_vec {
                     let element = sensor.insert(&key);
@@ -186,7 +188,7 @@ where
         }
     }
     magds.add_sensor(
-        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<String>>).into()))
+        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<Arc<str>>>).into()))
     )
 }
 
@@ -268,6 +270,8 @@ pub fn magds_from_csv(name: &str, file_path: &str, skip: &[&str]) -> Option<MAGD
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+    
     use polars::datatypes::DataType;
 
     use witchnet_common::{
@@ -284,12 +288,12 @@ mod tests {
         let x_sensor_id = *magds.sensor_ids("x").unwrap().first().unwrap();
         let y_sensor_id = *magds.sensor_ids("y").unwrap().first().unwrap();
         let z_sensor_id = *magds.sensor_ids("z").unwrap().first().unwrap();
-        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::String("b".into())).is_some());
-        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::String("b".into())).is_some());
-        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::String("a".into())).is_some());
-        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::String("b".into())).is_some());
+        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::ArcStr("a".into())).is_some());
+        assert!(magds.sensor_search(x_sensor_id, &DataTypeValue::ArcStr("b".into())).is_some());
+        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::ArcStr("a".into())).is_some());
+        assert!(magds.sensor_search(y_sensor_id, &DataTypeValue::ArcStr("b".into())).is_some());
+        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::ArcStr("a".into())).is_some());
+        assert!(magds.sensor_search(z_sensor_id, &DataTypeValue::ArcStr("b".into())).is_some());
         println!("{magds}");
     }
 
@@ -300,11 +304,11 @@ mod tests {
 
         let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
         let versicolor = 
-            magds.sensor_search(variety_sensor_id, &"Versicolor".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Versicolor").into()).unwrap();
         let setosa = 
-            magds.sensor_search(variety_sensor_id, &"Setosa".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Setosa").into()).unwrap();
         let virginica = 
-            magds.sensor_search(variety_sensor_id, &"Virginica".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Virginica").into()).unwrap();
         assert_eq!(setosa.borrow().counter(), 49);
         assert_eq!(versicolor.borrow().counter(), 50);
         assert_eq!(virginica.borrow().counter(), 50);
@@ -323,11 +327,11 @@ mod tests {
         let sepal_width_sensor_id = *magds.sensor_ids("sepal.width").unwrap().first().unwrap();
 
         let versicolor = 
-            magds.sensor_search(variety_sensor_id, &"Versicolor".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Versicolor").into()).unwrap();
         let setosa = 
-            magds.sensor_search(variety_sensor_id, &"Setosa".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Setosa").into()).unwrap();
         let virginica = 
-            magds.sensor_search(variety_sensor_id, &"Virginica".to_string().into()).unwrap();
+            magds.sensor_search(variety_sensor_id, &Arc::<str>::from("Virginica").into()).unwrap();
         assert_eq!(setosa.borrow().counter(), 49);
         assert_eq!(versicolor.borrow().counter(), 50);
         assert_eq!(virginica.borrow().counter(), 50);
@@ -349,7 +353,7 @@ mod tests {
             } else if id.parent_id == sepal_width_sensor_id {
                 assert_eq!(sensor.borrow().value(), 3.5.into());
             } else if id.parent_id == variety_sensor_id {
-                assert_eq!(sensor.borrow().value(), String::from("Setosa").into());
+                assert_eq!(sensor.borrow().value(), Arc::<str>::from("Setosa").into());
             } else if id.parent_id == sepal_length_sensor_id {
                 panic!()
             } 
@@ -367,7 +371,7 @@ mod tests {
             } else if id.parent_id == sepal_width_sensor_id {
                 assert_eq!(sensor.borrow().value(), 3.0.into());
             } else if id.parent_id == variety_sensor_id {
-                assert_eq!(sensor.borrow().value(), String::from("Setosa").into());
+                assert_eq!(sensor.borrow().value(), Arc::<str>::from("Setosa").into());
             } else if id.parent_id == sepal_length_sensor_id {
                 assert_eq!(sensor.borrow().value(), 4.9.into());
             } 
@@ -393,7 +397,7 @@ mod tests {
         println!("{}", variety_graph.0.borrow());
         let variety_from_magds = magds.sensor(variety_sensor_id).unwrap();
         let versicolor_result = variety_from_magds.borrow().search(
-            &"Versicolor".to_string().into()
+            &Arc::<str>::from("Versicolor").into()
         );
         assert!(versicolor_result.is_some());
         assert_eq!(versicolor_result.unwrap().borrow().counter(), 50);
