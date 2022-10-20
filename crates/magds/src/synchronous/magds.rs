@@ -1,4 +1,5 @@
 use std::{
+    sync::Arc,
     rc::Rc,
     cell::RefCell,
     collections::HashMap,
@@ -74,7 +75,7 @@ impl MAGDS {
             DataType::ISize => SensorConatiner::ISize(ASAGraph::<isize>::new_box(new_id)),
             DataType::F32 => SensorConatiner::F32(ASAGraph::<f32>::new_box(new_id)),
             DataType::F64 => SensorConatiner::F64(ASAGraph::<f64>::new_box(new_id)),
-            DataType::RcStr => SensorConatiner::RcStr(ASAGraph::<Rc<str>>::new_box(new_id)),
+            DataType::ArcStr => SensorConatiner::ArcStr(ASAGraph::<Arc<str>>::new_box(new_id)),
             DataType::String => SensorConatiner::String(ASAGraph::<String>::new_box(new_id)),
             DataType::Unknown => panic!("unknown data type sensor is not allowed")
         };
@@ -267,6 +268,7 @@ impl Display for MAGDS {
 #[cfg(test)]
 mod tests {
     use std::{
+        sync::Arc,
         rc::Rc,
         cell::RefCell
     };
@@ -364,8 +366,9 @@ mod tests {
         let neuron_1_from_magds = magds.neuron(1, 1).unwrap();
         assert_eq!(neuron_1_from_magds.borrow().id(), neuron_1_id);
 
-        let (_rcstr_test_sensor, rcstr_test_id) = magds.create_sensor("rcstr_test", DataType::RcStr);
-        let text: Rc<str> = Rc::from("test");
+        let (_rcstr_test_sensor, rcstr_test_id) = 
+            magds.create_sensor("rcstr_test", DataType::ArcStr);
+        let text: Arc<str> = Arc::from("test");
         let sensor_element = magds.sensor_insert(rcstr_test_id, &text.into());
         assert!(sensor_element.is_some())
     }

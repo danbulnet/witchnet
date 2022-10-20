@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    sync::Arc,
     rc::Rc,
     cell::RefCell,
     str::FromStr
@@ -167,7 +168,7 @@ pub fn predict_weighted(
             let predicted_value_str = values_sorted.into_iter().next_back()?.0;
             let predicted_value: DataTypeValue = match target_data_type {
                 DataType::Bool => bool::from_str(&predicted_value_str).ok()?.into(),
-                DataType::RcStr => Rc::<str>::from(predicted_value_str).into(),
+                DataType::ArcStr => Arc::<str>::from(predicted_value_str).into(),
                 DataType::String => predicted_value_str.to_string().into(),
                 _ => { log::error!("classified as not numerical data so shouldn't be here"); return None }
             };

@@ -1,5 +1,5 @@
 use std::{
-    rc::Rc,
+    sync::Arc,
     marker::PhantomData,
     fmt::{ Display, Formatter, Result as FmtResult }
 };
@@ -56,7 +56,7 @@ impl_numerical! {
     f32, f64
 }
 
-impl_categorical! { String, Rc<str>, bool }
+impl_categorical! { String, Arc<str>, bool }
 
 #[derive(Debug, PartialEq, Eq, EnumAsInner)]
 pub enum DataType {
@@ -75,7 +75,7 @@ pub enum DataType {
     ISize,
     F32,
     F64,
-    RcStr,
+    ArcStr,
     String,
     Unknown
 }
@@ -97,7 +97,7 @@ pub enum DataTypeValue {
     ISize(isize),
     F32(f32),
     F64(f64),
-    RcStr(Rc<str>),
+    ArcStr(Arc<str>),
     String(String),
     Unknown
 }
@@ -124,7 +124,7 @@ impl DataTypeValue {
             DataTypeValue::ISize(v) => Some(*v as f64),
             DataTypeValue::F32(v) => Some(*v as f64),
             DataTypeValue::F64(v) => Some(*v as f64),
-            DataTypeValue::RcStr(_) => None,
+            DataTypeValue::ArcStr(_) => None,
             DataTypeValue::String(_) => None,
             DataTypeValue::Unknown => None
         }
@@ -147,7 +147,7 @@ impl DataTypeValue {
             DataTypeValue::ISize(v) => v.to_string(),
             DataTypeValue::F32(v) => v.to_string(),
             DataTypeValue::F64(v) => v.to_string(),
-            DataTypeValue::RcStr(v) => v.to_string(),
+            DataTypeValue::ArcStr(v) => v.to_string(),
             DataTypeValue::String(v) => v.clone(),
             DataTypeValue::Unknown => String::from("")
         }
@@ -170,7 +170,7 @@ impl DataTypeValue {
             DataTypeValue::ISize(v) => vec![DataTypeValue::ISize(*v)],
             DataTypeValue::F32(v) => vec![DataTypeValue::F32(*v)],
             DataTypeValue::F64(v) => vec![DataTypeValue::F64(*v)],
-            DataTypeValue::RcStr(key) => {
+            DataTypeValue::ArcStr(key) => {
                 let key = key.to_string();
                 if key.starts_with("[") && key.ends_with("]") {
                     let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
@@ -186,7 +186,7 @@ impl DataTypeValue {
                             DataTypeValue::String(string.into())
                         }).collect()
                 } else {
-                    vec![DataTypeValue::RcStr(key.into())]
+                    vec![DataTypeValue::ArcStr(key.into())]
                 }
             },
             DataTypeValue::String(key) => {
@@ -243,7 +243,7 @@ impl From<&DataTypeValue> for DataCategory {
             DataTypeValue::ISize(_) => DataCategory::Numerical,
             DataTypeValue::F32(_) => DataCategory::Numerical,
             DataTypeValue::F64(_) => DataCategory::Numerical,
-            DataTypeValue::RcStr(_) => DataCategory::Categorical,
+            DataTypeValue::ArcStr(_) => DataCategory::Categorical,
             DataTypeValue::String(_) => DataCategory::Categorical,
             DataTypeValue::Unknown => DataCategory::Categorical
         }
@@ -268,7 +268,7 @@ impl From<&DataTypeValue> for DataType {
             DataTypeValue::ISize(_) => DataType::ISize,
             DataTypeValue::F32(_) => DataType::F32,
             DataTypeValue::F64(_) => DataType::F64,
-            DataTypeValue::RcStr(_) => DataType::RcStr,
+            DataTypeValue::ArcStr(_) => DataType::ArcStr,
             DataTypeValue::String(_) => DataType::String,
             DataTypeValue::Unknown => DataType::Unknown
         }
@@ -324,8 +324,8 @@ impl Distance for DataTypeValue {
             DataTypeValue::F64(lhs) => {
                 (*lhs as f64 - v.to_f64().unwrap()).abs()
             }
-            DataTypeValue::RcStr(lhs) => {
-                match v.as_rc_str() { 
+            DataTypeValue::ArcStr(lhs) => {
+                match v.as_arc_str() { 
                     Some(rhs) => if *lhs == *rhs { 0.0 } else { 1.0 },
                     None => match v.as_string() {
                         Some(rhs) => if lhs.to_string() == *rhs { 0.0 } else { 1.0 },
@@ -336,7 +336,7 @@ impl Distance for DataTypeValue {
             DataTypeValue::String(lhs) => {
                 match v.as_string() { 
                     Some(rhs) => if *lhs == *rhs { 0.0 } else { 1.0 },
-                    None => match v.as_rc_str() {
+                    None => match v.as_arc_str() {
                         Some(rhs) => if *lhs == rhs.to_string() { 0.0 } else { 1.0 },
                         None => 1.0
                     }
@@ -394,8 +394,8 @@ impl Distance for DataTypeValue {
             DataTypeValue::F64(lhs) => {
                 Comparable((*lhs as f64 - v.to_f64().unwrap()).abs())
             }
-            DataTypeValue::RcStr(lhs) => {
-                match v.as_rc_str() { 
+            DataTypeValue::ArcStr(lhs) => {
+                match v.as_arc_str() { 
                     Some(rhs) => if *lhs == *rhs { Comparable(0.0) } else { Incomparable },
                     None => match v.as_string() {
                         Some(rhs) => {
@@ -408,7 +408,7 @@ impl Distance for DataTypeValue {
             DataTypeValue::String(lhs) => {
                 match v.as_string() { 
                     Some(rhs) => if *lhs == *rhs { Comparable(0.0) } else { Incomparable },
-                    None => match v.as_rc_str() {
+                    None => match v.as_arc_str() {
                         Some(rhs) => {
                             if *lhs == rhs.to_string() { Comparable(0.0) } else { Incomparable }
                         }
@@ -481,8 +481,8 @@ impl From<f64> for DataTypeValue {
     fn from(v: f64) -> DataTypeValue { DataTypeValue::F64(v) } 
 }
 
-impl From<Rc<str>> for DataTypeValue { 
-    fn from(v: Rc<str>) -> DataTypeValue { DataTypeValue::RcStr(v) } 
+impl From<Arc<str>> for DataTypeValue { 
+    fn from(v: Arc<str>) -> DataTypeValue { DataTypeValue::ArcStr(v) } 
 }
 
 impl From<String> for DataTypeValue { 
@@ -549,8 +549,8 @@ impl From<DataTypeValue> for Option<f64> {
     fn from(v: DataTypeValue) -> Option<f64> { v.into_f64().ok() } 
 }
 
-impl From<DataTypeValue> for Option<Rc<str>> { 
-    fn from(v: DataTypeValue) -> Option<Rc<str>> { v.into_rc_str().ok() } 
+impl From<DataTypeValue> for Option<Arc<str>> { 
+    fn from(v: DataTypeValue) -> Option<Arc<str>> { v.into_arc_str().ok() } 
 }
 
 impl From<DataTypeValue> for Option<String> { 
@@ -577,7 +577,7 @@ impl<'a> DataTypeValueStr<'a> {
             DataType::ISize => DataTypeValue::ISize(self.0.parse().ok()?),
             DataType::F32 => DataTypeValue::F32(self.0.parse().ok()?),
             DataType::F64 => DataTypeValue::F64(self.0.parse().ok()?),
-            DataType::RcStr => DataTypeValue::RcStr(self.0.into()),
+            DataType::ArcStr => DataTypeValue::ArcStr(self.0.into()),
             DataType::String => DataTypeValue::String(self.0.parse().ok()?),
             DataType::Unknown => return None
         };
@@ -602,7 +602,7 @@ impl !UnknownDataTypeMarker for i128 {}
 impl !UnknownDataTypeMarker for isize {}
 impl !UnknownDataTypeMarker for f32 {}
 impl !UnknownDataTypeMarker for f64 {}
-impl !UnknownDataTypeMarker for Rc<str> {}
+impl !UnknownDataTypeMarker for Arc<str> {}
 impl !UnknownDataTypeMarker for String {}
 
 impl !UnknownDataTypeMarker for PhantomData<bool> {}
@@ -620,7 +620,7 @@ impl !UnknownDataTypeMarker for PhantomData<i128> {}
 impl !UnknownDataTypeMarker for PhantomData<isize> {}
 impl !UnknownDataTypeMarker for PhantomData<f32> {}
 impl !UnknownDataTypeMarker for PhantomData<f64> {}
-impl !UnknownDataTypeMarker for PhantomData<Rc<str>> {}
+impl !UnknownDataTypeMarker for PhantomData<Arc<str>> {}
 impl !UnknownDataTypeMarker for PhantomData<String> {}
 
 pub trait DataDeductor { 
@@ -703,8 +703,8 @@ impl DataDeductor for f64 {
     fn data_category(&self) -> DataCategory { DataCategory::Numerical }
 }
 
-impl DataDeductor for Rc<str> {
-    fn data_type(&self) -> DataType { DataType::RcStr }
+impl DataDeductor for Arc<str> {
+    fn data_type(&self) -> DataType { DataType::ArcStr }
     fn data_category(&self) -> DataCategory { DataCategory::Categorical }
 }
 
@@ -788,8 +788,8 @@ impl DataDeductor for PhantomData<f64> {
     fn data_category(&self) -> DataCategory { DataCategory::Numerical }
 }
 
-impl DataDeductor for PhantomData<Rc<str>> {
-    fn data_type(&self) -> DataType { DataType::RcStr }
+impl DataDeductor for PhantomData<Arc<str>> {
+    fn data_type(&self) -> DataType { DataType::ArcStr }
     fn data_category(&self) -> DataCategory { DataCategory::Categorical }
 }
 
@@ -823,9 +823,9 @@ mod tests {
         assert_eq!(x.distance(&y), 1.0f64);
 
         let x: DataTypeValue = "1.0f32".to_string().into();
-        let y: DataTypeValue = Rc::<str>::from("1.0f32").into();
+        let y: DataTypeValue = Arc::<str>::from("1.0f32").into();
         assert_eq!(x.distance(&y), 0.0f64);
-        let y: DataTypeValue = Rc::<str>::from("1.1f32").into();
+        let y: DataTypeValue = Arc::<str>::from("1.1f32").into();
         assert_eq!(x.distance(&y), 1.0f64);
 
         let x: DataTypeValue = 1.0f32.into();

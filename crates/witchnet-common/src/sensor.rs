@@ -1,4 +1,5 @@
 use std::{
+    sync::Arc,
     rc::Rc,
     cell::RefCell,
     fmt::Display,
@@ -86,7 +87,7 @@ impl_sensor_data_numeric! {
 }
 
 impl_sensor_data_categoric! {
-    String, Rc<str>, bool
+    String, Arc<str>, bool
 }
 
 impl SensorData for DataTypeValue {

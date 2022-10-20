@@ -200,20 +200,20 @@ mod tests {
 
     #[test]
     fn classification() {
-        let y_rcstr_ref = vec![
-            DataTypeValue::RcStr("1.0".into()),
-            DataTypeValue::RcStr("2.0".into()), 
-            DataTypeValue::RcStr("3.0".into())
+        let y_arcstr_ref = vec![
+            DataTypeValue::ArcStr("1.0".into()),
+            DataTypeValue::ArcStr("2.0".into()), 
+            DataTypeValue::ArcStr("3.0".into())
         ];
-        let y_rcstr_pred = vec![
-            DataTypeValue::RcStr("1.0".into()), 
-            DataTypeValue::RcStr("2.5".into()), 
-            DataTypeValue::RcStr("5.0".into())
+        let y_arcstr_pred = vec![
+            DataTypeValue::ArcStr("1.0".into()), 
+            DataTypeValue::ArcStr("2.5".into()), 
+            DataTypeValue::ArcStr("5.0".into())
         ];
         let probas = vec![0.5, 1.0, 0.8];
 
         let performace = SupervisedPerformance::classification(
-            y_rcstr_ref, y_rcstr_pred, probas
+            y_arcstr_ref, y_arcstr_pred, probas
         ).unwrap();
 
         let accuracy_result = performace.accuracy().unwrap();

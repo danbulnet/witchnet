@@ -1,6 +1,7 @@
 use std::{
     fmt::{ Display, Formatter, Result as FmtResult },
     rc::Rc,
+    sync::Arc,
     cell::RefCell
 };
 
@@ -31,7 +32,7 @@ pub enum SensorConatiner {
     ISize(Box<dyn Sensor<isize>>),
     F32(Box<dyn Sensor<f32>>),
     F64(Box<dyn Sensor<f64>>),
-    RcStr(Box<dyn Sensor<Rc<str>>>),
+    ArcStr(Box<dyn Sensor<Arc<str>>>),
     String(Box<dyn Sensor<String>>)
 }
 
@@ -53,7 +54,7 @@ impl Display for SensorConatiner {
             SensorConatiner::ISize(v) => write!(f, "{v}"),
             SensorConatiner::F32(v) => write!(f, "{v}"),
             SensorConatiner::F64(v) => write!(f, "{v}"),
-            SensorConatiner::RcStr(v) => write!(f, "{v}"),
+            SensorConatiner::ArcStr(v) => write!(f, "{v}"),
             SensorConatiner::String(v) => write!(f, "{v}"),
         }
     }
@@ -77,7 +78,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.id(),
             SensorConatiner::F32(v) => v.id(),
             SensorConatiner::F64(v) => v.id(),
-            SensorConatiner::RcStr(v) => v.id(),
+            SensorConatiner::ArcStr(v) => v.id(),
             SensorConatiner::String(v) => v.id()
         }
     }
@@ -99,7 +100,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.data_type(),
             SensorConatiner::F32(v) => v.data_type(),
             SensorConatiner::F64(v) => v.data_type(),
-            SensorConatiner::RcStr(v) => v.data_type(),
+            SensorConatiner::ArcStr(v) => v.data_type(),
             SensorConatiner::String(v) => v.data_type()
         }
     }
@@ -121,7 +122,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.data_category(),
             SensorConatiner::F32(v) => v.data_category(),
             SensorConatiner::F64(v) => v.data_category(),
-            SensorConatiner::RcStr(v) => v.data_category(),
+            SensorConatiner::ArcStr(v) => v.data_category(),
             SensorConatiner::String(v) => v.data_category()
         }
     }
@@ -173,8 +174,8 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::F64(v) => {
                 v.insert(item.as_f64().unwrap())
             },
-            SensorConatiner::RcStr(v) => {
-                v.insert(item.as_rc_str().unwrap())
+            SensorConatiner::ArcStr(v) => {
+                v.insert(item.as_arc_str().unwrap())
             },
             SensorConatiner::String(v) => {
                 v.insert(item.as_string().unwrap())
@@ -229,8 +230,8 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::F64(v) => {
                 v.search(item.as_f64()?)
             },
-            SensorConatiner::RcStr(v) => {
-                v.search(item.as_rc_str()?)
+            SensorConatiner::ArcStr(v) => {
+                v.search(item.as_arc_str()?)
             },
             SensorConatiner::String(v) => {
                 v.search(item.as_string()?)
@@ -321,9 +322,9 @@ impl Sensor<DataTypeValue> for SensorConatiner {
                     item.as_f64().unwrap(), signal, propagate_horizontal, propagate_vertical
                 )
             },
-            SensorConatiner::RcStr(v) => {
+            SensorConatiner::ArcStr(v) => {
                 v.activate(
-                    item.as_rc_str().unwrap(), signal, propagate_horizontal, propagate_vertical
+                    item.as_arc_str().unwrap(), signal, propagate_horizontal, propagate_vertical
                 )
             },
             SensorConatiner::String(v) => {
@@ -416,9 +417,9 @@ impl Sensor<DataTypeValue> for SensorConatiner {
                     item.as_f64().unwrap(), propagate_horizontal, propagate_vertical
                 )
             },
-            SensorConatiner::RcStr(v) => {
+            SensorConatiner::ArcStr(v) => {
                 v.deactivate(
-                    item.as_rc_str().unwrap(), propagate_horizontal, propagate_vertical
+                    item.as_arc_str().unwrap(), propagate_horizontal, propagate_vertical
                 )
             },
             SensorConatiner::String(v) => {
@@ -446,7 +447,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.deactivate_sensor(),
             SensorConatiner::F32(v) => v.deactivate_sensor(),
             SensorConatiner::F64(v) => v.deactivate_sensor(),
-            SensorConatiner::RcStr(v) => v.deactivate_sensor(),
+            SensorConatiner::ArcStr(v) => v.deactivate_sensor(),
             SensorConatiner::String(v) => v.deactivate_sensor()
         }
     }
@@ -468,7 +469,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.neurons(),
             SensorConatiner::F32(v) => v.neurons(),
             SensorConatiner::F64(v) => v.neurons(),
-            SensorConatiner::RcStr(v) => v.neurons(),
+            SensorConatiner::ArcStr(v) => v.neurons(),
             SensorConatiner::String(v) => v.neurons()
         }
     }
@@ -490,7 +491,7 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             SensorConatiner::ISize(v) => v.values().into_iter().map(|x| x.into()).collect(),
             SensorConatiner::F32(v) => v.values().into_iter().map(|x| x.into()).collect(),
             SensorConatiner::F64(v) => v.values().into_iter().map(|x| x.into()).collect(),
-            SensorConatiner::RcStr(v) => v.values().into_iter().map(|x| x.into()).collect(),
+            SensorConatiner::ArcStr(v) => v.values().into_iter().map(|x| x.into()).collect(),
             SensorConatiner::String(v) => v.values().into_iter().map(|x| x.into()).collect()
         }
     }
@@ -586,9 +587,9 @@ impl From<Box<dyn Sensor<f64>>> for SensorConatiner {
     }
 }
 
-impl From<Box<dyn Sensor<Rc<str>>>> for SensorConatiner {
-    fn from(sensor: Box<dyn Sensor<Rc<str>>>) -> SensorConatiner {
-        SensorConatiner::RcStr(sensor)
+impl From<Box<dyn Sensor<Arc<str>>>> for SensorConatiner {
+    fn from(sensor: Box<dyn Sensor<Arc<str>>>) -> SensorConatiner {
+        SensorConatiner::ArcStr(sensor)
     }
 }
 
