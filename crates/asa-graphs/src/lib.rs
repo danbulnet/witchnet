@@ -7,6 +7,7 @@
 
 pub mod simple;
 pub mod neural;
+pub mod neural_async;
 
 #[cfg(test)]
 mod tests {

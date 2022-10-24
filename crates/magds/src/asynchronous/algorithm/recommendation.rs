@@ -2,7 +2,7 @@ use witchnet_common::{
     data::{ DataTypeValue, DataCategory }
 };
 
-use crate::synchronous::magds::MAGDS;
+use crate::asynchronous::magds::MAGDS;
 
 pub fn recommend(
     magds: &mut MAGDS, 
@@ -51,7 +51,7 @@ pub fn recommend_weighted(
                 }
             }
         };
-        let max_activation = sensor.borrow_mut().activate(*weight, fuzzy, true);
+        let max_activation = sensor.write().unwrap().activate(*weight, fuzzy, true);
         max_activation_sum += max_activation;
     }
 
@@ -61,7 +61,12 @@ pub fn recommend_weighted(
     if neurons_len == 0 { return None }
 
     let mut values_sorted: Vec<(DataTypeValue, f32)> = neurons.into_iter()
-        .map(|neuron| (neuron.borrow().explain_one(target), neuron.borrow().activation() / max_activation_sum))
+        .map(
+            |neuron| (
+                neuron.read().unwrap().explain_one(target), 
+                neuron.read().unwrap().activation() / max_activation_sum
+            )
+        )
         .filter(|(target, _activation)| target.is_some())
         .map(|(target, activation)| (target.unwrap(), activation))
         .collect();
@@ -75,7 +80,7 @@ mod tests {
     use witchnet_common::data::DataTypeValue;
 
     use crate::{
-        synchronous::{
+        asynchronous::{
             parser,
             algorithm::{ recommendation, prediction }
         }

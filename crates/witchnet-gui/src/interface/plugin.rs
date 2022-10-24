@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use bevy_egui::{ EguiPlugin, EguiContext };
 
-// use magds::asynchronous::magds::MAGDS;
+use magds::asynchronous::magds::MAGDS;
 
 use crate::{
     resources::{

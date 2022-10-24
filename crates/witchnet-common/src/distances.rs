@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use num_traits::ToPrimitive;
 
@@ -57,7 +57,7 @@ macro_rules! impl_distance_categorical {
     }
 }
 
-impl_distance_categorical! { Rc<str>, String, &str }
+impl_distance_categorical! { Arc<str>, String, &str }
 
 #[cfg(test)]
 mod tests {

@@ -1,5 +1,5 @@
 use std::{
-    sync::Arc,
+    sync::{ Arc, RwLock },
     rc::Rc,
     cell::RefCell,
     fmt::Display,
@@ -17,7 +17,7 @@ use dyn_clone::DynClone;
 
 use crate::{
     data::{ DataCategory, DataType, DataTypeValue, DataDeductor, UnknownDataTypeMarker },
-    neuron::Neuron,
+    neuron::{ Neuron, NeuronAsync },
     distances::Distance
 };
 
@@ -160,6 +160,38 @@ pub trait Sensor<D: SensorData>: Any + Display {
     fn deactivate_sensor(&mut self);
 
     fn neurons(&self) -> Vec<Rc<RefCell<dyn Neuron>>>;
+
+    fn values(&self) -> Vec<D>;
+
+    // fn iterator(&self) -> Vec<D>;
+}
+
+pub trait SensorAsync<D: SensorData>: Any + Display {
+    fn id(&self) -> u32;
+
+    fn data_type(&self) -> DataType;
+
+    fn data_category(&self) -> DataCategory;
+
+    fn insert(&mut self, item: &D) -> Arc<RwLock<dyn NeuronAsync>>;
+    
+    fn search(&self, item: &D) -> Option<Arc<RwLock<dyn NeuronAsync>>>;
+
+    fn activate(
+        &mut self, 
+        item: &D, 
+        signal: f32, 
+        propagate_horizontal: bool, 
+        propagate_vertical: bool
+    ) -> Result<f32>;
+    
+    fn deactivate(
+        &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool
+    ) -> Result<()>;
+
+    fn deactivate_sensor(&mut self);
+
+    fn neurons(&self) -> Vec<Arc<RwLock<dyn NeuronAsync>>>;
 
     fn values(&self) -> Vec<D>;
 
