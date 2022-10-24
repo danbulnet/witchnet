@@ -52,7 +52,7 @@ where
         }
     }
 
-    pub fn new_rc(id: u32) -> Arc<RwLock<ASAGraph<Key, ORDER>>> {
+    pub fn new_arc(id: u32) -> Arc<RwLock<ASAGraph<Key, ORDER>>> {
         Arc::new(RwLock::new(ASAGraph::new(id)))
     }
 
@@ -274,29 +274,32 @@ where
     }
 
     fn set_extrema(&mut self, element: &Arc<RwLock<Element<Key, ORDER>>>) {
-        let key = &element.read().unwrap().key;
         let key_min = &self.key_min;
         let key_max = &self.key_max;
+
         let mut should_update_weights = false;
-        if key_min.is_none() != key_max.is_none() {
-            panic!("inconsistent extremas: key_min.is_none() != key_max.is_none()")
-        } else if self.key_min.is_none() || self.key_max.is_none() {
-            self.key_min = Some(*dyn_clone::clone_box(key));
-            self.key_max = Some(*dyn_clone::clone_box(key));
-            self.element_min = Some(element.clone());
-            self.element_max = Some(element.clone());
-            should_update_weights = true;
-        } else {
-            if key.partial_compare(key_min.as_ref().unwrap()) == Some(Less) {
+        {
+            let key = &element.read().unwrap().key;
+            if key_min.is_none() != key_max.is_none() {
+                panic!("inconsistent extremas: key_min.is_none() != key_max.is_none()")
+            } else if self.key_min.is_none() || self.key_max.is_none() {
                 self.key_min = Some(*dyn_clone::clone_box(key));
-                self.element_min = Some(element.clone());
-                should_update_weights = true;
-            }
-            if key.partial_compare(key_max.as_ref().unwrap()) == Some(Greater) {
                 self.key_max = Some(*dyn_clone::clone_box(key));
+                self.element_min = Some(element.clone());
                 self.element_max = Some(element.clone());
                 should_update_weights = true;
-            }   
+            } else {
+                if key.partial_compare(key_min.as_ref().unwrap()) == Some(Less) {
+                    self.key_min = Some(*dyn_clone::clone_box(key));
+                    self.element_min = Some(element.clone());
+                    should_update_weights = true;
+                }
+                if key.partial_compare(key_max.as_ref().unwrap()) == Some(Greater) {
+                    self.key_max = Some(*dyn_clone::clone_box(key));
+                    self.element_max = Some(element.clone());
+                    should_update_weights = true;
+                }   
+            }
         }
 
         if should_update_weights {
@@ -306,32 +309,25 @@ where
     }
 
     fn update_elements_weights(&mut self, range: f32) {
-        let mut element = match &self.element_min {
+        let mut prev_element_ptr = match &self.element_min {
             Some(e) => e.clone(),
             None => return
         };
-        loop {
-            match &element.write().unwrap().prev {
-                Some(e) => {
-                    let prev_element = e.0.upgrade().unwrap().clone();
-                    let weight = element.read().unwrap().weight(&*prev_element.read().unwrap(), range);
-                    element.write().unwrap().prev = Some((Arc::downgrade(&prev_element), weight));
-                    prev_element.write().unwrap().next = Some((Arc::downgrade(&element), weight));
-                },
-                None => {}
-            };
 
-            let next_element = match &element.read().unwrap().next {
-                Some(e) => {
-                    let next_element = e.0.upgrade().unwrap().clone();
-                    let weight = element.read().unwrap().weight(&*next_element.read().unwrap(), range);
-                    element.write().unwrap().next = Some((Arc::downgrade(&next_element), weight));
-                    next_element.write().unwrap().prev = Some((Arc::downgrade(&element), weight));
-                    next_element
-                },
-                None => return
-            };
-            element = next_element;
+        loop {
+            let next_element_ptr;
+            {
+                let mut prev_element = prev_element_ptr.write().unwrap();
+                let next_element_tuple = prev_element.next.clone();
+                if next_element_tuple.is_none() { break }
+                next_element_ptr = next_element_tuple.unwrap().0.clone().upgrade().unwrap();
+                let mut next_element = next_element_ptr.write().unwrap();
+                let weight = prev_element.weight(&next_element, range);
+                prev_element.next.as_mut().unwrap().1 = weight;
+                next_element.prev.as_mut().unwrap().1 = weight;
+            }
+            prev_element_ptr = next_element_ptr;
+            
         }
     }
 
@@ -532,17 +528,17 @@ pub mod tests {
     }
 
     #[test]
-    fn create_100_elements_graph() {
+    fn create_1000_elements_graph() {
         let mut rng = rand::thread_rng();
 
         let start = Instant::now();
 
-        let mut graph = Box::new(ASAGraph::<i32, 3>::new(1));
+        let graph = ASAGraph::<i32, 3>::new_arc(1);
 
-        let n = 1_000;
-        for _ in 0..n {
-            let number: i32 = rng.gen();
-            graph.insert(&number);
+        let n = 1000;
+        for _ in (0..n).rev() {
+            let random_number: i32 = rng.gen_range(0..10000);
+            graph.write().unwrap().insert(&random_number);
         }
 
         let duration = start.elapsed();

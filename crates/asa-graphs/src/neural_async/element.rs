@@ -95,6 +95,10 @@ where
         1.0f32 - (other.key.distance(&self.key) as f32).abs() / range
     }
 
+    pub fn weight_to_key(&self, other_key: &Key, range: f32) -> f32 {
+        1.0f32 - (other_key.distance(&self.key) as f32).abs() / range
+    }
+
     pub fn fuzzy_activate(&mut self, signal: f32) -> Vec<(Arc<RwLock<dyn NeuronAsync>>, f32)> {
         self.activation += signal;
 
@@ -114,8 +118,10 @@ where
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 let new_element;
                 {
-                    let element_borrowed = &mut *element.write().unwrap();
-                    element_borrowed.activate(element_activation * weight, false, false);
+                    {
+                        let element_borrowed = &mut *element.write().unwrap();
+                        element_borrowed.activate(element_activation * weight, false, false);
+                    }
                     let element_borrowed = &*element.read().unwrap();
                     neurons.append(
                         &mut (&*element.read().unwrap())
@@ -151,8 +157,10 @@ where
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
                 let new_element;
                 {
-                    let element_borrowed = &mut *element.write().unwrap();
-                    element_borrowed.activate(element_activation * weight, false, false);
+                    {
+                        let element_borrowed = &mut *element.write().unwrap();
+                        element_borrowed.activate(element_activation * weight, false, false);
+                    }
                     let element_borrowed = &*element.read().unwrap();
                     neurons.append(
                         &mut element_borrowed
@@ -600,10 +608,7 @@ mod tests {
         let graph = Arc::new(
             RwLock::new(ASAGraph::<i32, 3>::new(1))
         );
-        for i in 1..=9 { 
-            println!("i {i}");
-            graph.write().unwrap().insert(&i);
-        }
+        for i in 1..=9 { graph.write().unwrap().insert(&i); }
 
         let mid_element = graph.read().unwrap().search(&5).unwrap();
         mid_element.write().unwrap().simple_activate(1.0f32);
