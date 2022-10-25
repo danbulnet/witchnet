@@ -26,7 +26,7 @@ where Key: SensorData, [(); ORDER + 1]: {
 
 impl<Key, const ORDER: usize> Node<Key, ORDER> 
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
@@ -244,7 +244,7 @@ where
 }
 
 impl<Key, const ORDER: usize> Display for Node<Key, ORDER> 
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     fn fmt(&self, f: &mut Formatter) -> Result {
         let mut node: String = format!(
             "<==leaf:{}, size:{}, keys:", self.is_leaf, self.size

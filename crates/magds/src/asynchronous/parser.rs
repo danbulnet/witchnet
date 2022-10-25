@@ -190,7 +190,7 @@ where
     )
 }
 
-fn connector<T: SensorData>(
+fn connector<T: SensorData + Sync + Send>(
     magds: &mut MAGDS, 
     name: &str,
     id: u32,

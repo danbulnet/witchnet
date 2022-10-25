@@ -37,7 +37,8 @@ where Key: SensorData, [(); ORDER + 1]: {
 
 impl<Key, const ORDER: usize> Element<Key, ORDER> 
 where 
-    Key: SensorData, [(); ORDER + 1]:, 
+    Key: SensorData + Sync + Send, 
+    [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
@@ -212,7 +213,11 @@ where
 }
 
 impl<Key, const ORDER: usize> NeuronAsync for Element<Key, ORDER> 
-where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTypeValue: From<Key> {
+where 
+    Key: SensorData + Sync + Send, 
+    [(); ORDER + 1]:, 
+    PhantomData<Key>: DataDeductor, DataTypeValue: From<Key>
+{
     fn id(&self) -> NeuronID {
         NeuronID {
             id: self.id,
@@ -321,7 +326,7 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
 impl<Key, const ORDER: usize> NeuronConnectAsync for Element<Key, ORDER> 
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
@@ -347,7 +352,7 @@ where
 impl<Key, const ORDER: usize, Other: NeuronAsync + NeuronConnectAsync + 'static> 
 NeuronConnectBilateralAsync<Other> for Element<Key, ORDER>
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>

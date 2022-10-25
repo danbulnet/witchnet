@@ -20,7 +20,7 @@ use super::{
 
 #[derive(Clone)]
 pub struct ASAGraph<Key, const ORDER: usize = 25>
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     pub id: u32,
     pub(crate) root: Arc<RwLock<Node<Key, ORDER>>>,
     pub element_min: Option<Arc<RwLock<Element<Key, ORDER>>>>,
@@ -33,7 +33,7 @@ where Key: SensorData, [(); ORDER + 1]: {
 
 impl<Key, const ORDER: usize> ASAGraph<Key, ORDER> 
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>
@@ -431,7 +431,7 @@ where
 }
 
 impl<'a, Key, const ORDER: usize> IntoIterator for &'a ASAGraph<Key, ORDER> 
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     type Item = Arc<RwLock<Element<Key, ORDER>>>;
     type IntoIter = ASAGraphIntoIterator<'a, Key, ORDER>;
 
@@ -447,13 +447,13 @@ where Key: SensorData, [(); ORDER + 1]: {
 }
 
 pub struct ASAGraphIntoIterator<'a, Key, const ORDER: usize = 25>
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     graph: &'a ASAGraph<Key, ORDER>,
     index: Option<Arc<RwLock<Element<Key, ORDER>>>>
 }
 
 impl<'a, Key, const ORDER: usize> Iterator for ASAGraphIntoIterator<'a, Key, ORDER> 
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     type Item = Arc<RwLock<Element<Key, ORDER>>>;
     fn next(&mut self) -> Option<Arc<RwLock<Element<Key, ORDER>>>> {
         let next_option;
@@ -479,7 +479,7 @@ where Key: SensorData, [(); ORDER + 1]: {
 }
 
 impl<Key, const ORDER: usize> Display for ASAGraph<Key, ORDER> 
-where Key: SensorData, [(); ORDER + 1]: {
+where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let mut height = 0;
         let mut node = self.root.clone();

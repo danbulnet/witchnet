@@ -166,7 +166,7 @@ pub trait Sensor<D: SensorData>: Any + Display {
     // fn iterator(&self) -> Vec<D>;
 }
 
-pub trait SensorAsync<D: SensorData>: Any + Display {
+pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
     fn id(&self) -> u32;
 
     fn data_type(&self) -> DataType;

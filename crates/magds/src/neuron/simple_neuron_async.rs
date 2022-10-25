@@ -197,7 +197,7 @@ impl NeuronConnectAsync for SimpleNeuron {
 
 impl<Key, const ORDER: usize> NeuronConnectBilateralAsync<Element<Key, ORDER>> for SimpleNeuron 
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>

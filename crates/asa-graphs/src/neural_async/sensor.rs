@@ -15,7 +15,7 @@ use super::graph::ASAGraph;
 
 impl<Key, const ORDER: usize> SensorAsync<Key> for ASAGraph<Key, ORDER> 
 where 
-    Key: SensorData, 
+    Key: SensorData + Sync + Send, 
     [(); ORDER + 1]:, 
     PhantomData<Key>: DataDeductor,
     DataTypeValue: From<Key>

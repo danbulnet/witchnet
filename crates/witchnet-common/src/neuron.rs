@@ -91,7 +91,7 @@ pub trait NeuronConnectBilateral<Other: Neuron + NeuronConnect>: Neuron + Neuron
     ) -> Result<()>;
 }
 
-pub trait NeuronAsync {
+pub trait NeuronAsync: Sync + Send {
     fn id(&self) -> NeuronID;
 
     fn value(&self) -> DataTypeValue;
@@ -139,7 +139,7 @@ impl Debug for dyn NeuronAsync {
     }
 }
 
-pub trait NeuronConnectAsync {
+pub trait NeuronConnectAsync: Sync + Send {
     fn connect_to<Other: NeuronAsync + NeuronConnectAsync + 'static>(
         &mut self, to: Arc<RwLock<Other>>, kind: ConnectionKind
     ) -> Result<()>;

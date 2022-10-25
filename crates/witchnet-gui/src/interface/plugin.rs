@@ -17,7 +17,7 @@ pub struct Interface;
 impl Plugin for Interface {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins)
-            // .insert_resource(MAGDS::new())
+            .insert_resource(MAGDS::new())
             .insert_resource(DataFilePath::default())
             .insert_resource(DataFileName::default())
             .insert_resource(NeuronAppearance::default())
