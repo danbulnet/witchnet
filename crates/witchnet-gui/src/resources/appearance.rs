@@ -3,7 +3,7 @@ use std::default::Default;
 use bevy::prelude::*;
 
 pub const MIN_APPEARANCE_WIDTH: f32 = 150f32;
-pub const APPEARANCE_X: f32 = 200f32;
+pub const APPEARANCE_X: f32 = 215f32;
 
 pub struct NeuronAppearance {
     pub show: bool,

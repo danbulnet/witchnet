@@ -38,7 +38,7 @@ impl MAGDS {
         }
     }
     
-    pub fn new_rc() -> Arc<RwLock<MAGDS>> {
+    pub fn new_arc() -> Arc<RwLock<MAGDS>> {
         Arc::new(RwLock::new(
             MAGDS { 
                 sensors: HashMap::new(),

@@ -1,14 +1,7 @@
 use bevy::prelude::*;
 
 use bevy_egui::{ 
-    egui::{ 
-        self, 
-        Ui,
-        Window,
-        Align2,
-        Grid,
-        Vec2
-    }, 
+    egui::{ self, Ui, Window, Align2, Grid }, 
     EguiContext 
 };
 
