@@ -52,8 +52,11 @@ fn sensor_settings(
     mut resource: ResMut<SensorAppearance>
 ) {
     Grid::new("sensor").show(&mut ui, |ui| {
-        ui.label(egui::RichText::new("sensor")
-            .color(utils::color_bevy_to_egui(&resource.primary_active_color))); 
+        ui.label(
+            egui::RichText::new("sensor")
+                .color(utils::color_bevy_to_egui(&resource.primary_active_color))
+                .strong()
+        );
         ui.end_row();
 
         w::checkbox_row(ui, "show:", &mut resource.show);
@@ -85,8 +88,11 @@ fn neuron_settings(
     mut resource: ResMut<NeuronAppearance>
 ) {
     Grid::new("neuron").show(&mut ui, |ui| {
-        ui.label(egui::RichText::new("neuron")
-            .color(utils::color_bevy_to_egui(&resource.primary_active_color))); 
+        ui.label(
+            egui::RichText::new("neuron")
+                .color(utils::color_bevy_to_egui(&resource.primary_active_color))
+                .strong()
+        );
         ui.end_row();
 
         w::checkbox_row(ui, "show:", &mut resource.show);
@@ -118,8 +124,11 @@ fn connection_settings(
     mut resource: ResMut<ConnectionAppearance>
 ) {
     Grid::new("connection").show(&mut ui, |ui| {
-        ui.label(egui::RichText::new("connection")
-            .color(utils::color_bevy_to_egui(&resource.active_color))); 
+        ui.label(
+            egui::RichText::new("connection")
+                .color(utils::color_bevy_to_egui(&resource.active_color))
+                .strong()
+        );
         ui.end_row();
 
         w::checkbox_row(ui, "show:", &mut resource.show);

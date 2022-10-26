@@ -6,63 +6,67 @@ use std::{
 
 use bevy::prelude::*;
 
-use bevy_egui::egui::{ self, Ui, Widget, Rgba, Color32 };
+use bevy_egui::egui::{ 
+    self,
+    Ui,
+    Widget,
+    Rgba,
+    FontFamily,
+    RichText,
+    Slider
+};
 
 use rfd::{ FileDialog, MessageDialog, MessageLevel };
 
 use witchnet_common::polars;
 
+use magds::asynchronous::parser;
+
 use crate::{
     resources::{
-        magds::MainMAGDS,
+        magds::{ MainMAGDS, LoadedDatasets, ADDED_TO_MAGDS_COLOR },
         data::{ 
             DataFiles, 
             DataFile, 
             FILE_NAME_OK_COLOR, 
             FILE_NAME_ERR_COLOR, 
-            ADDED_TO_MAGDS_COLOR 
         },
-        common::{ NEUTRAL_ACTIVE_COLOR, NEUTRAL_INACTIVE_COLOR, STANDARD_TEXT_SIZE }
+        common::{ 
+            NEUTRAL_COLOR, 
+            NEUTRAL_INACTIVE_COLOR, 
+            STANDARD_TEXT_SIZE, 
+            STANDARD_MONOSPACE_TEXT_SIZE 
+        }
     },
     utils
 };
 
-// pub fn add_magds_button_row(
-//     ui: &mut Ui,
-//     data_file_res: &mut ResMut<Option<DataFile>>,
-//     magds_res: &mut ResMut<MainMAGDS>
-// ) {
-//     ui.horizontal(|ui| {
-//         let load_data_button = ui.button("add to magds");
-//         if load_data_button.clicked() {
-//             match &data_file_res {
-//                 Some(file_path) => {
-                    
-//                 }
-//                 None => ui.label(
-//                     egui::RichText::new("").monospace().size(STANDARD_TEXT_SIZE).color(Color32::GRAY)
-//                 );
-//             };
-//         }
-//         if data_file_res.loaded {
-//             ui.label(
-//                 egui::RichText::new("added").monospace().size(STANDARD_TEXT_SIZE).color(ADDED_TO_MAGDS_COLOR)
-//             );
-//         }
-//     });
-//     ui.end_row();
-// }
+pub fn add_magds_button_row(
+    ui: &mut Ui,
+    data_files_res: &mut ResMut<DataFiles>,
+    magds_res: &mut ResMut<MainMAGDS>
+) {
+    ui.horizontal(|ui| {
+        if let Some(index) = data_files_res.current {
+            let add_button = ui.button("add to magds");
+            if add_button.clicked() {
+                let data_file = &data_files_res.history[index];
+                if let Some(df) = &data_file.data_frame {
+                    let df_name = &data_file.name;
+                    let mut magds = magds_res.0.write().unwrap();
+                    parser::add_df_to_magds(&mut magds, df_name, df);
+                }
+            }
+        }
+    });
+    ui.end_row();
+}
 
 pub fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
     if let Some(index) = data_files_res.current {
     let data_file = &mut data_files_res.history[index];
     for (feature, active) in (&mut data_file.features).into_iter() {
         ui.horizontal(|ui| {
-            // let label = egui::RichText::new(feature)
-            //     .monospace()
-            //     .size(STANDARD_TEXT_SIZE)
-            //     .color(NEUTRAL_ACTIVE_COLOR);
-            // ui.label(label);
             checkbox_row(ui, feature, active);
         });
         ui.end_row();
@@ -79,41 +83,36 @@ pub fn file_button_row(
     ui.horizontal(|ui| {
         let load_data_button = ui.button(label);
         if load_data_button.clicked() {
-            load_button_clicked(ui, label, extensions, data_files_res);
+            load_button_clicked(extensions, data_files_res);
         }
         match data_files_res.current {
             Some(index) => {
                 let data_file = &data_files_res.history[index];
                 let label = if data_file.data_frame.is_some() {
-                    egui::RichText::new(&data_file.name)
+                    RichText::new(&data_file.name)
                         .monospace()
-                        .size(STANDARD_TEXT_SIZE)
+                        .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_OK_COLOR)
                 } else {
-                    egui::RichText::new(&data_file.name)
+                    RichText::new(&data_file.name)
                         .monospace()
-                        .size(STANDARD_TEXT_SIZE)
+                        .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_ERR_COLOR)
                 };
                 ui.label(label)
             }
             None => ui.label(
-                egui::RichText::new("select csv file")
+                RichText::new("select csv file")
                     .monospace()
-                    .size(STANDARD_TEXT_SIZE)
-                    .color(NEUTRAL_ACTIVE_COLOR)
+                    .size(STANDARD_MONOSPACE_TEXT_SIZE)
+                    .color(NEUTRAL_COLOR)
             ),
         };
     });
     ui.end_row();
 }
 
-fn load_button_clicked(
-    ui: &mut Ui, 
-    label: &str,
-    extensions: &[&str],
-    data_files_res: &mut ResMut<DataFiles>
-) {
+fn load_button_clicked(extensions: &[&str], data_files_res: &mut ResMut<DataFiles>) {
     let file_path = FileDialog::new()
         .add_filter("", extensions)
         .set_directory(env::current_dir().unwrap())
@@ -130,11 +129,11 @@ fn load_button_clicked(
     };
 
     if let Some(file_name) = file_name {
-        let file_name = if file_name.chars().count() <= 18 {
+        let file_name = if file_name.chars().count() <= 20 {
             file_name
         } else {
             let mut file_name = file_name[..file_name.char_indices()
-                .nth(15).unwrap().0].to_string();
+                .nth(17).unwrap().0].to_string();
             file_name.push_str("...");
             file_name
         };
@@ -175,14 +174,23 @@ fn load_button_clicked(
     }
 }
 
+pub(crate) fn loaded_files(ui: &mut Ui, data_files_res: &mut ResMut<LoadedDatasets>) {
+    for dataset in &data_files_res.0 {
+        RichText::new(&dataset.name)
+            .monospace()
+            .size(STANDARD_MONOSPACE_TEXT_SIZE)
+            .color(ADDED_TO_MAGDS_COLOR);
+    }
+}
+
 pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
     ui.horizontal(|ui| {
-        let color = if *state { NEUTRAL_ACTIVE_COLOR } else { NEUTRAL_INACTIVE_COLOR };
-        let label = egui::RichText::new(label)
-            .monospace()
+        let color = if *state { NEUTRAL_COLOR } else { NEUTRAL_INACTIVE_COLOR };
+        let label_widget = RichText::new(label)
+            .family(FontFamily::Proportional)
             .size(STANDARD_TEXT_SIZE)
             .color(color);
-        ui.label(label);
+        ui.label(label_widget);
         ui.checkbox(state, "");
     });
     ui.end_row();
@@ -191,8 +199,12 @@ pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
 pub fn slider_row(
     ui: &mut Ui, label: &str, value: &mut f32, bounds: (f32, f32)) {
     ui.horizontal(|ui| {
-        ui.label(label);
-        egui::Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui);
+        let label_widget = RichText::new(label)
+            .family(FontFamily::Proportional)
+            .size(STANDARD_TEXT_SIZE)
+            .color(NEUTRAL_COLOR);
+        ui.label(label_widget);
+        Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui);
     });
     ui.end_row();
 }
@@ -217,7 +229,11 @@ pub fn color_picker(ui: &mut egui::Ui, color: &mut Color) -> egui::Response {
 
 pub fn color_picker_row(ui: &mut Ui, label: &str, color: &mut Color) {
     ui.horizontal(|ui| {
-        ui.label(label);
+        let label_widget = RichText::new(label)
+            .family(FontFamily::Proportional)
+            .size(STANDARD_TEXT_SIZE)
+            .color(NEUTRAL_COLOR);
+        ui.label(label_widget);
         color_picker(ui, color);
     });
     ui.end_row();

@@ -230,7 +230,11 @@ where
 
 pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
     let mut magds = MAGDS::new();
-    
+    add_df_to_magds(&mut magds, df_name, df);
+    magds
+}
+
+pub fn add_df_to_magds(magds: &mut MAGDS, df_name: &str, df: &DataFrame) {
     log::info!("magds_from_df: df size: {} (cols) x {} (rows)", df.width(), df.height());
     log::info!("magds_from_df: df columns: {:?}", df.get_column_names());
     
@@ -254,10 +258,8 @@ pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
                 continue
             }
         };
-        connected_sensor_from_datavec(&mut magds, column_name, &datavec, &neurons);
+        connected_sensor_from_datavec(magds, column_name, &datavec, &neurons);
     }
-
-    magds
 }
 
 pub fn magds_from_csv(name: &str, file_path: &str, skip: &[&str]) -> Option<MAGDS> {

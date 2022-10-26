@@ -7,7 +7,7 @@ use crate::{
     resources::{
         appearance::{ NeuronAppearance, SensorAppearance, ConnectionAppearance },
         data::DataFiles,
-        magds::MainMAGDS
+        magds::{ MainMAGDS, LoadedDatasets }
     },
     interface::{ appearance, data }
 };
@@ -18,6 +18,7 @@ impl Plugin for Interface {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins)
             .insert_resource(MainMAGDS::default())
+            .insert_resource(LoadedDatasets::default())
             .insert_resource(DataFiles::default())
             .insert_resource(NeuronAppearance::default())
             .insert_resource(NeuronAppearance::default())
