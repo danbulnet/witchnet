@@ -118,6 +118,10 @@ impl MAGDS {
         }
     }
 
+    pub fn sensors_names(&self) -> Vec<Arc<str>> { 
+        self.sensor_ids.keys().cloned().collect()
+    }
+
     pub fn sensor_name(&self, id: u32) -> Option<&str> { 
         match self.sensor_names.get(&id) {
             Some(id) => Some(&id),
@@ -202,6 +206,10 @@ impl MAGDS {
             if neuron.read().unwrap().id() == *id { return Some(neuron.clone()) }
         }
         None
+    }
+
+    pub fn neurons_names(&self) -> Vec<Arc<str>> { 
+        self.neuron_group_ids.keys().cloned().collect()
     }
 
     pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Arc<RwLock<dyn NeuronAsync>>> {

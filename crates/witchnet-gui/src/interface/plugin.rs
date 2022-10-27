@@ -5,7 +5,12 @@ use bevy_egui::{ EguiPlugin, EguiContext };
 
 use crate::{
     resources::{
-        appearance::{ NeuronAppearance, SensorAppearance, ConnectionAppearance },
+        appearance::{ 
+            NeuronAppearance, 
+            SensorAppearance, 
+            ConnectionAppearance, 
+            Appearance 
+        },
         data::DataFiles,
         magds::{ MainMAGDS, LoadedDatasets }
     },
@@ -20,6 +25,7 @@ impl Plugin for Interface {
             .insert_resource(MainMAGDS::default())
             .insert_resource(LoadedDatasets::default())
             .insert_resource(DataFiles::default())
+            .insert_resource(Appearance::default())
             .insert_resource(NeuronAppearance::default())
             .insert_resource(NeuronAppearance::default())
             .insert_resource(SensorAppearance::default())

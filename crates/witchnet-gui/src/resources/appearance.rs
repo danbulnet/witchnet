@@ -1,10 +1,93 @@
-use std::default::Default;
+use std::{
+    sync::Arc,
+    string::ToString,
+    default::Default,
+    collections::HashMap
+};
 
 use bevy::prelude::*;
 
-pub const MIN_APPEARANCE_WIDTH: f32 = 150f32;
-pub const APPEARANCE_X: f32 = 225f32;
+pub const MIN_APPEARANCE_WIDTH: f32 = 210f32;
+pub const APPEARANCE_X: f32 = 245f32;
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+pub enum Selector {
+    All,
+    One(Arc<str>)
+}
+
+impl Default for Selector {
+    fn default() -> Self { Selector::All }
+}
+
+impl ToString for Selector {
+    fn to_string(&self) -> String {
+        match self {
+            Selector::All => "all".to_string(),
+            Selector::One(name) => name.to_string()
+        }
+    }
+}
+
+impl Selector {
+    pub fn to_arc_str(&self) -> Arc<str> {
+        match self {
+            Selector::All => "all".into(),
+            Selector::One(name) => name.clone()
+        }
+    }
+
+    pub fn to_str(&self) -> &str {
+        match self {
+            Selector::All => "all",
+            Selector::One(name) => &*name
+        }
+    }
+}
+
+pub struct Appearance {
+    pub sensors: HashMap<Selector, SensorAppearance>,
+    pub neurons: HashMap<Selector, NeuronAppearance>,
+    pub connections: HashMap<Selector, ConnectionAppearance>,
+
+    pub selected_sensor: Selector,
+    pub selected_neuron: Selector,
+    pub selected_connection: Selector
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance { 
+            sensors: HashMap::from([(Selector::All, SensorAppearance::default())]),
+            neurons: HashMap::from([(Selector::All, NeuronAppearance::default())]),
+            connections: HashMap::from([
+                (Selector::All, ConnectionAppearance::default()),
+                (
+                    Selector::One(Arc::<str>::from("asa-graph-nodes")), 
+                    ConnectionAppearance::default()
+                ),
+                (
+                    Selector::One(Arc::<str>::from("sensor-sensor")), 
+                    ConnectionAppearance::default()
+                ),
+                (
+                    Selector::One(Arc::<str>::from("sensor-neuron")), 
+                    ConnectionAppearance::default()
+                ),
+                (
+                    Selector::One(Arc::<str>::from("neuron-neuron")), 
+                    ConnectionAppearance::default()
+                ),
+            ]),
+
+            selected_sensor: Selector::default(), 
+            selected_neuron: Selector::default(), 
+            selected_connection: Selector::default()
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct NeuronAppearance {
     pub show: bool,
     pub show_text: bool,
@@ -53,6 +136,7 @@ impl Default for NeuronAppearance {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct SensorAppearance {
     pub show: bool,
     pub show_text: bool,
@@ -101,6 +185,7 @@ impl Default for SensorAppearance {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ConnectionAppearance {
     pub show: bool,
     pub show_text: bool,

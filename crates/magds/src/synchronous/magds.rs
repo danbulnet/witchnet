@@ -127,6 +127,10 @@ impl MAGDS {
         }
     }
 
+    pub fn sensors_names(&self) -> Vec<Rc<str>> { 
+        self.sensor_ids.keys().cloned().collect()
+    }
+
     pub fn sensor_data_type(&self, id: u32) -> Option<DataType> { 
         Some(self.sensors.get(&id)?.borrow().data_type())
     }
@@ -204,6 +208,10 @@ impl MAGDS {
             if neuron.borrow().id() == *id { return Some(neuron.clone()) }
         }
         None
+    }
+
+    pub fn neurons_names(&self) -> Vec<Rc<str>> { 
+        self.neuron_group_ids.keys().cloned().collect()
     }
 
     pub fn neuron(&self, id: u32, parent_id: u32) -> Option<Rc<RefCell<dyn Neuron>>> {

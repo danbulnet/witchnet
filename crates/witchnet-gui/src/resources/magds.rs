@@ -20,7 +20,9 @@ impl Default for MainMAGDS {
 pub(crate) struct LoadedDataset {
     pub(crate) name: String,
     pub(crate) path: PathBuf,
-    pub(crate) rows: u32,
+    pub(crate) rows: usize,
+    pub(crate) rows_total: usize,
+    pub(crate) random_pick: bool,
     pub(crate) features: Vec<String>
 }
 
