@@ -10,6 +10,8 @@ use regex::Regex;
 
 use polars::prelude::*;
 
+use rand::{ thread_rng, seq::SliceRandom };
+
 use asa_graphs::neural::{
     element::Element,
     graph::ASAGraph
@@ -230,17 +232,43 @@ where
 
 pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
     let mut magds = MAGDS::new();
-    add_df_to_magds(&mut magds, df_name, df);
+    add_df_to_magds(&mut magds, df_name, df, &vec![], 0, false);
     magds
 }
 
-pub fn add_df_to_magds(magds: &mut MAGDS, df_name: &str, df: &DataFrame) {
+pub fn magds_from_df_limit(
+    df_name: &str, 
+    df: &DataFrame, 
+    skip_columns: &[&str],
+    limit: usize, 
+    random: bool
+) -> MAGDS {
+    let mut magds = MAGDS::new();
+    add_df_to_magds(&mut magds, df_name, df, skip_columns, limit, random);
+    magds
+}
+
+pub fn add_df_to_magds(
+    magds: &mut MAGDS, 
+    df_name: &str, 
+    df: &DataFrame,
+    skip_columns: &[&str],
+    limit: usize, 
+    random: bool
+) {
     log::info!("magds_from_df: df size: {} (cols) x {} (rows)", df.width(), df.height());
     log::info!("magds_from_df: df columns: {:?}", df.get_column_names());
     
     let neuron_group_id: u32 = *magds.neuron_group_names.keys().max().unwrap_or(&0) + 1;
     let mut neurons: Vec<Rc<RefCell<SimpleNeuron>>> = Vec::new();
-    for i in 1..=df.height() {
+
+    let mut all_indices: Vec<usize> = (0..df.height()).collect();
+    if random { all_indices.shuffle(&mut thread_rng()) };
+    let limit = if limit == 0 { df.height() } else { usize::min(limit, df.height()) };
+    let indices = &all_indices[0..limit];
+    
+    for i in indices {
+        let i = i + 1;
         let neuron = SimpleNeuron::new(
             NeuronID{ id: i as u32, parent_id: neuron_group_id }
         );
@@ -250,15 +278,18 @@ pub fn add_df_to_magds(magds: &mut MAGDS, df_name: &str, df: &DataFrame) {
     magds.add_neuron_group(df_name, neuron_group_id);
 
     for column in df.get_columns() {
-        let column_name = column.name();
-        let datavec = match polars_common::series_to_datavec(column) {
-            Ok(v) => v,
-            Err(e) => { 
-                log::error!("error convering {column_name} to datavec, error: {e}");
-                continue
-            }
-        };
-        connected_sensor_from_datavec(magds, column_name, &datavec, &neurons);
+        if !skip_columns.contains(&column.name()) {
+            let column = column.take_iter(&mut indices.into_iter().map(|x| *x)).unwrap();
+            let column_name = column.name();
+            let datavec = match polars_common::series_to_datavec(&column) {
+                Ok(v) => v,
+                Err(e) => { 
+                    log::error!("error convering {column_name} to datavec, error: {e}");
+                    continue
+                }
+            };
+            connected_sensor_from_datavec(magds, column_name, &datavec, &neurons);
+        }
     }
 }
 

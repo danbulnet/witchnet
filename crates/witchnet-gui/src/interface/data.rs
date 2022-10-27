@@ -227,7 +227,13 @@ pub fn add_magds_button_row(
                     let df_name = &data_file.name;
                     let mut magds = magds_res.0.write().unwrap();
                     let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
-                    parser::add_df_to_magds(&mut magds, df_name, df);
+                    let skip_features: Vec<&str> = (&data_file.features).into_iter()
+                        .filter(|(_key, value)| !**value)
+                        .map(|(key, _value)| &**key)
+                        .collect();
+                    parser::add_df_to_magds(
+                        &mut magds, df_name, df, &skip_features, data_file.rows_limit, data_file.random_pick
+                    );
                     
                     let default_sensor_appearance = appearance.sensors[&Selector::All].clone();
                     for sensor_name in magds.sensors_names() {
