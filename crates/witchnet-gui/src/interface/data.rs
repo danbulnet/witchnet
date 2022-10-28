@@ -48,39 +48,29 @@ use crate::{
 };
 
 pub(crate) fn data_window(
-    mut egui_context: ResMut<EguiContext>, 
-    mut windows: ResMut<Windows>,
-    mut data_files_res: ResMut<DataFiles>,
-    mut loaded_datasets_res: ResMut<LoadedDatasets>,
-    mut magds_res: ResMut<MainMAGDS>,
-    mut appearance_res: ResMut<Appearance>,
+    ui: &mut Ui,
+    data_files_res: &mut ResMut<DataFiles>,
+    loaded_datasets_res: &mut ResMut<LoadedDatasets>,
+    magds_res: &mut ResMut<MainMAGDS>,
+    appearance_res: &mut ResMut<Appearance>,
 ) {
-    let window = windows.get_primary_mut().unwrap();
-    let max_height = window.height();
+    ui.set_min_width(MIN_DATA_WIDTH);
 
-    Window::new("data")
-        .anchor(Align2::LEFT_TOP, [DATA_X, INTERFACE_PADDING])
-        .scroll2([false, true])
-        .fixed_size([MIN_DATA_WIDTH, max_height])
-        .show(egui_context.ctx_mut(), |ui| {
-            ui.set_min_width(MIN_DATA_WIDTH);
+    file_button_row(ui, "load", &["csv"], data_files_res);
+    
+    data_points(ui, data_files_res);
 
-            file_button_row(ui, "load", &["csv"], &mut data_files_res);
-            
-            data_points(ui, &mut data_files_res);
+    features_list(ui, data_files_res);
+    
+    add_magds_button_row(
+        ui, 
+        data_files_res, 
+        loaded_datasets_res,
+        magds_res, 
+        appearance_res
+    );
 
-            features_list(ui, &mut data_files_res);
-            
-            add_magds_button_row(
-                ui, 
-                &mut data_files_res, 
-                &mut loaded_datasets_res,
-                &mut magds_res, 
-                &mut appearance_res
-            );
-
-            loaded_files(ui, &mut loaded_datasets_res);
-        });
+    loaded_files(ui, loaded_datasets_res);
 }
 
 pub fn file_button_row(
