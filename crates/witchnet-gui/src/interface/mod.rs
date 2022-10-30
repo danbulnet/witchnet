@@ -1,6 +1,10 @@
-pub mod plugin;
 pub mod appearance;
 pub mod widgets;
 pub mod data;
 pub mod app;
 pub mod layout;
+pub mod simulation_2d;
+pub mod simulation_3d;
+pub mod sensors;
+pub mod neurons;
+pub mod connections;

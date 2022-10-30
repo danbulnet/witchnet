@@ -5,16 +5,7 @@ use std::{
 
 use bevy::prelude::*;
 
-use bevy_egui::{ 
-    egui::{
-        self,
-        Ui,
-        RichText,
-        Window,
-        Align2,
-    }, 
-    EguiContext 
-};
+use bevy_egui::egui::{ self, Ui, RichText };
 
 use rfd::{ FileDialog, MessageDialog, MessageLevel };
 
@@ -27,7 +18,6 @@ use crate::{
     resources::{
         appearance::{ Appearance, Selector },
         common::{
-            INTERFACE_PADDING,
             NEUTRAL_ACTIVE_COLOR,
             NEUTRAL_COLOR,
             NEUTRAL_INACTIVE_COLOR, 
@@ -38,11 +28,10 @@ use crate::{
         data::{ 
             DataFiles, 
             DataFile, 
-            MIN_DATA_WIDTH, 
-            DATA_X, 
             FILE_NAME_OK_COLOR,
             FILE_NAME_ERR_COLOR
         },
+        layout::DEFAULT_PANEL_WIDTH,
         magds::{ MainMAGDS, LoadedDatasets, LoadedDataset, ADDED_TO_MAGDS_COLOR }
     }
 };
@@ -54,23 +43,27 @@ pub(crate) fn data_window(
     magds_res: &mut ResMut<MainMAGDS>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
-    ui.set_min_width(MIN_DATA_WIDTH);
+    egui::ScrollArea::vertical()
+        .stick_to_bottom(true)
+        .show(ui, |ui| {
+            ui.set_min_width(DEFAULT_PANEL_WIDTH);
 
-    file_button_row(ui, "load", &["csv"], data_files_res);
-    
-    data_points(ui, data_files_res);
+            file_button_row(ui, "load", &["csv"], data_files_res);
+            
+            data_points(ui, data_files_res);
 
-    features_list(ui, data_files_res);
-    
-    add_magds_button_row(
-        ui, 
-        data_files_res, 
-        loaded_datasets_res,
-        magds_res, 
-        appearance_res
-    );
+            features_list(ui, data_files_res);
+            
+            add_magds_button_row(
+                ui, 
+                data_files_res, 
+                loaded_datasets_res,
+                magds_res, 
+                appearance_res
+            );
 
-    loaded_files(ui, loaded_datasets_res);
+            loaded_files(ui, loaded_datasets_res);
+        });
 }
 
 pub fn file_button_row(
@@ -88,12 +81,12 @@ pub fn file_button_row(
             Some(index) => {
                 let data_file = &data_files_res.history[index];
                 let label = if data_file.data_frame.is_some() {
-                    RichText::new(widgets::shrink_str(&data_file.name, 23))
+                    RichText::new(widgets::shrink_str(&data_file.name, 28))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_OK_COLOR)
                 } else {
-                    RichText::new(widgets::shrink_str(&data_file.name, 23))
+                    RichText::new(widgets::shrink_str(&data_file.name, 28))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_ERR_COLOR)
@@ -192,7 +185,7 @@ pub fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
         ui.separator(); ui.end_row();
         ui.label(egui::RichText::new("features").color(NEUTRAL_ACTIVE_COLOR).strong());
         for (feature, active) in (&mut data_file.features).into_iter() {
-            let label = ui.selectable_label(*active, &widgets::shrink_str(feature, 29));
+            let label = ui.selectable_label(*active, feature);
             if label.clicked() {
                 *active = !*active;
             }
@@ -277,7 +270,7 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<LoadedD
     }
 
     for dataset in &loaded_datasets_res.0 {
-        let label_widget = RichText::new(widgets::shrink_str(&dataset.name, 29))
+        let label_widget = RichText::new(&dataset.name)
             .monospace()
             .size(STANDARD_MONOSPACE_TEXT_SIZE)
             .color(ADDED_TO_MAGDS_COLOR);
@@ -289,13 +282,13 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<LoadedD
             dataset.rows_total,
             if dataset.random_pick { "random" } else { "consecutive" }
         );
-        let label_widget = RichText::new(widgets::shrink_str(&rows_text, 42))
+        let label_widget = RichText::new(widgets::shrink_str(&rows_text, 58))
             .size(SMALL_TEXT_SIZE)
             .color(NEUTRAL_COLOR);
         ui.label(label_widget);
 
         for feature in &dataset.features {
-            let label_widget = RichText::new(widgets::shrink_str(feature, 42))
+            let label_widget = RichText::new(widgets::shrink_str(feature, 58))
                 .size(SMALL_TEXT_SIZE)
                 .color(NEUTRAL_INACTIVE_COLOR);
             ui.label(label_widget);

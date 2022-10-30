@@ -1,47 +1,29 @@
 use bevy::prelude::*;
 
-use bevy_egui::{ 
-    egui::{ Ui, Window, Align2, Grid }, 
-    EguiContext 
-};
+use bevy_egui::egui::{ Ui, Grid };
 
 use crate::{
     resources::{
-        appearance::{
-            Selector,
-            Appearance,
-            APPEARANCE_X,
-            MIN_APPEARANCE_WIDTH
-        },
-        common::INTERFACE_PADDING
+        appearance::{ Selector, Appearance },
+        layout::DEFAULT_PANEL_WIDTH
     },
     interface::widgets as w,
     utils
 };
 
 pub(crate) fn appearance_window(
-    mut egui_context: ResMut<EguiContext>,
-    mut windows: ResMut<Windows>,
-    mut appearance: ResMut<Appearance>
+    ui: &mut Ui,
+    appearance: &mut ResMut<Appearance>
 ) {
-    let window = windows.get_primary_mut().unwrap();
-    let max_height = window.height();
+    ui.set_min_width(DEFAULT_PANEL_WIDTH);
 
-    Window::new("appearance")
-        .anchor(Align2::LEFT_TOP, [APPEARANCE_X, INTERFACE_PADDING])
-        .scroll2([false, true])
-        .fixed_size([MIN_APPEARANCE_WIDTH, max_height])
-        .show(egui_context.ctx_mut(), |ui| {
-            ui.set_min_width(MIN_APPEARANCE_WIDTH);
+    sensor_settings(ui, appearance);
+    ui.separator(); ui.end_row();
 
-            sensor_settings(ui, &mut appearance);
-            ui.separator(); ui.end_row();
+    neuron_settings(ui, appearance);
+    ui.separator(); ui.end_row();
 
-            neuron_settings(ui, &mut appearance);
-            ui.separator(); ui.end_row();
-
-            connection_settings(ui, &mut appearance);
-        });
+    connection_settings(ui, appearance);
 }
 
 fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {

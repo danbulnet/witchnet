@@ -7,9 +7,6 @@ use std::{
 
 use bevy::prelude::*;
 
-pub const MIN_APPEARANCE_WIDTH: f32 = 210f32;
-pub const APPEARANCE_X: f32 = 245f32;
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub enum Selector {
     All,

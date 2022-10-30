@@ -6,7 +6,8 @@ use crate::{
     resources::{
         appearance::Appearance,
         data::DataFiles,
-        magds::{ MainMAGDS, LoadedDatasets }
+        magds::{ MainMAGDS, LoadedDatasets },
+        layout::Layout
     },
     interface::layout
 };
@@ -15,6 +16,7 @@ pub fn app() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
+        .insert_resource(Layout::default())
         .insert_resource(MainMAGDS::default())
         .insert_resource(LoadedDatasets::default())
         .insert_resource(DataFiles::default())

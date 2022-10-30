@@ -19,10 +19,6 @@ path = "src/lib.rs"
 name = "witchnet-gui"
 path = "src/bin/main.rs"
 
-[[bin]]
-name = "witchnet-gui-example"
-path = "src/bin/example.rs"
-
 [dependencies]
 witchnet-common = { path = "../witchnet-common", version = "0.1.0" }
 magds = { path = "../magds", version = "0.1.0" }
