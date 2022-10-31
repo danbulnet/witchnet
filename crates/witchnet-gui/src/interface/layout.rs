@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 use bevy::prelude::*;
 
 use bevy_egui::{ 
@@ -15,13 +13,11 @@ use bevy_egui::{
 use crate::{
     resources::{
         appearance::Appearance,
-        data::DataFiles,
+        data::{ DataFiles, DATA_PANEL_SCROLL_WIDTH },
         magds::{ MainMAGDS, LoadedDatasets },
         layout::{ 
             Layout, 
-            LeftPanel, 
             DEFAULT_PANEL_SCROLL_WIDTH, 
-            RightPanel, 
             CentralPanel as LayoutCentralPanel 
         }
     },
@@ -77,12 +73,10 @@ fn top_panel(
             
             ui.separator();
             
-            let data_toggle = ui.toggle_value(&mut layout_res.data, "🖹 data");
-            if data_toggle.clicked() { layout_res.data_clicked() }
+            ui.toggle_value(&mut layout_res.data, "🖹 data");
             // ui.toggle_value(&mut state2, "🖵 appearance");
-            let appearance_toggle = ui.toggle_value(&mut layout_res.appearance, "🔧 appearance");
-            if appearance_toggle.clicked() { layout_res.appearance_clicked() }
-
+            ui.toggle_value(&mut layout_res.appearance, "🔧 appearance");
+            
             ui.separator();
 
             let toggole_2d = ui.toggle_value(&mut layout_res.simulation_2d, "🔳 2D simulation");
@@ -92,12 +86,9 @@ fn top_panel(
 
             ui.separator();
 
-            let sensors_toggle = ui.toggle_value(&mut layout_res.sensors, "❄ sensors");
-            if sensors_toggle.clicked() { layout_res.sensors_clicked() }
-            let neurons_toggle = ui.toggle_value(&mut layout_res.neurons, "Ψ neurons");
-            if neurons_toggle.clicked() { layout_res.neurons_clicked() }
-            let connections_toggle = ui.toggle_value(&mut layout_res.connections, "🎟 connections");
-            if connections_toggle.clicked() { layout_res.connections_clicked() }
+            ui.toggle_value(&mut layout_res.sensors, "❄ sensors");
+            ui.toggle_value(&mut layout_res.neurons, "Ψ neurons");
+            ui.toggle_value(&mut layout_res.connections, "🎟 connections");
         });
     });
 }
@@ -110,30 +101,32 @@ fn left_panel(
     magds_res: &mut ResMut<MainMAGDS>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
-    if let Some(lp) = layout_res.left_panel {
-        SidePanel::left("left_panel")
+    if layout_res.data {
+        SidePanel::left("data_panel")
+            .resizable(false)
+            .max_width(DATA_PANEL_SCROLL_WIDTH)
+            .min_width(DATA_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("🖹 data");
+                });
+                ui.separator();
+                data::data_window(
+                    ui, data_files_res, loaded_datasets_res, magds_res, appearance_res
+                );
+            }
+        );
+    }
+    if layout_res.appearance {
+        SidePanel::left("appearance_panel")
             .resizable(false)
             .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
-            .min_width(DEFAULT_PANEL_SCROLL_WIDTH)
             .show(egui_context.ctx_mut(), |ui| {
-                match lp {
-                    LeftPanel::Data => {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("🖹 data");
-                        });
-                        ui.separator();
-                        data::data_window(
-                            ui, data_files_res, loaded_datasets_res, magds_res, appearance_res
-                        );
-                    }
-                    LeftPanel::Appearance => {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("🔧 appearance");
-                        });
-                        ui.separator();
-                        appearance::appearance_window(ui, appearance_res);
-                    }
-                };
+                ui.vertical_centered(|ui| {
+                    ui.heading("🔧 appearance");
+                });
+                ui.separator();
+                appearance::appearance_window(ui, appearance_res);
             }
         );
     }
@@ -145,35 +138,42 @@ fn right_panel(
     magds_res: &mut ResMut<MainMAGDS>,
     appearance_res: &mut ResMut<Appearance>
 ) {
-    if let Some(rp) = layout_res.right_panel {
-        SidePanel::right("right_panel")
+    if layout_res.sensors {
+        SidePanel::right("sensors_panel")
             .resizable(false)
             .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
-            .min_width(DEFAULT_PANEL_SCROLL_WIDTH)
             .show(egui_context.ctx_mut(), |ui| {
-                match rp {
-                    RightPanel::Sensors => {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("❄ sensors");
-                        });
-                        ui.separator();
-                        sensors::sensors(ui, magds_res, appearance_res);
-                    }
-                    RightPanel::Neurons => {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("Ψ neurons");
-                        });
-                        ui.separator();
-                        neurons::neurons(ui, magds_res, appearance_res);
-                    }
-                    RightPanel::Connections => {
-                        ui.vertical_centered(|ui| {
-                            ui.heading("🎟 connections");
-                        });
-                        ui.separator();
-                        connections::connections(ui, magds_res, appearance_res);
-                    }
-                };
+                ui.vertical_centered(|ui| {
+                    ui.heading("❄ sensors");
+                });
+                ui.separator();
+                sensors::sensors(ui, magds_res, appearance_res);
+            }
+        );
+    }
+    if layout_res.neurons {
+        SidePanel::right("neurons_panel")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("Ψ neurons");
+                });
+                ui.separator();
+                neurons::neurons(ui, magds_res, appearance_res);
+            }
+        );
+    }
+    if layout_res.connections {
+        SidePanel::right("connections_panel")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("🎟 connections");
+                });
+                ui.separator();
+                connections::connections(ui, magds_res, appearance_res);
             }
         );
     }

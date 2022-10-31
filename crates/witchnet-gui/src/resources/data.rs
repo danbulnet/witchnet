@@ -8,6 +8,9 @@ use polars::prelude::*;
 
 use bevy_egui::egui::Color32;
 
+pub const DATA_PANEL_WIDTH: f32 = 180f32;
+pub const DATA_PANEL_SCROLL_WIDTH: f32 = 198f32;
+
 pub const FILE_NAME_OK_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 pub const FILE_NAME_ERR_COLOR: Color32 = Color32::from_rgb(232, 148, 148);
 

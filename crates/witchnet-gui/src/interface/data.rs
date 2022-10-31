@@ -29,9 +29,9 @@ use crate::{
             DataFiles, 
             DataFile, 
             FILE_NAME_OK_COLOR,
-            FILE_NAME_ERR_COLOR
+            FILE_NAME_ERR_COLOR,
+            DATA_PANEL_WIDTH
         },
-        layout::DEFAULT_PANEL_WIDTH,
         magds::{ MainMAGDS, LoadedDatasets, LoadedDataset, ADDED_TO_MAGDS_COLOR }
     }
 };
@@ -46,7 +46,7 @@ pub(crate) fn data_window(
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
         .show(ui, |ui| {
-            ui.set_min_width(DEFAULT_PANEL_WIDTH);
+            ui.set_min_width(DATA_PANEL_WIDTH);
 
             file_button_row(ui, "load", &["csv"], data_files_res);
             
@@ -81,12 +81,12 @@ pub fn file_button_row(
             Some(index) => {
                 let data_file = &data_files_res.history[index];
                 let label = if data_file.data_frame.is_some() {
-                    RichText::new(widgets::shrink_str(&data_file.name, 28))
+                    RichText::new(widgets::shrink_str(&data_file.name, 23))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_OK_COLOR)
                 } else {
-                    RichText::new(widgets::shrink_str(&data_file.name, 28))
+                    RichText::new(widgets::shrink_str(&data_file.name, 23))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_ERR_COLOR)
@@ -282,13 +282,13 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<LoadedD
             dataset.rows_total,
             if dataset.random_pick { "random" } else { "consecutive" }
         );
-        let label_widget = RichText::new(widgets::shrink_str(&rows_text, 58))
+        let label_widget = RichText::new(widgets::shrink_str(&rows_text, 48))
             .size(SMALL_TEXT_SIZE)
             .color(NEUTRAL_COLOR);
         ui.label(label_widget);
 
         for feature in &dataset.features {
-            let label_widget = RichText::new(widgets::shrink_str(feature, 58))
+            let label_widget = RichText::new(widgets::shrink_str(feature, 48))
                 .size(SMALL_TEXT_SIZE)
                 .color(NEUTRAL_INACTIVE_COLOR);
             ui.label(label_widget);

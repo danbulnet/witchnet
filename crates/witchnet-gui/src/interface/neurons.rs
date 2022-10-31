@@ -5,7 +5,8 @@ use bevy_egui::egui::{ self, Ui };
 use crate::{
     resources::{
         appearance::Appearance,
-        magds::MainMAGDS
+        magds::MainMAGDS,
+        layout::DEFAULT_PANEL_WIDTH
     }
 };
 
@@ -17,6 +18,7 @@ pub(crate) fn neurons(
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
         .show(ui, |ui| {
-            ui.label("neurons")
+            ui.set_min_width(DEFAULT_PANEL_WIDTH);
+            ui.label("neurons");
     });
 }
