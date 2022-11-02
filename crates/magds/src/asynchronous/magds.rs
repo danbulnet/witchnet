@@ -254,7 +254,8 @@ impl Display for MAGDS {
         writeln!(f, "========== sensors ==========")?;
         let mut number = 1;
         for (id, sensor) in &self.sensors {
-            writeln!(f, "{number}: {id}")?;
+            let name = self.sensor_name(*id).unwrap();
+            writeln!(f, "{number}: {name}({id})")?;
             writeln!(f, "{}", sensor.read().unwrap())?;
             number += 1;
         }
@@ -262,7 +263,10 @@ impl Display for MAGDS {
         let mut number = 1;
         writeln!(f, "========== neurons ==========")?;
         for neuron in &self.neurons {
-            writeln!(f, "{number}: {}", neuron.read().unwrap())?;
+            let neuron_id = neuron.read().unwrap().id().parent_id;
+            let parent_name = self.neuron_group_name(neuron_id).unwrap();
+            writeln!(f, "{number}: {parent_name}({neuron_id})")?;
+            writeln!(f, "{}", neuron.read().unwrap())?;
             number += 1;
         }
 
