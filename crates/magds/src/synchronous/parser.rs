@@ -19,10 +19,10 @@ use asa_graphs::neural::{
 
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
-    neuron::{ Neuron, NeuronID, NeuronConnectBilateral },
+    neuron::{ Neuron, NeuronID },
     connection::ConnectionKind,
     sensor::{ Sensor, SensorData },
-    data::{ DataDeductor, DataTypeValue }
+    data::{ DataDeductor, DataTypeValue, DataType }
 };
 
 use crate::{
@@ -113,25 +113,49 @@ pub(crate) fn connected_sensor_from_datavec(
         DataVecOption::Unknown => {
             panic!("can't parse vec data type for sensor {name}")
         }
-        DataVecOption::BoolVec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Float32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Float64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Utf8Vec(vec) => { connector_string(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::BoolVec(vec) => {
+            connector(&mut magds, name, DataType::Bool, vec, neurons)
+        }
+        DataVecOption::UInt8Vec(vec) => {
+            connector(&mut magds, name, DataType::U8, vec, neurons)
+        }
+        DataVecOption::UInt16Vec(vec) => {
+            connector(&mut magds, name, DataType::U16, vec, neurons)
+        }
+        DataVecOption::UInt32Vec(vec) => {
+            connector(&mut magds, name, DataType::U32, vec, neurons)
+        }
+        DataVecOption::UInt64Vec(vec) => {
+            connector(&mut magds, name, DataType::U64, vec, neurons)
+        }
+        DataVecOption::Int8Vec(vec) => {
+            connector(&mut magds, name, DataType::I8, vec, neurons)
+        }
+        DataVecOption::Int16Vec(vec) => {
+            connector(&mut magds, name, DataType::I16, vec, neurons)
+        }
+        DataVecOption::Int32Vec(vec) => {
+            connector(&mut magds, name, DataType::I32, vec, neurons)
+        }
+        DataVecOption::Int64Vec(vec) => {
+            connector(&mut magds, name, DataType::I64, vec, neurons)
+        }
+        DataVecOption::Float32Vec(vec) => {
+            connector(&mut magds, name, DataType::F32, vec, neurons)
+        }
+        DataVecOption::Float64Vec(vec) => {
+            connector(&mut magds, name, DataType::F64, vec, neurons)
+        }
+        DataVecOption::Utf8Vec(vec) => {
+            connector_string(&mut magds, name, DataType::ArcStr, vec, neurons)
+        }
     }
 }
 
 fn connector_string(
     magds: &mut MAGDS, 
     name: &str,
-    id: u32,
+    data_type: DataType,
     vec: &[Option<Arc<str>>], 
     neurons: &[Rc<RefCell<SimpleNeuron>>]
 ) -> (Rc<RefCell<SensorConatiner>>, u32) 
@@ -141,7 +165,14 @@ where
     DataTypeValue: From<Arc<str>>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<Arc<str>>::new_box(id);
+    let (sensor, id) = if let Some(ids) = magds.sensor_ids(name) {
+        if let Some(id) = ids.first() {
+            if let Some(sensor) = magds.sensor(*id) {
+                (sensor.clone(), *id)
+            } else { magds.create_sensor(name, data_type) }
+        } else { magds.create_sensor(name, data_type) }
+    } else { magds.create_sensor(name, data_type) };
+
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
             if key.as_ref() == "" { continue }
@@ -162,26 +193,28 @@ where
                         )
                     }).collect();
                 for key in key_vec {
-                    let element = sensor.insert(&key);
-                    if let Err(e) = Element::connect_bilateral(
-                        element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+                    let element = sensor.borrow_mut().insert(&key.into());
+                    let mut element = element.borrow_mut();
+                    if let Err(e) = element.connect_bilateral(
+                        neuron_ptr.clone(), false, ConnectionKind::Defining
                     ) {
                         log::error!(
                             "error connecting neuron {} with sensor {}, error: {e}", 
                             neuron_ptr.borrow(), 
-                            element.borrow()
+                            element
                         );
                     }
                 }
             } else {
-                let element = sensor.insert(key);
-                if let Err(e) = Element::connect_bilateral(
-                    element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+                let element = sensor.borrow_mut().insert(&(*dyn_clone::clone_box(key)).into());
+                let mut element = element.borrow_mut();
+                if let Err(e) = element.connect_bilateral(
+                    neuron_ptr.clone(), false, ConnectionKind::Defining
                 ) {
                     log::error!(
                         "error connecting neuron {} with sensor {}, error: {e}", 
                         neuron_ptr.borrow(), 
-                        element.borrow()
+                        element
                     );
                 }
             }
@@ -189,15 +222,14 @@ where
             continue
         }
     }
-    magds.add_sensor(
-        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<Arc<str>>>).into()))
-    )
+    
+    (sensor.clone(), id)
 }
 
 fn connector<T: SensorData>(
     magds: &mut MAGDS, 
     name: &str,
-    id: u32,
+    data_type: DataType,
     vec: &[Option<T>], 
     neurons: &[Rc<RefCell<SimpleNeuron>>]
 ) -> (Rc<RefCell<SensorConatiner>>, u32)
@@ -207,27 +239,35 @@ where
     DataTypeValue: From<T>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<T>::new_box(id);
+    let (sensor, id) = if let Some(ids) = magds.sensor_ids(name) {
+        if let Some(id) = ids.first() {
+            if let Some(sensor) = magds.sensor(*id) {
+                (sensor.clone(), *id)
+            } else { magds.create_sensor(name, data_type) }
+        } else { magds.create_sensor(name, data_type) }
+    } else { magds.create_sensor(name, data_type) };
+    
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
-            let element = sensor.insert(key);
+            let key_converted = &(*dyn_clone::clone_box(key)).into();
+            let element = sensor.borrow_mut().insert(key_converted);
+            let mut element = element.borrow_mut();
             let neuron_ptr = neurons[i].clone();
-            if let Err(e) = Element::connect_bilateral(
-                element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+            if let Err(e) = element.connect_bilateral(
+                neuron_ptr.clone(), false, ConnectionKind::Defining
             ) {
                 log::error!(
                     "error connecting neuron {} with sensor {}, error: {e}", 
                     neuron_ptr.borrow(), 
-                    element.borrow()
+                    element
                 );
             }
         } else {
             continue
         }
     }
-    magds.add_sensor(
-        name, Rc::new(RefCell::new((sensor as Box<dyn Sensor<T>>).into()))
-    )
+    
+    (sensor.clone(), id)
 }
 
 pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {

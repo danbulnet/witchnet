@@ -1,19 +1,13 @@
 use std::{
     rc::{ Rc, Weak },
     cell::RefCell,
-    fmt::{ Display, Formatter, Result as FmtResult },
-    marker::PhantomData
+    fmt::{ Display, Formatter, Result as FmtResult }
 };
 
 use anyhow::Result;
 
 use witchnet_common::{
-    neuron::{ 
-        Neuron, 
-        NeuronID, 
-        NeuronConnect,
-        NeuronConnectBilateral
-    }, 
+    neuron::{ Neuron, NeuronID }, 
     connection::{
         ConnectionKind,
         collective::{
@@ -22,11 +16,8 @@ use witchnet_common::{
         },
         collective::explanatory::ExplanatoryConnections
     },
-    sensor::SensorData,
     data::{ DataDeductor, DataTypeValue, DataType }
 };
-
-use asa_graphs::neural::element::Element;
 
 pub struct SimpleNeuron {
     pub id: NeuronID,
@@ -167,24 +158,20 @@ impl Neuron for SimpleNeuron {
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
         self.deactivate(propagate_horizontal, propagate_vertical)
     }
-}
 
-impl NeuronConnect for SimpleNeuron {
-    fn connect_to<Other: Neuron + NeuronConnect + 'static>(
-        &mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    fn connect_to(
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                let to_borrowed = to.borrow();
-                if to_borrowed.is_sensor() {
+                if is_to_sensor {
                     anyhow::bail!("only defining connection from sensor to neuron can be created")
                 }
                 self.defined_neurons.add(to.clone());
                 Ok(())
             },
             ConnectionKind::Explanatory => {
-                let to_borrowed = to.borrow();
-                if to_borrowed.is_sensor() {
+                if is_to_sensor {
                     self.defining_sensors.add(to.clone());
                 } else {
                     self.defining_neurons.add(to.clone());
@@ -194,34 +181,26 @@ impl NeuronConnect for SimpleNeuron {
             _ => { anyhow::bail!("only defining connection to SimpleNeuron can be created") }
         }
     }
-}
 
-impl<Key, const ORDER: usize> NeuronConnectBilateral<Element<Key, ORDER>> for SimpleNeuron 
-where 
-    Key: SensorData, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
     fn connect_bilateral(
-        _from: Rc<RefCell<Self>>, _to: Rc<RefCell<Element<Key, ORDER>>>, _kind: ConnectionKind
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
-        anyhow::bail!("connections from SimpleNeuron to Element are not allowed")
-    }
-}
-
-impl NeuronConnectBilateral<SimpleNeuron> for SimpleNeuron {
-    fn connect_bilateral(
-        from: Rc<RefCell<Self>>, to: Rc<RefCell<SimpleNeuron>>, kind: ConnectionKind
-    ) -> Result<()> {
-        match kind {
-            ConnectionKind::Defining => {
-                from.borrow_mut().connect_to(to.clone(), kind)?;
-                to.borrow_mut().connect_to(from, ConnectionKind::Explanatory)?;
-                Ok(())
-            }
-            _ => {
-                anyhow::bail!("only defining connection from Element to SimpleNeuron can be created")
+        if is_to_sensor {
+            anyhow::bail!("connections from SimpleNeuron to Element are not allowed")
+        } else {
+            match kind {
+                ConnectionKind::Defining => {
+                    self.connect_to(to.clone(), is_to_sensor, kind)?;
+                    to.borrow_mut().connect_to(
+                        self.self_ptr.upgrade().unwrap(), false, ConnectionKind::Explanatory
+                    )?;
+                    Ok(())
+                }
+                _ => {
+                    anyhow::bail!(
+                        "only defining connection from Element to SimpleNeuron can be created"
+                    )
+                }
             }
         }
     }
@@ -246,7 +225,7 @@ mod tests {
     };
 
     use witchnet_common::{
-        neuron::{ NeuronConnect, NeuronConnectBilateral, NeuronID },
+        neuron::{ Neuron, NeuronID },
         connection::ConnectionKind
     };
 
@@ -281,7 +260,7 @@ mod tests {
         assert_eq!(neuron_1.borrow().counter(), 1usize);
         
         neuron_1.borrow_mut().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), false, ConnectionKind::Defining
         ).unwrap();
 
         let max_activation = neuron_1.borrow_mut().activate(1.0f32, true, true);
@@ -333,7 +312,7 @@ mod tests {
         );
 
         let connection_1 = neuron_1.borrow_mut().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), false, ConnectionKind::Defining
         );
         assert!(connection_1.is_ok());
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 1);
@@ -354,7 +333,7 @@ mod tests {
         let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.borrow_mut().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), true, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
@@ -371,8 +350,8 @@ mod tests {
         );
         let neuron_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Defining
+        let connection_1 = neuron_1.borrow_mut().connect_bilateral(
+            neuron_2.clone(), true, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 0);
@@ -391,8 +370,8 @@ mod tests {
             NeuronID { id: 2, parent_id }
         );
 
-        SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Defining
+        neuron_1.borrow_mut().connect_bilateral(
+            neuron_2.clone(), false, ConnectionKind::Defining
         ).unwrap();
         assert_eq!(neuron_1.borrow().defined_neurons().len(), 1);
         assert_eq!(neuron_1.borrow().defining_neurons().len(), 0);
@@ -413,28 +392,28 @@ mod tests {
         );
         let sensor: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Inhibitory
+        let connection_1 = neuron_1.borrow_mut().connect_bilateral(
+            neuron_2.clone(), false, ConnectionKind::Inhibitory
         );
         assert!(connection_1.is_err());
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), sensor.clone(), ConnectionKind::Defining
+        let connection_1 = neuron_1.borrow_mut().connect_bilateral(
+            sensor.clone(), false, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), sensor.clone(), ConnectionKind::Explanatory
-        );
-        assert!(connection_1.is_err());
-
-        let connection_1 = neuron_1.borrow_mut().connect_to(
-            neuron_2.clone(), ConnectionKind::Inhibitory
+        let connection_1 = neuron_1.borrow_mut().connect_bilateral(
+            sensor.clone(), false, ConnectionKind::Explanatory
         );
         assert!(connection_1.is_err());
 
         let connection_1 = neuron_1.borrow_mut().connect_to(
-            sensor.clone(), ConnectionKind::Inhibitory
+            neuron_2.clone(), false, ConnectionKind::Inhibitory
+        );
+        assert!(connection_1.is_err());
+
+        let connection_1 = neuron_1.borrow_mut().connect_to(
+            sensor.clone(), false, ConnectionKind::Inhibitory
         );
         assert!(connection_1.is_err());
     }

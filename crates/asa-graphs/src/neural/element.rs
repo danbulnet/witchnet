@@ -8,7 +8,7 @@ use std::{
 use anyhow::Result;
 
 use witchnet_common::{
-    neuron::{ Neuron, NeuronConnect, NeuronID, NeuronConnectBilateral },
+    neuron::{ Neuron, NeuronID },
     connection::{
         ConnectionKind,
         collective::{
@@ -28,6 +28,7 @@ where Key: SensorData, [(); ORDER + 1]: {
     pub key: Key,
     pub counter: usize,
     pub activation: f32,
+    pub(crate) self_ptr: Weak<RefCell<Element<Key, ORDER>>>,
     pub next: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub definitions: DefiningConnections,
@@ -52,6 +53,7 @@ where
                     key: *dyn_clone::clone_box(key),
                     counter: 1,
                     activation: 0.0f32,
+                    self_ptr: Weak::new(),
                     next: None,
                     prev: None,
                     definitions: DefiningConnections::new(),
@@ -59,7 +61,7 @@ where
                 }
             )
         );
-
+        element_ptr.borrow_mut().self_ptr = Rc::downgrade(&element_ptr);
         element_ptr
     }
 
@@ -298,21 +300,13 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
             }
         }
     }
-}
 
-impl<Key, const ORDER: usize> NeuronConnect for Element<Key, ORDER> 
-where 
-    Key: SensorData, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
-    fn connect_to<Other: Neuron + NeuronConnect + 'static>(
-        &mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind
+    fn connect_to(
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                if to.borrow().is_sensor() {
+                if is_to_sensor {
                     anyhow::bail!("only defining connection from sensor to neuron can be created")
                 }
                 self.definitions.add(to);
@@ -323,24 +317,17 @@ where
             }
         }
     }
-}
 
-impl<Key, const ORDER: usize, Other: Neuron + NeuronConnect + 'static> 
-NeuronConnectBilateral<Other> for Element<Key, ORDER>
-where 
-    Key: SensorData, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
     fn connect_bilateral(
-        from: Rc<RefCell<Self>>, to: Rc<RefCell<Other>>, kind: ConnectionKind
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                if !to.borrow().is_sensor() {
-                    from.borrow_mut().connect_to(to.clone(), kind)?;
-                    to.borrow_mut().connect_to(from, ConnectionKind::Explanatory)?;
+                if !is_to_sensor {
+                    self.connect_to(to.clone(), is_to_sensor, kind)?;
+                    to.borrow_mut().connect_to(
+                        self.self_ptr.upgrade().unwrap(), true, ConnectionKind::Explanatory
+                    )?;
                     Ok(())
                 } else {
                     anyhow::bail!("connections between sensors are not allowed")    
@@ -368,7 +355,7 @@ mod tests {
     };
 
     use witchnet_common::{
-        neuron::{ Neuron, NeuronConnect },
+        neuron::Neuron,
         connection::ConnectionKind
     };
 
@@ -638,7 +625,9 @@ mod tests {
         let element_1: Rc<RefCell<Element<i32, 3>>> = Element::new(&1, 1, 1);
         let element_2: Rc<RefCell<Element<i32, 3>>> = Element::new(&2, 2, 1);
 
-        let ok = element_1.borrow_mut().connect_to(element_2.clone(), ConnectionKind::Defining);
+        let ok = element_1.borrow_mut().connect_to(
+            element_2.clone(), true, ConnectionKind::Defining
+        );
         assert!(ok.is_err());
         assert_eq!(element_1.borrow().defining_neurons().len(), 0);
     }

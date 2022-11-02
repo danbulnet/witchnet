@@ -55,6 +55,14 @@ pub trait Neuron {
     ) -> f32;
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
+
+    fn connect_to(
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
+    ) -> Result<()>;
+
+    fn connect_bilateral(
+        &mut self, to: Rc<RefCell<dyn Neuron>>, is_to_sensor: bool, kind: ConnectionKind
+    ) -> Result<()>;
 }
 
 impl Display for dyn Neuron {
@@ -77,18 +85,6 @@ impl Debug for dyn Neuron {
             self.activation()
         )
     }
-}
-
-pub trait NeuronConnect {
-    fn connect_to<Other: Neuron + NeuronConnect + 'static>(
-        &mut self, to: Rc<RefCell<Other>>, kind: ConnectionKind
-    ) -> Result<()>;
-}
-
-pub trait NeuronConnectBilateral<Other: Neuron + NeuronConnect>: Neuron + NeuronConnect {
-    fn connect_bilateral(
-        from: Rc<RefCell<Self>>, to: Rc<RefCell<Other>>, kind: ConnectionKind
-    ) -> Result<()>;
 }
 
 pub trait NeuronAsync: Sync + Send {
@@ -145,16 +141,4 @@ impl Debug for dyn NeuronAsync {
             self.activation()
         )
     }
-}
-
-pub trait NeuronConnectAsync: Sync + Send {
-    fn connect_to<Other: NeuronAsync + NeuronConnectAsync + 'static>(
-        &mut self, to: Arc<RwLock<Other>>, kind: ConnectionKind
-    ) -> Result<()>;
-}
-
-pub trait NeuronConnectBilateralAsync<Other: NeuronAsync>: NeuronAsync {   
-    fn connect_bilateral(
-        from: Arc<RwLock<Self>>, to: Arc<RwLock<Other>>, kind: ConnectionKind
-    ) -> Result<()>;
 }

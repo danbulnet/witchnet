@@ -189,7 +189,6 @@ where
                 for key in key_vec {
                     let element = sensor.write().unwrap().insert(&key.into());
                     let mut element = element.write().unwrap();
-                    println!("1");
                     if let Err(e) = element.connect_bilateral(
                         neuron_ptr.clone(), false, ConnectionKind::Defining
                     ) {
