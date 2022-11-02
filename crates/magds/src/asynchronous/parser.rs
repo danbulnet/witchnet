@@ -10,17 +10,14 @@ use polars::prelude::*;
 
 use rand::{ thread_rng, seq::SliceRandom };
 
-use asa_graphs::neural_async::{
-    element::Element,
-    graph::ASAGraph
-};
+use asa_graphs::neural_async::graph::ASAGraph;
 
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
-    neuron::{ NeuronAsync, NeuronID, NeuronConnectBilateralAsync },
+    neuron::{ NeuronAsync, NeuronID },
     connection::ConnectionKind,
     sensor::{ SensorAsync, SensorData },
-    data::{ DataDeductor, DataTypeValue }
+    data::{ DataDeductor, DataTypeValue, DataType }
 };
 
 use crate::{
@@ -106,30 +103,53 @@ pub(crate) fn sensor_from_datavec(
 pub(crate) fn connected_sensor_from_datavec(
     mut magds: &mut MAGDS, name: &str, data: &DataVecOption, neurons: &[Arc<RwLock<SimpleNeuron>>]
 ) -> (Arc<RwLock<SensorConatiner>>, u32) {
-    let new_id: u32 = *magds.sensors.keys().max().unwrap_or(&0) + 1;
     match data {
         DataVecOption::Unknown => {
             panic!("can't parse vec data type for sensor {name}")
         }
-        DataVecOption::BoolVec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::UInt64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int8Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int16Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Int64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Float32Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Float64Vec(vec) => { connector(&mut magds, name, new_id, vec, neurons) }
-        DataVecOption::Utf8Vec(vec) => { connector_string(&mut magds, name, new_id, vec, neurons) }
+        DataVecOption::BoolVec(vec) => {
+            connector(&mut magds, name, DataType::Bool, vec, neurons)
+        }
+        DataVecOption::UInt8Vec(vec) => {
+            connector(&mut magds, name, DataType::U8, vec, neurons)
+        }
+        DataVecOption::UInt16Vec(vec) => {
+            connector(&mut magds, name, DataType::U16, vec, neurons)
+        }
+        DataVecOption::UInt32Vec(vec) => {
+            connector(&mut magds, name, DataType::U32, vec, neurons)
+        }
+        DataVecOption::UInt64Vec(vec) => {
+            connector(&mut magds, name, DataType::U64, vec, neurons)
+        }
+        DataVecOption::Int8Vec(vec) => {
+            connector(&mut magds, name, DataType::I8, vec, neurons)
+        }
+        DataVecOption::Int16Vec(vec) => {
+            connector(&mut magds, name, DataType::I16, vec, neurons)
+        }
+        DataVecOption::Int32Vec(vec) => {
+            connector(&mut magds, name, DataType::I32, vec, neurons)
+        }
+        DataVecOption::Int64Vec(vec) => {
+            connector(&mut magds, name, DataType::I64, vec, neurons)
+        }
+        DataVecOption::Float32Vec(vec) => {
+            connector(&mut magds, name, DataType::F32, vec, neurons)
+        }
+        DataVecOption::Float64Vec(vec) => {
+            connector(&mut magds, name, DataType::F64, vec, neurons)
+        }
+        DataVecOption::Utf8Vec(vec) => {
+            connector_string(&mut magds, name, DataType::ArcStr, vec, neurons)
+        }
     }
 }
 
 fn connector_string(
     magds: &mut MAGDS, 
     name: &str,
-    id: u32,
+    data_type: DataType,
     vec: &[Option<Arc<str>>], 
     neurons: &[Arc<RwLock<SimpleNeuron>>]
 ) -> (Arc<RwLock<SensorConatiner>>, u32) 
@@ -139,7 +159,14 @@ where
     DataTypeValue: From<Arc<str>>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<Arc<str>>::new_box(id);
+    let (sensor, id) = if let Some(ids) = magds.sensor_ids(name) {
+        if let Some(id) = ids.first() {
+            if let Some(sensor) = magds.sensor(*id) {
+                (sensor.clone(), *id)
+            } else { magds.create_sensor(name, data_type) }
+        } else { magds.create_sensor(name, data_type) }
+    } else { magds.create_sensor(name, data_type) };
+
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
             if key.as_ref() == "" { continue }
@@ -160,26 +187,29 @@ where
                         )
                     }).collect();
                 for key in key_vec {
-                    let element = sensor.insert(&key);
-                    if let Err(e) = Element::connect_bilateral(
-                        element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+                    let element = sensor.write().unwrap().insert(&key.into());
+                    let mut element = element.write().unwrap();
+                    println!("1");
+                    if let Err(e) = element.connect_bilateral(
+                        neuron_ptr.clone(), false, ConnectionKind::Defining
                     ) {
                         log::error!(
                             "error connecting neuron {} with sensor {}, error: {e}", 
                             neuron_ptr.read().unwrap(), 
-                            element.read().unwrap()
+                            element
                         );
                     }
                 }
             } else {
-                let element = sensor.insert(key);
-                if let Err(e) = Element::connect_bilateral(
-                    element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+                let element = sensor.write().unwrap().insert(&(*dyn_clone::clone_box(key)).into());
+                let mut element = element.write().unwrap();
+                if let Err(e) = element.connect_bilateral(
+                    neuron_ptr.clone(), false, ConnectionKind::Defining
                 ) {
                     log::error!(
                         "error connecting neuron {} with sensor {}, error: {e}", 
                         neuron_ptr.read().unwrap(), 
-                        element.read().unwrap()
+                        element
                     );
                 }
             }
@@ -187,15 +217,14 @@ where
             continue
         }
     }
-    magds.add_sensor(
-        name, Arc::new(RwLock::new((sensor as Box<dyn SensorAsync<Arc<str>>>).into()))
-    )
+
+    (sensor.clone(), id)
 }
 
 fn connector<T: SensorData + Sync + Send>(
     magds: &mut MAGDS, 
     name: &str,
-    id: u32,
+    data_type: DataType,
     vec: &[Option<T>], 
     neurons: &[Arc<RwLock<SimpleNeuron>>]
 ) -> (Arc<RwLock<SensorConatiner>>, u32)
@@ -205,27 +234,35 @@ where
     DataTypeValue: From<T>
 {
     assert_eq!(neurons.len(), vec.len());
-    let mut sensor = ASAGraph::<T>::new_box(id);
+    let (sensor, id) = if let Some(ids) = magds.sensor_ids(name) {
+        if let Some(id) = ids.first() {
+            if let Some(sensor) = magds.sensor(*id) {
+                (sensor.clone(), *id)
+            } else { magds.create_sensor(name, data_type) }
+        } else { magds.create_sensor(name, data_type) }
+    } else { magds.create_sensor(name, data_type) };
+
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
-            let element = sensor.insert(key);
+            let key_converted = &(*dyn_clone::clone_box(key)).into();
+            let element = sensor.write().unwrap().insert(key_converted);
+            let mut element = element.write().unwrap();
             let neuron_ptr = neurons[i].clone();
-            if let Err(e) = Element::connect_bilateral(
-                element.clone(), neuron_ptr.clone(), ConnectionKind::Defining
+            if let Err(e) = element.connect_bilateral(
+                neuron_ptr.clone(), false, ConnectionKind::Defining
             ) {
                 log::error!(
                     "error connecting neuron {} with sensor {}, error: {e}", 
                     neuron_ptr.read().unwrap(), 
-                    element.read().unwrap()
+                    element
                 );
             }
         } else {
             continue
         }
     }
-    magds.add_sensor(
-        name, Arc::new(RwLock::new((sensor as Box<dyn SensorAsync<T>>).into()))
-    )
+
+    (sensor.clone(), id)
 }
 
 pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {

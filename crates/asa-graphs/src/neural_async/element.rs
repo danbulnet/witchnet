@@ -7,9 +7,7 @@ use std::{
 use anyhow::Result;
 
 use witchnet_common::{
-    neuron::{ 
-        NeuronAsync, NeuronID, NeuronConnectAsync, NeuronConnectBilateralAsync
-    },
+    neuron::{ NeuronAsync, NeuronID },
     connection::{
         ConnectionKind,
         collective::{
@@ -29,6 +27,7 @@ where Key: SensorData, [(); ORDER + 1]: {
     pub key: Key,
     pub counter: usize,
     pub activation: f32,
+    pub(crate) self_ptr: Weak<RwLock<Element<Key, ORDER>>>,
     pub next: Option<(Weak<RwLock<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RwLock<Element<Key, ORDER>>>, f32)>,
     pub definitions: DefiningConnectionsAsync,
@@ -54,6 +53,7 @@ where
                     key: *dyn_clone::clone_box(key),
                     counter: 1,
                     activation: 0.0f32,
+                    self_ptr: Weak::new(),
                     next: None,
                     prev: None,
                     definitions: DefiningConnectionsAsync::new(),
@@ -61,7 +61,7 @@ where
                 }
             )
         );
-
+        element_ptr.write().unwrap().self_ptr = Arc::downgrade(&element_ptr);
         element_ptr
     }
 
@@ -322,21 +322,13 @@ where
             }
         }
     }
-}
 
-impl<Key, const ORDER: usize> NeuronConnectAsync for Element<Key, ORDER> 
-where 
-    Key: SensorData + Sync + Send, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
-    fn connect_to<Other: NeuronAsync + NeuronConnectAsync + 'static>(
-        &mut self, to: Arc<RwLock<Other>>, kind: ConnectionKind
+    fn connect_to(
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                if to.read().unwrap().is_sensor() {
+                if is_to_sensor {
                     anyhow::bail!("only defining connection from sensor to neuron can be created")
                 }
                 self.definitions.add(to);
@@ -347,24 +339,17 @@ where
             }
         }
     }
-}
 
-impl<Key, const ORDER: usize, Other: NeuronAsync + NeuronConnectAsync + 'static> 
-NeuronConnectBilateralAsync<Other> for Element<Key, ORDER>
-where 
-    Key: SensorData + Sync + Send, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
     fn connect_bilateral(
-        from: Arc<RwLock<Self>>, to: Arc<RwLock<Other>>, kind: ConnectionKind
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                if !to.read().unwrap().is_sensor() {
-                    from.write().unwrap().connect_to(to.clone(), kind)?;
-                    to.write().unwrap().connect_to(from, ConnectionKind::Explanatory)?;
+                if !is_to_sensor {
+                    self.connect_to(to.clone(), is_to_sensor, kind)?;
+                    to.write().unwrap().connect_to(
+                        self.self_ptr.upgrade().unwrap(), true, ConnectionKind::Explanatory
+                    )?;
                     Ok(())
                 } else {
                     anyhow::bail!("connections between sensors are not allowed")    
@@ -389,7 +374,7 @@ mod tests {
     use std::sync::{ Arc, RwLock };
 
     use witchnet_common::{
-        neuron::{ NeuronAsync, NeuronConnectAsync },
+        neuron::NeuronAsync,
         connection::ConnectionKind
     };
 
@@ -659,7 +644,9 @@ mod tests {
         let element_1: Arc<RwLock<Element<i32, 3>>> = Element::new(&1, 1, 1);
         let element_2: Arc<RwLock<Element<i32, 3>>> = Element::new(&2, 2, 1);
 
-        let ok = element_1.write().unwrap().connect_to(element_2.clone(), ConnectionKind::Defining);
+        let ok = element_1.write().unwrap().connect_to(
+            element_2.clone(), true, ConnectionKind::Defining
+        );
         assert!(ok.is_err());
         assert_eq!(element_1.read().unwrap().defining_neurons().len(), 0);
     }

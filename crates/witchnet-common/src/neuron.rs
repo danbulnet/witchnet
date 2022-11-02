@@ -115,6 +115,14 @@ pub trait NeuronAsync: Sync + Send {
     ) -> f32;
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
+
+    fn connect_to(
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
+    ) -> Result<()>;
+
+    fn connect_bilateral(
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
+    ) -> Result<()>;
 }
 
 impl Display for dyn NeuronAsync {
@@ -145,9 +153,7 @@ pub trait NeuronConnectAsync: Sync + Send {
     ) -> Result<()>;
 }
 
-pub trait NeuronConnectBilateralAsync<
-    Other: NeuronAsync + NeuronConnectAsync
->: NeuronAsync + NeuronConnectAsync {   
+pub trait NeuronConnectBilateralAsync<Other: NeuronAsync>: NeuronAsync {   
     fn connect_bilateral(
         from: Arc<RwLock<Self>>, to: Arc<RwLock<Other>>, kind: ConnectionKind
     ) -> Result<()>;

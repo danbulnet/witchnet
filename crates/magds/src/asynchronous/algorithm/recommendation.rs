@@ -72,6 +72,8 @@ pub fn recommend_weighted(
         .collect();
     values_sorted.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
+    println!("values_sorted {:?}", values_sorted);
+
     Some(values_sorted.into_iter().rev().collect())
 }
 

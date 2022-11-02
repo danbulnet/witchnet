@@ -1,18 +1,12 @@
 use std::{
     sync::{ Arc, Weak, RwLock },
-    fmt::{ Display, Formatter, Result as FmtResult },
-    marker::PhantomData
+    fmt::{ Display, Formatter, Result as FmtResult }
 };
 
 use anyhow::Result;
 
 use witchnet_common::{
-    neuron::{ 
-        NeuronAsync, 
-        NeuronID, 
-        NeuronConnectAsync,
-        NeuronConnectBilateralAsync
-    }, 
+    neuron::{ NeuronAsync, NeuronID }, 
     connection::{
         ConnectionKind,
         collective::{
@@ -21,11 +15,8 @@ use witchnet_common::{
             explanatory::ExplanatoryConnectionsAsync
         }
     },
-    sensor::SensorData,
-    data::{ DataDeductor, DataTypeValue, DataType }
+    data::{ DataTypeValue, DataType }
 };
-
-use asa_graphs::neural_async::element::Element;
 
 pub struct SimpleNeuron {
     pub id: NeuronID,
@@ -166,24 +157,20 @@ impl NeuronAsync for SimpleNeuron {
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
         self.deactivate(propagate_horizontal, propagate_vertical)
     }
-}
 
-impl NeuronConnectAsync for SimpleNeuron {
-    fn connect_to<Other: NeuronAsync + NeuronConnectAsync + 'static>(
-        &mut self, to: Arc<RwLock<Other>>, kind: ConnectionKind
+    fn connect_to(
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
         match kind {
             ConnectionKind::Defining => {
-                let to_borrowed = to.read().unwrap();
-                if to_borrowed.is_sensor() {
+                if is_to_sensor {
                     anyhow::bail!("only defining connection from sensor to neuron can be created")
                 }
                 self.defined_neurons.add(to.clone());
                 Ok(())
             },
             ConnectionKind::Explanatory => {
-                let to_borrowed = to.read().unwrap();
-                if to_borrowed.is_sensor() {
+                if is_to_sensor {
                     self.defining_sensors.add(to.clone());
                 } else {
                     self.defining_neurons.add(to.clone());
@@ -193,34 +180,26 @@ impl NeuronConnectAsync for SimpleNeuron {
             _ => { anyhow::bail!("only defining connection to SimpleNeuron can be created") }
         }
     }
-}
 
-impl<Key, const ORDER: usize> NeuronConnectBilateralAsync<Element<Key, ORDER>> for SimpleNeuron 
-where 
-    Key: SensorData + Sync + Send, 
-    [(); ORDER + 1]:, 
-    PhantomData<Key>: DataDeductor,
-    DataTypeValue: From<Key>
-{
     fn connect_bilateral(
-        _from: Arc<RwLock<Self>>, _to: Arc<RwLock<Element<Key, ORDER>>>, _kind: ConnectionKind
+        &mut self, to: Arc<RwLock<dyn NeuronAsync>>, is_to_sensor: bool, kind: ConnectionKind
     ) -> Result<()> {
-        anyhow::bail!("connections from SimpleNeuron to Element are not allowed")
-    }
-}
-
-impl NeuronConnectBilateralAsync<SimpleNeuron> for SimpleNeuron {
-    fn connect_bilateral(
-        from: Arc<RwLock<Self>>, to: Arc<RwLock<SimpleNeuron>>, kind: ConnectionKind
-    ) -> Result<()> {
-        match kind {
-            ConnectionKind::Defining => {
-                from.write().unwrap().connect_to(to.clone(), kind)?;
-                to.write().unwrap().connect_to(from, ConnectionKind::Explanatory)?;
-                Ok(())
-            }
-            _ => {
-                anyhow::bail!("only defining connection from Element to SimpleNeuron can be created")
+        if is_to_sensor {
+            anyhow::bail!("connections from SimpleNeuron to Element are not allowed")
+        } else {
+            match kind {
+                ConnectionKind::Defining => {
+                    self.connect_to(to.clone(), is_to_sensor, kind)?;
+                    to.write().unwrap().connect_to(
+                        self.self_ptr.upgrade().unwrap(), false, ConnectionKind::Explanatory
+                    )?;
+                    Ok(())
+                }
+                _ => {
+                    anyhow::bail!(
+                        "only defining connection from Element to SimpleNeuron can be created"
+                    )
+                }
             }
         }
     }
@@ -242,7 +221,7 @@ mod tests {
     use std::sync::{ Arc, RwLock };
 
     use witchnet_common::{
-        neuron::{ NeuronConnectAsync, NeuronConnectBilateralAsync, NeuronID },
+        neuron::{ NeuronAsync, NeuronID },
         connection::ConnectionKind
     };
 
@@ -277,7 +256,7 @@ mod tests {
         assert_eq!(neuron_1.read().unwrap().counter(), 1usize);
         
         neuron_1.write().unwrap().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), false, ConnectionKind::Defining
         ).unwrap();
 
         let max_activation = neuron_1.write().unwrap().activate(1.0f32, true, true);
@@ -329,7 +308,7 @@ mod tests {
         );
 
         let connection_1 = neuron_1.write().unwrap().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), false, ConnectionKind::Defining
         );
         assert!(connection_1.is_ok());
         assert_eq!(neuron_1.read().unwrap().defined_neurons().len(), 1);
@@ -350,7 +329,7 @@ mod tests {
         let neuron_2: Arc<RwLock<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
         let connection_1 = neuron_1.write().unwrap().connect_to(
-            neuron_2.clone(), ConnectionKind::Defining
+            neuron_2.clone(), true, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
         assert_eq!(neuron_1.read().unwrap().defined_neurons().len(), 0);
@@ -367,8 +346,8 @@ mod tests {
         );
         let neuron_2: Arc<RwLock<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Defining
+        let connection_1 = neuron_1.write().unwrap().connect_bilateral(
+            neuron_2.clone(), true, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
         assert_eq!(neuron_1.read().unwrap().defined_neurons().len(), 0);
@@ -387,8 +366,8 @@ mod tests {
             NeuronID { id: 2, parent_id }
         );
 
-        SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Defining
+        neuron_1.write().unwrap().connect_bilateral(
+            neuron_2.clone(), false, ConnectionKind::Defining
         ).unwrap();
         assert_eq!(neuron_1.read().unwrap().defined_neurons().len(), 1);
         assert_eq!(neuron_1.read().unwrap().defining_neurons().len(), 0);
@@ -409,28 +388,28 @@ mod tests {
         );
         let sensor: Arc<RwLock<Element<i32, 3>>> = Element::new(&1, 1, 1);
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), neuron_2.clone(), ConnectionKind::Inhibitory
+        let connection_1 = neuron_1.write().unwrap().connect_bilateral(
+            neuron_2.clone(), false, ConnectionKind::Inhibitory
         );
         assert!(connection_1.is_err());
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), sensor.clone(), ConnectionKind::Defining
+        let connection_1 = neuron_1.write().unwrap().connect_bilateral(
+            sensor.clone(), true, ConnectionKind::Defining
         );
         assert!(connection_1.is_err());
 
-        let connection_1 = SimpleNeuron::connect_bilateral(
-            neuron_1.clone(), sensor.clone(), ConnectionKind::Explanatory
-        );
-        assert!(connection_1.is_err());
-
-        let connection_1 = neuron_1.write().unwrap().connect_to(
-            neuron_2.clone(), ConnectionKind::Inhibitory
+        let connection_1 = neuron_1.write().unwrap().connect_bilateral(
+            sensor.clone(), true, ConnectionKind::Explanatory
         );
         assert!(connection_1.is_err());
 
         let connection_1 = neuron_1.write().unwrap().connect_to(
-            sensor.clone(), ConnectionKind::Inhibitory
+            neuron_2.clone(), false, ConnectionKind::Inhibitory
+        );
+        assert!(connection_1.is_err());
+
+        let connection_1 = neuron_1.write().unwrap().connect_to(
+            sensor.clone(), true, ConnectionKind::Inhibitory
         );
         assert!(connection_1.is_err());
     }
