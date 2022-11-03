@@ -58,7 +58,7 @@ impl_numerical! {
 
 impl_categorical! { String, Arc<str>, bool }
 
-#[derive(Debug, PartialEq, Eq, EnumAsInner)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumAsInner)]
 pub enum DataType {
     Bool,
     U8,
