@@ -182,10 +182,12 @@ where
                         Arc::<str>::from(
                             Regex::new(r#"["']+"#).unwrap()
                                 .split(x)
-                                .filter(|x| *x != "")
-                                .next().unwrap()
+                                .next()
+                                .unwrap()
                         )
-                    }).collect();
+                    })
+                    .filter(|x| x.as_ref() != "")
+                    .collect();
                 for key in key_vec {
                     let element = sensor.write().unwrap().insert(&key.into());
                     let mut element = element.write().unwrap();
