@@ -45,7 +45,11 @@ pub fn predict_weighted(
     
 
     for (id, value, weight) in features {
-        log::info!("sensor: {}", magds.sensor(*id).unwrap().read().unwrap());
+        log::debug!(
+            "sensor {}: {}", 
+            magds.sensor_name(*id).unwrap(), 
+            magds.sensor(*id).unwrap().read().unwrap()
+        );
         let sensor = match magds.sensor_search(*id, value) {
             Some(s) => s,
             None => {

@@ -25,6 +25,11 @@ pub fn recommend_weighted(
     let mut max_activation_sum = 0.0f32;
 
     for (id, value, weight) in features {
+        log::debug!(
+            "sensor {}: {}", 
+            magds.sensor_name(*id).unwrap(), 
+            magds.sensor(*id).unwrap().read().unwrap()
+        );
         let sensor = match magds.sensor_search(id.clone(), value) {
             Some(s) => s,
             None => {

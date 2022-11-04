@@ -230,6 +230,8 @@ mod tests {
 
     #[test]
     fn string_to_vec() {
+        assert_eq!(super::string_to_vec("a"), vec!["a"]);
+        assert_eq!(super::string_to_vec("a, b"), vec!["a, b"]);
         assert_eq!(super::string_to_vec("[a, b]"), vec!["a", "b"]);
         assert_eq!(super::string_to_vec("['a', 'b']"), vec!["a", "b"]);
         assert_eq!(super::string_to_vec("[''a'', ''b'']"), vec!["a", "b"]);
