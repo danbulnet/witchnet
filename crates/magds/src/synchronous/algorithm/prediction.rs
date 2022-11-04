@@ -76,6 +76,11 @@ pub fn predict_weighted(
         max_activation_sum += max_activation;
     }
 
+    if max_activation_sum == 0.0f32 {
+        log::warn!("no feature activated, prediction impossible");
+        return None
+    }
+
     let neurons = &magds.neurons;
 
     let neurons_len = neurons.len();
@@ -108,10 +113,7 @@ pub fn predict_weighted(
                 if let Some(target_value) = neuron.borrow().explain_one(target) {
                     targets_weighted.push(target_value.to_f64().unwrap() * current_weight as f64);
                     weights += current_weight;
-                    let proba = if max_activation_sum == 0.0f32 { 0.0f32 } else {
-                        (neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight
-                    };
-                    probas.push(proba);
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= weight_ratio;
 
                     winners_counter += 1;
@@ -161,10 +163,7 @@ pub fn predict_weighted(
                         values.insert(target_value, current_weight);
                     }
                     weights += current_weight;
-                    let proba = if max_activation_sum == 0.0f32 { 0.0f32 } else {
-                        (neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight
-                    };
-                    probas.push(proba);
+                    probas.push((neuron_activation.to_f32().unwrap() / max_activation_sum) * current_weight);
                     current_weight /= weight_ratio;
 
                     winners_counter += 1;
@@ -439,8 +438,6 @@ mod tests {
         let train_file = "data/iris_original_train.csv";
         let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
         let data_proba = prediction::predict_weighted(&mut magds_train, &vec![], 1u32, true);
-        assert!(data_proba.is_some());
-        println!("data_proba {:?}", data_proba);
-        assert_eq!(data_proba.unwrap().1, 0.0f32);
+        assert!(data_proba.is_none());
     }
 }
