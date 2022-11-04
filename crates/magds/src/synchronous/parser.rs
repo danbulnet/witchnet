@@ -6,16 +6,11 @@ use std::{
     path::Path
 };
 
-use regex::Regex;
-
 use polars::prelude::*;
 
 use rand::{ thread_rng, seq::SliceRandom };
 
-use asa_graphs::neural::{
-    element::Element,
-    graph::ASAGraph
-};
+use asa_graphs::neural::graph::ASAGraph;
 
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
@@ -108,7 +103,6 @@ pub(crate) fn sensor_from_datavec(
 pub(crate) fn connected_sensor_from_datavec(
     mut magds: &mut MAGDS, name: &str, data: &DataVecOption, neurons: &[Rc<RefCell<SimpleNeuron>>]
 ) -> (Rc<RefCell<SensorConatiner>>, u32) {
-    let new_id: u32 = *magds.sensors.keys().max().unwrap_or(&0) + 1;
     match data {
         DataVecOption::Unknown => {
             panic!("can't parse vec data type for sensor {name}")
@@ -179,35 +173,12 @@ where
             
             let neuron_ptr = neurons[i].clone();
 
-            if key.starts_with("[") && key.ends_with("]") {
-                let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
-                let key_vec: Vec<_> = Regex::new(r"\s*,\s*")
-                    .unwrap()
-                    .split(key)
-                    .map(|x| {
-                        Regex::new(r#"["']+"#).unwrap()
-                            .split(x)
-                            .filter(|x| !x.is_empty())
-                            .collect::<Vec<&str>>()
-                    })
-                    .filter(|x| !x.is_empty())
-                    .map(|x| Arc::<str>::from(*x.first().unwrap()))
-                    .collect();
-                for key in key_vec {
-                    let element = sensor.borrow_mut().insert(&key.into());
-                    let mut element = element.borrow_mut();
-                    if let Err(e) = element.connect_bilateral(
-                        neuron_ptr.clone(), false, ConnectionKind::Defining
-                    ) {
-                        log::error!(
-                            "error connecting neuron {} with sensor {}, error: {e}", 
-                            neuron_ptr.borrow(), 
-                            element
-                        );
-                    }
-                }
-            } else {
-                let element = sensor.borrow_mut().insert(&(*dyn_clone::clone_box(key)).into());
+            let key_vec: Vec<_> = polars_common::string_to_vec(key)
+                .into_iter()
+                .map(|x| Arc::<str>::from(x))
+                .collect();
+            for key in key_vec {
+                let element = sensor.borrow_mut().insert(&key.into());
                 let mut element = element.borrow_mut();
                 if let Err(e) = element.connect_bilateral(
                     neuron_ptr.clone(), false, ConnectionKind::Defining

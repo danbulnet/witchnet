@@ -4,8 +4,6 @@ use std::{
     path::Path
 };
 
-use regex::Regex;
-
 use polars::prelude::*;
 
 use rand::{ thread_rng, seq::SliceRandom };
@@ -173,35 +171,12 @@ where
             
             let neuron_ptr = neurons[i].clone();
 
-            if key.starts_with("[") && key.ends_with("]") {
-                let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
-                let key_vec: Vec<_> = Regex::new(r"\s*,\s*")
-                    .unwrap()
-                    .split(key)
-                    .map(|x| {
-                        Regex::new(r#"["']+"#).unwrap()
-                            .split(x)
-                            .filter(|x| !x.is_empty())
-                            .collect::<Vec<&str>>()
-                    })
-                    .filter(|x| !x.is_empty())
-                    .map(|x| Arc::<str>::from(*x.first().unwrap()))
-                    .collect();
-                for key in key_vec {
-                    let element = sensor.write().unwrap().insert(&key.into());
-                    let mut element = element.write().unwrap();
-                    if let Err(e) = element.connect_bilateral(
-                        neuron_ptr.clone(), false, ConnectionKind::Defining
-                    ) {
-                        log::error!(
-                            "error connecting neuron {} with sensor {}, error: {e}", 
-                            neuron_ptr.read().unwrap(), 
-                            element
-                        );
-                    }
-                }
-            } else {
-                let element = sensor.write().unwrap().insert(&(*dyn_clone::clone_box(key)).into());
+            let key_vec: Vec<_> = polars_common::string_to_vec(key)
+                .into_iter()
+                .map(|x| Arc::<str>::from(x))
+                .collect();
+            for key in key_vec {
+                let element = sensor.write().unwrap().insert(&key.into());
                 let mut element = element.write().unwrap();
                 if let Err(e) = element.connect_bilateral(
                     neuron_ptr.clone(), false, ConnectionKind::Defining

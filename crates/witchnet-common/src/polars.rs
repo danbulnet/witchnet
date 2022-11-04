@@ -5,6 +5,8 @@ use std::{
 
 use polars::prelude::*;
 
+use regex::Regex;
+
 use crate::data::DataTypeValue;
 
 pub enum DataVec {
@@ -186,6 +188,30 @@ pub fn series_to_datavec(series: &Series) -> PolarsResult<DataVecOption> {
     }
 }
 
+pub fn string_to_vec(mut input: &str) -> Vec<&str> {
+    input = input.trim();
+    if input.starts_with("[") && input.ends_with("]") {
+        input = input.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
+        
+    } else if input.starts_with("\"[") && input.ends_with("]\"") {
+        input = input.strip_prefix("\"[").unwrap().strip_suffix("]\"").unwrap();
+    } else {
+        return vec![input]
+    }
+    Regex::new(r"\s*,\s*")
+        .unwrap()
+        .split(input)
+        .map(|x| {
+            Regex::new(r#"["']+"#).unwrap()
+                .split(x)
+                .filter(|x| !x.is_empty())
+                .collect::<Vec<&str>>()
+        })
+        .filter(|x| !x.is_empty())
+        .map(|x| *x.first().unwrap())
+        .collect()
+}
+
 mod tests {
     #[test]
     fn csv_to_dataframe() {
@@ -200,5 +226,16 @@ mod tests {
             println!("{column_name}");
             assert!(valid_columns.contains(&column_name));
         }
+    }
+
+    #[test]
+    fn string_to_vec() {
+        assert_eq!(super::string_to_vec("[a, b]"), vec!["a", "b"]);
+        assert_eq!(super::string_to_vec("['a', 'b']"), vec!["a", "b"]);
+        assert_eq!(super::string_to_vec("[''a'', ''b'']"), vec!["a", "b"]);
+        assert_eq!(super::string_to_vec(r#"["a", "b"]"#), vec!["a", "b"]);
+        assert_eq!(super::string_to_vec(r#"[""a"", ""b""]"#), vec!["a", "b"]);
+        assert_eq!(super::string_to_vec(r#""[""a"", ""b""]""#), vec!["a", "b"]);
+        assert!(super::string_to_vec(r"[]").is_empty());
     }
 }
