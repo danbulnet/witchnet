@@ -61,7 +61,6 @@ pub fn recommend_weighted(
     }
 
     let neurons = &magds.neurons;
-    log::debug!("{:?}", neurons);
 
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
@@ -70,16 +69,19 @@ pub fn recommend_weighted(
         .map(
             |neuron| (
                 neuron.read().unwrap().explain_one(target), 
-                neuron.read().unwrap().activation() / max_activation_sum
+                if max_activation_sum == 0.0f32 {
+                    0.0f32
+                } else {
+                    neuron.read().unwrap().activation() / max_activation_sum
+                }
             )
         )
         .filter(|(target, _activation)| target.is_some())
         .map(|(target, activation)| (target.unwrap(), activation))
         .collect();
-    log::debug!("values_sorted before sort {:?}", values_sorted);
     values_sorted.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
-    log::info!("values_sorted {:?}", values_sorted);
+    log::debug!("values_sorted {:?}", values_sorted);
 
     Some(values_sorted.into_iter().rev().collect())
 }
@@ -113,12 +115,17 @@ mod tests {
         ];
 
         let recommendations = recommendation::recommend(
+            &mut magds, &vec![], variety_sensor_id, true
+        ).unwrap();
+        assert!(!recommendations.is_empty());
+        assert!(recommendations.first().unwrap().1 == 0.0f32);
+        println!("empty recommendations {:?}", recommendations);
+
+        let recommendations = recommendation::recommend(
             &mut magds, &features, variety_sensor_id, true
         ).unwrap();
-
         assert!(!recommendations.is_empty());
         assert!(recommendations.first().unwrap().1 > 0f32);
-
         println!("recommendations {:?}", recommendations);
         
         let pred = prediction::predict(&mut magds, &features, variety_sensor_id, true);

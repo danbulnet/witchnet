@@ -61,7 +61,14 @@ pub fn recommend_weighted(
     if neurons_len == 0 { return None }
 
     let mut values_sorted: Vec<(DataTypeValue, f32)> = neurons.into_iter()
-        .map(|neuron| (neuron.borrow().explain_one(target), neuron.borrow().activation() / max_activation_sum))
+        .map(|neuron| (
+            neuron.borrow().explain_one(target), 
+            if max_activation_sum == 0.0f32 {
+                0.0f32
+            } else {
+                neuron.borrow().activation() / max_activation_sum
+            }
+        ))
         .filter(|(target, _activation)| target.is_some())
         .map(|(target, activation)| (target.unwrap(), activation))
         .collect();
