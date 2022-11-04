@@ -4,15 +4,14 @@ use std::{
     fmt::{ Display, Formatter, Result as FmtResult }
 };
 
-use regex::Regex;
-
 use enum_as_inner::EnumAsInner;
 
 use crate::{
     distances::{ 
         Distance, 
         DistanceChecked::{ self, * }
-    }
+    },
+    polars
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumAsInner)]
@@ -171,42 +170,16 @@ impl DataTypeValue {
             DataTypeValue::F32(v) => vec![DataTypeValue::F32(*v)],
             DataTypeValue::F64(v) => vec![DataTypeValue::F64(*v)],
             DataTypeValue::ArcStr(key) => {
-                let key = key.to_string();
-                if key.starts_with("[") && key.ends_with("]") {
-                    let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
-                    Regex::new(r"\s*,\s*")
-                        .unwrap()
-                        .split(key)
-                        .map(|x| {
-                            let string = Regex::new(r#"["']+"#).unwrap()
-                                .split(x)
-                                .filter(|x| *x != "")
-                                .next()
-                                .unwrap();
-                            DataTypeValue::String(string.into())
-                        }).collect()
-                } else {
-                    vec![DataTypeValue::ArcStr(key.into())]
-                }
+                polars::string_to_vec(key.as_ref())
+                    .into_iter()
+                    .map(|x| DataTypeValue::ArcStr(x.into()))
+                    .collect::<Vec<_>>()
             },
             DataTypeValue::String(key) => {
-                if key.starts_with("[") && key.ends_with("]") {
-                    let key = key.strip_prefix("[").unwrap().strip_suffix("]").unwrap();
-                    Regex::new(r"\s*,\s*")
-                        .unwrap()
-                        .split(key)
-                        .map(|x| {
-                            let string = Regex::new(r#"["']+"#).unwrap()
-                                .split(x)
-                                .filter(|x| *x != "")
-                                .next()
-                                .unwrap()
-                                .to_string();
-                            DataTypeValue::String(string)
-                        }).collect()
-                } else {
-                    vec![DataTypeValue::String(key.clone())]
-                }
+                polars::string_to_vec(key.as_ref())
+                    .into_iter()
+                    .map(|x| DataTypeValue::ArcStr(x.into()))
+                    .collect::<Vec<_>>()
             },
             DataTypeValue::Unknown => vec![]
         }

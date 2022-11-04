@@ -309,7 +309,7 @@ pub fn prediction_score_df(
             for feature_id in feature_columns.keys() {
                 let weight = if weighted { similarities[feature_id] as f32 } else { 1.0f32 };
                 if let Some(feature_raw) = feature_columns[feature_id].get(i) {
-                    for feature in  feature_raw.to_vec() {
+                    for feature in feature_raw.to_vec() {
                         features.push((*feature_id, feature, weight));
                     }
                 }
