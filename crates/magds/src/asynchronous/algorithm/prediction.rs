@@ -96,7 +96,7 @@ pub fn predict_weighted(
         )
         .collect();
     neurons_sorted.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-    let neurons_sorted = &neurons_sorted[(neurons_len - winners_limit)..neurons_len];
+    // let neurons_sorted = &neurons_sorted[(neurons_len - winners_limit)..neurons_len];
 
     let target_data_category = match magds.sensor(target) {
         Some(s) => s.read().unwrap().data_category(),
@@ -127,6 +127,12 @@ pub fn predict_weighted(
                     if winners_counter >= winners_limit { break }
                 }
             }
+
+            if targets_weighted.is_empty() {
+                log::warn!("all winners has no target feature");
+                return None
+            }
+
             let predicted_value_f64: f64 = targets_weighted.iter().sum::<f64>() / weights as f64;
             let predicted_value: DataTypeValue = match target_data_type {
                 DataType::U8 => (predicted_value_f64 as u8).into(),
@@ -173,6 +179,11 @@ pub fn predict_weighted(
                     winners_counter += 1;
                     if winners_counter >= winners_limit { break }
                 }
+            }
+
+            if values.is_empty() {
+                log::warn!("all winners has no target feature");
+                return None
             }
 
             let mut values_sorted: Vec<(String, f32)> = values.into_iter()
