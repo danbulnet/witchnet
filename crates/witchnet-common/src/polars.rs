@@ -169,6 +169,7 @@ pub fn series_to_datavec_skipna(series: &Series) -> PolarsResult<DataVec> {
 
 pub fn series_to_datavec(series: &Series) -> PolarsResult<DataVecOption> {
     match series.dtype() {
+        DataType::Boolean => Ok(DataVecOption::BoolVec(series.bool()?.into_iter().collect())),
         DataType::UInt8 => Ok(DataVecOption::UInt8Vec(series.u8()?.into_iter().collect())),
         DataType::UInt16 => Ok(DataVecOption::UInt16Vec(series.u16()?.into_iter().collect())),
         DataType::UInt32 => Ok(DataVecOption::UInt32Vec(series.u32()?.into_iter().collect())),
