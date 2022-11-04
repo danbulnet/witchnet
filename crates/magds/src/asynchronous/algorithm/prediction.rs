@@ -42,16 +42,18 @@ pub fn predict_weighted(
     fuzzy: bool
 ) -> Option<DataProbability> {
     let mut max_activation_sum = 0.0f32;
+    
 
     for (id, value, weight) in features {
-        let sensor = match magds.sensor_search(id.clone(), value) {
+        log::info!("sensor: {}", magds.sensor(*id).unwrap().read().unwrap());
+        let sensor = match magds.sensor_search(*id, value) {
             Some(s) => s,
             None => {
-                match magds.sensor_data_category(id.clone()) {
+                match magds.sensor_data_category(*id) {
                     Some(DataCategory::Numerical) | Some(DataCategory::Ordinal) => {
                         if fuzzy {
                             log::info!("cannot find sensor {id} value {:?}, inserting", value);
-                            match magds.sensor_insert(id.clone(), value) {
+                            match magds.sensor_insert(*id, value) {
                                 Some(s) => s,
                                 None => {
                                     log::warn!("cannot insert {:?} to {id}, skipping", value);

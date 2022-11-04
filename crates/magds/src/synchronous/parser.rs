@@ -185,13 +185,14 @@ where
                     .unwrap()
                     .split(key)
                     .map(|x| {
-                        Arc::<str>::from(
-                            Regex::new(r#"["']+"#).unwrap()
-                                .split(x)
-                                .filter(|x| *x != "")
-                                .next().unwrap()
-                        )
-                    }).collect();
+                        Regex::new(r#"["']+"#).unwrap()
+                            .split(x)
+                            .filter(|x| !x.is_empty())
+                            .collect::<Vec<&str>>()
+                    })
+                    .filter(|x| !x.is_empty())
+                    .map(|x| Arc::<str>::from(*x.first().unwrap()))
+                    .collect();
                 for key in key_vec {
                     let element = sensor.borrow_mut().insert(&key.into());
                     let mut element = element.borrow_mut();
