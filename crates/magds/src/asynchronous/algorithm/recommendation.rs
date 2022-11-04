@@ -61,6 +61,7 @@ pub fn recommend_weighted(
     }
 
     let neurons = &magds.neurons;
+    log::debug!("{:?}", neurons);
 
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
@@ -75,9 +76,10 @@ pub fn recommend_weighted(
         .filter(|(target, _activation)| target.is_some())
         .map(|(target, activation)| (target.unwrap(), activation))
         .collect();
+    log::debug!("values_sorted before sort {:?}", values_sorted);
     values_sorted.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
-    println!("values_sorted {:?}", values_sorted);
+    log::info!("values_sorted {:?}", values_sorted);
 
     Some(values_sorted.into_iter().rev().collect())
 }
