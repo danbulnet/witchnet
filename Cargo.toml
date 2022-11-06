@@ -11,7 +11,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.65"
 authors = ["Daniel Bulanda <email: daniel@bulanda.net>"]
 description = "witchnet is a biologically inspired associative neural network"
 license = "AGPL-3.0"
