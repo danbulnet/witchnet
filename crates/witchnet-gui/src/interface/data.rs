@@ -258,7 +258,7 @@ pub fn add_magds_button_row(
 
 pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<LoadedDatasets>) {
     ui.separator(); ui.end_row();
-    ui.label(egui::RichText::new("loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
+    ui.label(RichText::new("loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
     ui.end_row();
     
     if loaded_datasets_res.0.is_empty() {

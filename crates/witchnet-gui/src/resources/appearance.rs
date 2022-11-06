@@ -43,6 +43,7 @@ impl Selector {
 }
 
 pub struct Appearance {
+    pub simulation2d: Simulation2DAppearance,
     pub sensors: HashMap<Selector, SensorAppearance>,
     pub neurons: HashMap<Selector, NeuronAppearance>,
     pub connections: HashMap<Selector, ConnectionAppearance>,
@@ -55,6 +56,7 @@ pub struct Appearance {
 impl Default for Appearance {
     fn default() -> Self {
         Appearance { 
+            simulation2d: Simulation2DAppearance::default(),
             sensors: HashMap::from([(Selector::All, SensorAppearance::default())]),
             neurons: HashMap::from([(Selector::All, NeuronAppearance::default())]),
             connections: HashMap::from([
@@ -219,6 +221,17 @@ impl Default for ConnectionAppearance {
             text_color: Color::rgba(0.750, 0.750, 0.743, 1.0),
             text_hover_color: Color::rgba(0.880, 0.880, 0.889, 1.0),
             text_active_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+        }
+    }
+}
+pub struct Simulation2DAppearance {
+    pub show_grid: [bool; 2],
+}
+
+impl Default for Simulation2DAppearance {
+    fn default() -> Self {
+        Simulation2DAppearance {
+            show_grid: [false, false]
         }
     }
 }

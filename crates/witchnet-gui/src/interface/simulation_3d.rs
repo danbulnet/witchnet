@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use bevy_egui::egui::{ self, Ui };
+use bevy_egui::egui::{ Ui };
 
 use crate::{
     resources::{

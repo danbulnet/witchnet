@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 
-use bevy_egui::egui::{ Ui, Grid };
+use bevy_egui::egui::{ Ui, Grid, RichText };
 
 use crate::{
     resources::{
         appearance::{ Selector, Appearance },
-        layout::DEFAULT_PANEL_WIDTH
+        layout::DEFAULT_PANEL_WIDTH,
+        common::NEUTRAL_ACTIVE_COLOR
     },
     interface::widgets as w,
     utils
@@ -17,6 +18,9 @@ pub(crate) fn appearance_window(
 ) {
     ui.set_min_width(DEFAULT_PANEL_WIDTH);
 
+    simulation2d_settings(ui, appearance);
+    ui.separator(); ui.end_row();
+
     sensor_settings(ui, appearance);
     ui.separator(); ui.end_row();
 
@@ -24,6 +28,18 @@ pub(crate) fn appearance_window(
     ui.separator(); ui.end_row();
 
     connection_settings(ui, appearance);
+}
+
+fn simulation2d_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
+    Grid::new("simulation_2d").show(&mut ui, |ui| {
+        ui.label(RichText::new("simulation 2d").color(NEUTRAL_ACTIVE_COLOR).strong());
+        ui.end_row();
+
+        let settings = &mut appearance.simulation2d;
+
+        w::checkbox_row(ui, "show x grid", &mut settings.show_grid[0]);
+        w::checkbox_row(ui, "show y grid", &mut settings.show_grid[1]);
+    });
 }
 
 fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {

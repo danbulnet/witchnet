@@ -1,5 +1,3 @@
-use std::f64::consts::TAU;
-
 use bevy::prelude::*;
 
 use bevy_egui::egui::{ 
@@ -9,8 +7,8 @@ use bevy_egui::egui::{
         Legend,
         Points,
         MarkerShape,
-        Polygon,
-        PlotPoints
+        Text,
+        PlotPoint
     }
 };
 
@@ -19,7 +17,8 @@ use crate::{
         appearance::{ Appearance, Selector },
         magds::MainMAGDS
     },
-    utils
+    utils,
+    interface::shapes
 };
 
 pub(crate) fn simulation(
@@ -27,7 +26,8 @@ pub(crate) fn simulation(
     _magds_res: &mut ResMut<MainMAGDS>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
-    ui.label("simulation 2D");
+    let simulation_settings = &mut appearance_res.simulation2d;
+
     let plot = Plot::new("lines_demo")
         .legend(Legend::default())
         .allow_boxed_zoom(false)
@@ -35,7 +35,10 @@ pub(crate) fn simulation(
         .show_background(false)
         .show_x(true)
         .show_y(true)
-        .show_axes([false, false]);
+        .data_aspect(1.0)
+        .x_axis_formatter(|_, _| "".to_string())
+        .y_axis_formatter(|_, _| "".to_string())
+        .show_axes(simulation_settings.show_grid);
     plot.show(ui, |plot_ui| {
         let settings = &appearance_res.neurons[&Selector::All];
         let points = Points::new(vec![
@@ -43,22 +46,34 @@ pub(crate) fn simulation(
             [2.0, 0.5],
             [3.0, 0.0],
             [4.0, 0.5],
-            [5.0, 0.0],
+            [25.0, 0.0],
         ])
             .name(format!("neurons"))
             .filled(true)
             .radius(settings.size)
-            .shape(MarkerShape::Circle)
+            .shape(MarkerShape::Square)
             .color(utils::color_bevy_to_egui(&settings.primary_color));
 
         if settings.show { plot_ui.points(points); }
 
-        let polygon = Polygon::new(PlotPoints::from_parametric_callback(
-            |t| (4.0 * t.sin() + 2.0 * t.cos(), 4.0 * t.cos() + 2.0 * t.sin()),
-            0.0..TAU,
-            100,
-        ));
+        shapes::rounded_box_r25r01(
+            plot_ui,
+            "test",
+            (0.0, 0.0),
+            (2.0, 3.0),
+            true,
+            utils::color_bevy_to_egui(&settings.secondary_color)
+        );
 
-        plot_ui.polygon(polygon.name("Convex polygon"));
+        shapes::rounded_box_r25r01(
+            plot_ui,
+            "test2",
+            (1.0, 1.0),
+            (2.5, 1.0),
+            false,
+            utils::color_bevy_to_egui(&settings.text_color)
+        );
+
+        Text::new(PlotPoint::new(0.0, 0.0), "wow").name("Text")
     });
 }
