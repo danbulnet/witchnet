@@ -62,6 +62,8 @@ fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         let size_bounds = sensor.size_bounds;
         w::slider_row(ui, "size", &mut sensor.size, size_bounds);
 
+        w::checkbox_row(ui, "rounded", &mut sensor.rounded);
+
         w::color_picker_row(ui, "primary color", &mut sensor.primary_color);
         w::color_picker_row(ui, "primary hover color", &mut sensor.primary_hover_color);
         w::color_picker_row(ui, "primary active color", &mut sensor.primary_active_color);
@@ -100,6 +102,8 @@ fn neuron_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         let size_bounds = neuron.size_bounds;
         w::slider_row(ui, "size", &mut neuron.size, size_bounds);
 
+        w::checkbox_row(ui, "rounded", &mut neuron.rounded);
+
         w::color_picker_row(ui, "primary color", &mut neuron.primary_color);
         w::color_picker_row(ui, "primary hover color", &mut neuron.primary_hover_color);
         w::color_picker_row(ui, "primary active color", &mut neuron.primary_active_color);
@@ -137,6 +141,8 @@ fn connection_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
 
         let thickness_bounds = connection.thickness_bounds;
         w::slider_row(ui, "thickness", &mut connection.thickness, thickness_bounds);
+
+        w::checkbox_row(ui, "curved", &mut connection.curved);
 
         w::color_picker_row(ui, "color", &mut connection.color);
         w::color_picker_row(ui, "hover color", &mut connection.hover_color);

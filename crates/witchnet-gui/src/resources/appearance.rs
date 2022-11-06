@@ -96,6 +96,8 @@ pub struct NeuronAppearance {
     pub text_size: f32,
     pub text_size_bounds: (f32, f32),
 
+    pub rounded: bool,
+
     pub primary_color: Color,
     pub primary_hover_color: Color,
     pub primary_active_color: Color,
@@ -115,10 +117,12 @@ impl Default for NeuronAppearance {
             show: true,
             show_text: true,
 
-            size: 20f32,
-            size_bounds: (0f32, 100f32),
+            size: 1.0f32,
+            size_bounds: (0.5f32, 10f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 50f32),
+
+            rounded: true,
 
             primary_color: Color::rgba(0.0930, 0.316, 0.930, 1.0),
             primary_hover_color: Color::rgba(0.352, 0.493, 0.880, 1.0),
@@ -144,6 +148,8 @@ pub struct SensorAppearance {
     pub size_bounds: (f32, f32),
     pub text_size: f32,
     pub text_size_bounds: (f32, f32),
+    
+    pub rounded: bool,
 
     pub primary_color: Color,
     pub primary_hover_color: Color,
@@ -164,10 +170,12 @@ impl Default for SensorAppearance {
             show: true,
             show_text: true,
 
-            size: 20f32,
-            size_bounds: (0f32, 100f32),
+            size: 1.0f32,
+            size_bounds: (0.5f32, 10f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 50f32),
+
+            rounded: true,
 
             primary_color: Color::rgba(0.0276, 0.420, 0.0210, 1.0),
             primary_hover_color: Color::rgba(0.278, 0.580, 0.273, 1.0),
@@ -194,6 +202,8 @@ pub struct ConnectionAppearance {
     pub text_size: f32,
     pub text_size_bounds: (f32, f32),
 
+    pub curved: bool,
+
     pub color: Color,
     pub hover_color: Color,
     pub active_color: Color,
@@ -209,10 +219,12 @@ impl Default for ConnectionAppearance {
             show: true,
             show_text: true,
             
-            thickness: 50f32,
-            thickness_bounds: (0f32, 100f32),
+            thickness: 0.5f32,
+            thickness_bounds: (0.1f32, 5f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 50f32),
+
+            curved: true,
 
             color: Color::rgba(0.670, 0.670, 0.663, 1.0),
             hover_color: Color::rgba(0.780, 0.780, 0.772, 1.0),

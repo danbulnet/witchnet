@@ -51,6 +51,14 @@ impl MAGDS {
         ))
     }
 
+    pub fn sensors(&self) -> Vec<Arc<RwLock<SensorConatiner>>> { 
+        self.sensors.values().cloned().collect()
+    }
+
+    pub fn sensors_names(&self) -> Vec<Arc<str>> { 
+        self.sensor_ids.keys().cloned().collect()
+    }
+
     pub fn create_sensor(
         &mut self, name: &str, data_type: DataType
     ) -> (Arc<RwLock<SensorConatiner>>, u32) {
@@ -118,10 +126,6 @@ impl MAGDS {
         }
     }
 
-    pub fn sensors_names(&self) -> Vec<Arc<str>> { 
-        self.sensor_ids.keys().cloned().collect()
-    }
-
     pub fn sensor_name(&self, id: u32) -> Option<&str> { 
         match self.sensor_names.get(&id) {
             Some(id) => Some(&id),
@@ -186,6 +190,8 @@ impl MAGDS {
             .deactivate_sensor();
         Ok(())
     }
+
+    pub fn neurons(&self) -> &[Arc<RwLock<dyn NeuronAsync>>] { &self.neurons }
     
     pub fn create_neuron(
         &mut self, id: NeuronID

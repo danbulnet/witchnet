@@ -1,6 +1,4 @@
-#![feature(const_for)]
-#![feature(const_fn_floating_point_arithmetic)]
-#![feature(const_mut_refs)]
+#![feature(iterator_step_by)]
 
 pub mod resources;
 pub mod components;

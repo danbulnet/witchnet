@@ -53,6 +53,14 @@ impl MAGDS {
         ))
     }
 
+    pub fn sensors(&self) -> Vec<Rc<RefCell<SensorConatiner>>> { 
+        self.sensors.values().cloned().collect()
+    }
+
+    pub fn sensors_names(&self) -> Vec<Rc<str>> { 
+        self.sensor_ids.keys().cloned().collect()
+    }
+
     pub fn create_sensor(
         &mut self, name: &str, data_type: DataType
     ) -> (Rc<RefCell<SensorConatiner>>, u32) {
@@ -127,10 +135,6 @@ impl MAGDS {
         }
     }
 
-    pub fn sensors_names(&self) -> Vec<Rc<str>> { 
-        self.sensor_ids.keys().cloned().collect()
-    }
-
     pub fn sensor_data_type(&self, id: u32) -> Option<DataType> { 
         Some(self.sensors.get(&id)?.borrow().data_type())
     }
@@ -188,6 +192,8 @@ impl MAGDS {
             .deactivate_sensor();
         Ok(())
     }
+
+    pub fn neurons(&self) -> &[Rc<RefCell<dyn Neuron>>] { &self.neurons }
     
     pub fn create_neuron(
         &mut self, id: NeuronID
