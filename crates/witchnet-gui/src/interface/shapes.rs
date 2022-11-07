@@ -6,9 +6,10 @@ use std::{
 use once_cell::sync::Lazy;
 
 use bevy_egui::egui::{
-    Color32,
-    plot::{ Polygon, PlotUi, LineStyle }
+    Color32
 };
+
+use crate::widgets::plot::{ Polygon, PlotUi, LineStyle };
 
 pub struct RoundedCornersR25 {
     pub radius: f64,
@@ -232,6 +233,6 @@ pub fn rounded_box(
     ui.polygon(
         polygon.name(name)
             .color(color)
-            .style(LineStyle::Dotted { spacing: 0.5 }).fill_alpha(0.5)
+            .style(LineStyle::Dotted { spacing: 0.5 }).fill_alpha(0.25)
     );
 }

@@ -7,6 +7,10 @@ use std::{
 
 use bevy::prelude::*;
 
+use bevy_egui::egui::Vec2;
+
+use crate::interface::transform::{ ScreenTransform, AxisBools };
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub enum Selector {
     All,
@@ -117,10 +121,10 @@ impl Default for NeuronAppearance {
             show: true,
             show_text: true,
 
-            size: 1.0f32,
-            size_bounds: (0.5f32, 10f32),
+            size: 5f32,
+            size_bounds: (0f32, 10f32),
             text_size: 10f32,
-            text_size_bounds: (0f32, 50f32),
+            text_size_bounds: (0f32, 20f32),
 
             rounded: true,
 
@@ -170,10 +174,10 @@ impl Default for SensorAppearance {
             show: true,
             show_text: true,
 
-            size: 35f32,
-            size_bounds: (10f32, 100f32),
-            text_size: 12f32,
-            text_size_bounds: (0f32, 50f32),
+            size: 5f32,
+            size_bounds: (0f32, 10f32),
+            text_size: 10f32,
+            text_size_bounds: (0f32, 20f32),
 
             rounded: true,
 
@@ -237,7 +241,7 @@ impl Default for ConnectionAppearance {
     }
 }
 pub struct Simulation2DAppearance {
-    pub show_grid: [bool; 2],
+    pub show_grid: [bool; 2]
 }
 
 impl Default for Simulation2DAppearance {
