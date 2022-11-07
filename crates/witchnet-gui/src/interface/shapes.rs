@@ -156,7 +156,7 @@ pub fn rounded_box_r25r01(
     ui.polygon(
         polygon.name(name)
             .color(color)
-            .style(LineStyle::Dotted { spacing: 0.5 }).fill_alpha(0.5)
+            .style(LineStyle::Dotted { spacing: 0.5 }).fill_alpha(0.8)
     );
 }
 

@@ -11,6 +11,7 @@ use bevy_egui::egui::{
         PlotPoint
     }
 };
+use witchnet_common::sensor::SensorAsync;
 
 use crate::{
     resources::{
@@ -72,10 +73,16 @@ pub(crate) fn simulation(
         //     utils::color_bevy_to_egui(&neuron_settings.text_color)
         // );
 
-        Text::new(PlotPoint::new(0.0, 0.0), "wow").name("Text");
+        let magds = magds_res.0.read().unwrap();
+        let sensors = magds.sensors();
+        let neurons = magds.neurons();
+
         let sensor_settings = &appearance_res.sensors[&Selector::All];
-        for i in 0..1_000 {
-            asa_graph_2d::element(plot_ui, "element", (2.0 * i as f64, 0.0), sensor_settings)
+        // if let Some(s) = sensors.first() {
+        //     asa_graph_2d::elements(plot_ui, "element", (0.0, 0.0), s.clone(), sensor_settings);
+        // }
+        for (i, sensor) in sensors.into_iter().enumerate() {
+            asa_graph_2d::elements(plot_ui, &sensor.read().unwrap().id().to_string(), (0.0, i as f64 * 100.0), sensor.clone(), sensor_settings);
         }
     });
 }

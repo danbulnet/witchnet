@@ -170,9 +170,9 @@ impl Default for SensorAppearance {
             show: true,
             show_text: true,
 
-            size: 1.0f32,
-            size_bounds: (0.5f32, 10f32),
-            text_size: 10f32,
+            size: 35f32,
+            size_bounds: (10f32, 100f32),
+            text_size: 12f32,
             text_size_bounds: (0f32, 50f32),
 
             rounded: true,
