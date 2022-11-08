@@ -31,14 +31,17 @@ fn weight(first: &DataTypeValue, second: &DataTypeValue, range: f32) -> f32 {
     1.0f32 - (first.distance(second) as f32).abs() / range
 }
 
-pub fn sensors(
+pub fn sensor(
     ui: &mut PlotUi, 
     name: &str, 
     origin: (f64, f64),
     sensor: Arc<RwLock<SensorConatiner>>,
     settings: &SensorAppearance,
-    connection_settings: &ConnectionAppearance
-) {
+    connection_settings: &ConnectionAppearance,
+    flip: bool
+) -> f64 {
+    let flip_sign = if flip { -1.0 } else { 1.0 };
+
     let size_f64 = settings.size as f64;
 
     let sensor = sensor.read().unwrap();
@@ -46,7 +49,7 @@ pub fn sensors(
     let values = sensor.values();
     let neurons = sensor.neurons();
 
-    if values.is_empty() { return }
+    if values.is_empty() { return 0.0f64 }
     let no_elements = values.len();
     let range = if sensor.data_category().is_categorical() {
         values.len() as f32
@@ -55,17 +58,17 @@ pub fn sensors(
     };
 
     let points_vec: Vec<[f64; 2]> = (0..neurons.len())
-        .map(|x| [x as f64 * 0.25 * size_f64, origin.1])
+        .map(|x| [origin.0 + x as f64 * 0.25 * size_f64, origin.1])
         .collect();
 
     let title_point = [
         points_vec[no_elements / 2][0], 
-        points_vec[no_elements / 2][1] + 1.8 * size_f64
+        points_vec[no_elements / 2][1] + flip_sign * 1.8 * size_f64
     ];
 
     for i in 0..no_elements {
-        let title_start = [points_vec[i][0], points_vec[i][1] + size_f64 * 0.05];
-        let title_end = [title_point[0], title_point[1] - size_f64 * 0.05];
+        let title_start = [points_vec[i][0], points_vec[i][1] + flip_sign * size_f64 * 0.05];
+        let title_end = [title_point[0], title_point[1] - flip_sign * size_f64 * 0.05];
         let second_neuron = neurons[i].read().unwrap();
         let title_connection_name = format!(
             "{} <-> {name} [1.0]", 
@@ -108,7 +111,7 @@ pub fn sensors(
             let title_connections = Line::new(PlotPoints::new(vec![title_start, title_end]))
                 .color(utils::color_bevy_to_egui(&connection_settings.color))
                 .style(LineStyle::Solid)
-                .name(&connection_name)
+                .name(&title_connection_name)
                 .width(connection_settings.thickness);
             let points = Points::new(vec![start, end, title_start, title_end])
                 .name(&connection_name)
@@ -141,13 +144,13 @@ pub fn sensors(
     let text = RichText::new(
         PlotPoint::new(
             points_vec[no_elements / 2][0], 
-            points_vec[no_elements / 2][1] + 2.0 * size_f64
+            points_vec[no_elements / 2][1] + flip_sign * 2.0 * size_f64
         ), 
         name
     )
         .name(name)
         .color(utils::color_bevy_to_egui(&settings.text_active_color))
-        .text_style(TextStyle::Monospace)
+        .text_style(TextStyle::Body)
         .available_width(f32::INFINITY)
         .anchor(Align2::CENTER_CENTER);
     ui.rich_text(text);
@@ -170,8 +173,8 @@ pub fn sensors(
     )
         .name(&first_value)
         .color(utils::color_bevy_to_egui(&settings.primary_color))
-        .text_style(TextStyle::Monospace)
-        .available_width(f32::INFINITY)
+        .text_style(TextStyle::Small)
+        .available_width(35.0 * size_f64 as f32)
         .anchor(Align2::RIGHT_CENTER);
     ui.rich_text(text);
 
@@ -185,8 +188,10 @@ pub fn sensors(
     )
         .name(&last_value)
         .color(utils::color_bevy_to_egui(&settings.primary_color))
-        .text_style(TextStyle::Monospace)
-        .available_width(f32::INFINITY)
+        .text_style(TextStyle::Small)
+        .available_width(35.0 * size_f64 as f32)
         .anchor(Align2::LEFT_CENTER);
     ui.rich_text(text);
+
+    points_vec.last().unwrap()[0] - points_vec[0][0]
 }
