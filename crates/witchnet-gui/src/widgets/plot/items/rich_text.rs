@@ -3,14 +3,14 @@ use bevy_egui::egui::*;
 use super::*;
 
 pub struct RichText {
-    pub text: WidgetText,
-    pub position: PlotPoint,
-    pub name: String,
-    pub highlight: bool,
-    pub color: Color32,
-    pub anchor: Align2,
-    pub text_style: TextStyle,
-    pub available_width: f32
+    pub(crate) text: WidgetText,
+    pub(crate) position: PlotPoint,
+    pub(crate) name: String,
+    pub(crate) highlight: bool,
+    pub(crate) color: Color32,
+    pub(crate) anchor: Align2,
+    pub(crate) text_style: TextStyle,
+    pub(crate) available_width: f32
 }
 
 impl RichText {

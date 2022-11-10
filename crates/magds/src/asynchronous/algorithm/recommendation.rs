@@ -113,7 +113,7 @@ mod tests {
             (petal_length_sensor_id, 1.5.into()),
             (petal_width_sensor_id, 2.0.into()),
         ];
-
+        
         let recommendations = recommendation::recommend(
             &mut magds, &vec![], variety_sensor_id, true
         ).unwrap();

@@ -20,6 +20,7 @@ mod box_elem;
 mod rect_elem;
 mod values;
 pub mod rich_text;
+pub mod nodes;
 
 const DEFAULT_FILL_ALPHA: f32 = 0.05;
 

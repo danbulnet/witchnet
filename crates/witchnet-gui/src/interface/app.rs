@@ -6,7 +6,7 @@ use crate::{
     resources::{
         appearance::Appearance,
         data::DataFiles,
-        magds::{ MainMAGDS, LoadedDatasets },
+        magds::{ MainMAGDS, LoadedDatasets, PositionXY },
         layout::Layout
     },
     interface::layout
@@ -19,6 +19,7 @@ pub fn app() {
         .insert_resource(Layout::default())
         .insert_resource(MainMAGDS::default())
         .insert_resource(LoadedDatasets::default())
+        .insert_resource(PositionXY::default())
         .insert_resource(DataFiles::default())
         .insert_resource(Appearance::default())
         .add_system(setup)

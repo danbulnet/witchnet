@@ -20,7 +20,8 @@ use transform::ScreenTransform;
 
 pub use items::{
     Arrows, Bar, BarChart, BoxElem, BoxPlot, BoxSpread, HLine, Line, LineStyle, MarkerShape,
-    Orientation, PlotImage, PlotPoint, PlotPoints, Points, Polygon, Text, VLine, rich_text::RichText
+    Orientation, PlotImage, PlotPoint, PlotPoints, Points, Polygon, Text, VLine, rich_text::RichText,
+    nodes::{ Nodes, NodeShape }
 };
 pub use legend::{Corner, Legend};
 pub use transform::PlotBounds;
@@ -1139,6 +1140,19 @@ impl PlotUi {
             points.color = self.auto_color();
         }
         self.items.push(Box::new(points));
+    }
+
+    /// Add nodes.
+    pub fn nodes(&mut self, mut nodes: Nodes) {
+        if nodes.series.is_empty() {
+            return;
+        };
+
+        // Give the nodes an automatic color if no color has been assigned.
+        if nodes.color == Color32::TRANSPARENT {
+            nodes.color = self.auto_color();
+        }
+        self.items.push(Box::new(nodes));
     }
 
     /// Add arrows.

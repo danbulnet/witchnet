@@ -9,12 +9,18 @@ use bevy_egui::egui::{ self, Ui, RichText };
 
 use rfd::{ FileDialog, MessageDialog, MessageLevel };
 
-use witchnet_common::polars;
+use witchnet_common::{
+    polars,
+    sensor::SensorAsync
+};
 
-use magds::asynchronous::parser;
+use magds::asynchronous::{ parser, magds::MAGDS };
 
 use crate::{
-    interface::widgets,
+    interface::{
+        widgets,
+        graph::positions
+    },
     resources::{
         appearance::{ Appearance, Selector },
         common::{
@@ -32,7 +38,14 @@ use crate::{
             FILE_NAME_ERR_COLOR,
             DATA_PANEL_WIDTH
         },
-        magds::{ MainMAGDS, LoadedDatasets, LoadedDataset, ADDED_TO_MAGDS_COLOR }
+        magds::{ 
+            MainMAGDS,
+            LoadedDatasets,
+            LoadedDataset,
+            PositionXY,
+            ADDED_TO_MAGDS_COLOR,
+            BIG_GAP_FACTOR
+        }
     }
 };
 
@@ -41,6 +54,7 @@ pub(crate) fn data_window(
     data_files_res: &mut ResMut<DataFiles>,
     loaded_datasets_res: &mut ResMut<LoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
+    position_xy_res: &mut ResMut<PositionXY>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     egui::ScrollArea::vertical()
@@ -58,7 +72,8 @@ pub(crate) fn data_window(
                 ui, 
                 data_files_res, 
                 loaded_datasets_res,
-                magds_res, 
+                magds_res,
+                position_xy_res,
                 appearance_res
             );
 
@@ -180,7 +195,7 @@ pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
     }
 }
 
-pub fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
+pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
         ui.label(egui::RichText::new("features").color(NEUTRAL_ACTIVE_COLOR).strong());
@@ -194,12 +209,13 @@ pub fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
     }
 }
 
-pub fn add_magds_button_row(
+pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<DataFiles>,
     loaded_datasets_res: &mut ResMut<LoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    appearance: &mut ResMut<Appearance>
+    position_xy_res: &mut ResMut<PositionXY>,
+    appearance_res: &mut ResMut<Appearance>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
@@ -208,31 +224,35 @@ pub fn add_magds_button_row(
             if add_button.clicked() {
                 if let Some(df) = &data_file.data_frame {
                     let df_name = &data_file.name;
-                    let mut magds = magds_res.0.write().unwrap();
-                    let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
-                    let skip_features: Vec<&str> = (&data_file.features).into_iter()
-                        .filter(|(_key, value)| !**value)
-                        .map(|(key, _value)| &**key)
-                        .collect();
-                    parser::add_df_to_magds(
-                        &mut magds, df_name, df, &skip_features, data_file.rows_limit, data_file.random_pick
-                    );
+                    {
+                        let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
+                        let skip_features: Vec<&str> = (&data_file.features).into_iter()
+                            .filter(|(_key, value)| !**value)
+                            .map(|(key, _value)| &**key)
+                            .collect();
+                        let mut magds = magds_res.0.write().unwrap();
+                        parser::add_df_to_magds(
+                            &mut magds, df_name, df, &skip_features, data_file.rows_limit, data_file.random_pick
+                        );
+                    }
+
+                    let magds = magds_res.0.read().unwrap();
                     
-                    let default_sensor_appearance = appearance.sensors[&Selector::All].clone();
+                    let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
                     for sensor_name in magds.sensors_names() {
                         let sensor_key = &Selector::One(sensor_name.clone());
-                        if !appearance.sensors.contains_key(sensor_key) {
-                            appearance.sensors.insert(
-                                sensor_key.clone(), default_sensor_appearance.clone()
+                        if !appearance_res.sensors.contains_key(sensor_key) {
+                            appearance_res.sensors.insert(
+                                sensor_key.clone(), sensor_appearance.clone()
                             );
                         }
                     }
-                    let default_neuron_appearance = appearance.neurons[&Selector::All].clone();
+                    let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
                     for neuron_name in magds.neurons_names() {
                         let neuron_key = &Selector::One(neuron_name.clone());
-                        if !appearance.neurons.contains_key(neuron_key) {
-                            appearance.neurons.insert(
-                                neuron_key.clone(), default_neuron_appearance.clone()
+                        if !appearance_res.neurons.contains_key(neuron_key) {
+                            appearance_res.neurons.insert(
+                                neuron_key.clone(), neuron_appearance.clone()
                             );
                         }
                     }
@@ -249,6 +269,13 @@ pub fn add_magds_button_row(
                             .collect()
                     };
                     loaded_datasets_res.0.push(loaded_dataset);
+
+                    positions::set_positions(
+                        &magds,
+                        (0.0, 0.0),
+                        position_xy_res, 
+                        appearance_res
+                    );
                 }
             }
         });

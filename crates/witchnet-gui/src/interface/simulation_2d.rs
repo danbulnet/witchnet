@@ -9,7 +9,7 @@ use witchnet_common::sensor::SensorAsync;
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        magds::MainMAGDS
+        magds::{ MainMAGDS, PositionXY }
     },
     utils,
     interface::{
@@ -23,6 +23,7 @@ use crate::{
 pub(crate) fn simulation(
     ui: &mut Ui,
     magds_res: &mut ResMut<MainMAGDS>,
+    position_xy_res: &mut ResMut<PositionXY>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     let simulation_settings = &mut appearance_res.simulation2d;
@@ -39,6 +40,6 @@ pub(crate) fn simulation(
         .y_axis_formatter(|_, _| "".to_string())
         .show_axes(simulation_settings.show_grid);
     plot.show(ui, |plot_ui| {
-        magds_2d::magds(plot_ui, magds_res, appearance_res);
+        magds_2d::magds(plot_ui, magds_res, position_xy_res, appearance_res);
     });
 }

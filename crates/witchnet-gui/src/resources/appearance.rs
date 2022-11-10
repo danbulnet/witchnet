@@ -223,8 +223,8 @@ impl Default for ConnectionAppearance {
             show: true,
             show_text: true,
             
-            thickness: 0.5f32,
-            thickness_bounds: (0.1f32, 5f32),
+            thickness: 0.1f32,
+            thickness_bounds: (0.01f32, 5f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 50f32),
 

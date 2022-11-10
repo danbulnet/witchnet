@@ -14,7 +14,7 @@ use crate::{
     resources::{
         appearance::Appearance,
         data::{ DataFiles, DATA_PANEL_SCROLL_WIDTH },
-        magds::{ MainMAGDS, LoadedDatasets },
+        magds::{ MainMAGDS, LoadedDatasets, PositionXY },
         layout::{ 
             Layout, 
             DEFAULT_PANEL_SCROLL_WIDTH, 
@@ -38,6 +38,7 @@ pub(crate) fn app_layout(
     mut data_files_res: ResMut<DataFiles>,
     mut loaded_datasets_res: ResMut<LoadedDatasets>,
     mut magds_res: ResMut<MainMAGDS>,
+    mut position_xy_res: ResMut<PositionXY>,
     mut appearance_res: ResMut<Appearance>,
 ) {
     top_panel(&mut egui_context, &mut layout_res);
@@ -47,6 +48,7 @@ pub(crate) fn app_layout(
         &mut data_files_res,
         &mut loaded_datasets_res,
         &mut magds_res,
+        &mut position_xy_res,
         &mut appearance_res
     );
     right_panel(
@@ -58,7 +60,8 @@ pub(crate) fn app_layout(
     central_panel(
         &mut egui_context, 
         &mut layout_res,
-        &mut magds_res, 
+        &mut magds_res,
+        &mut position_xy_res,
         &mut appearance_res
     );
 }
@@ -99,6 +102,7 @@ fn left_panel(
     data_files_res: &mut ResMut<DataFiles>,
     loaded_datasets_res: &mut ResMut<LoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
+    position_xy_res: &mut ResMut<PositionXY>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     if layout_res.data {
@@ -112,7 +116,12 @@ fn left_panel(
                 });
                 ui.separator();
                 data::data_window(
-                    ui, data_files_res, loaded_datasets_res, magds_res, appearance_res
+                    ui,
+                    data_files_res,
+                    loaded_datasets_res,
+                    magds_res,
+                    position_xy_res,
+                    appearance_res
                 );
             }
         );
@@ -183,12 +192,13 @@ fn central_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
+    position_xy_res: &mut ResMut<PositionXY>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
         match layout_res.central_panel {
             LayoutCentralPanel::Simulation2D => {
-                simulation_2d::simulation(ui, magds_res, appearance_res);
+                simulation_2d::simulation(ui, magds_res, position_xy_res, appearance_res);
             }
             LayoutCentralPanel::Simulation3D => {
                 simulation_3d::simulation(ui, magds_res, appearance_res);

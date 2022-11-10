@@ -8,6 +8,5 @@ pub mod simulation_3d;
 pub mod sensors;
 pub mod neurons;
 pub mod connections;
-pub mod shapes;
 pub mod graph;
 pub mod transform;
