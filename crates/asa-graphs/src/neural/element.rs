@@ -41,7 +41,8 @@ where
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
-    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.998;
+    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.98;
+    pub const INTERELEMENT_ACTIVATION_EXPONENT: i32 = 2;
 
     pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Rc<RefCell<Element<Key, ORDER>>> {
@@ -113,7 +114,11 @@ where
             let mut element = next.0.upgrade().unwrap();
             let mut weight = next.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
-                element.borrow_mut().activate(element_activation * weight, false, false);
+                element.borrow_mut().activate(
+                    element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                    false, 
+                    false
+                );
                 neurons.append(
                     &mut element.borrow()
                         .defining_neurons()
@@ -145,7 +150,11 @@ where
             let mut element = prev.0.upgrade().unwrap();
             let mut weight = prev.1;
             while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
-                element.borrow_mut().activate(element_activation * weight, false, false);
+                element.borrow_mut().activate(
+                    element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                    false, 
+                    false
+                );
                 neurons.append(
                     &mut element.borrow()
                         .defining_neurons()

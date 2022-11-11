@@ -41,7 +41,8 @@ where
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
-    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.998;
+    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.00001;
+    pub const INTERELEMENT_ACTIVATION_EXPONENT: i32 = 1;
 
     pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Arc<RwLock<Element<Key, ORDER>>> {
@@ -121,7 +122,11 @@ where
                 {
                     {
                         let element_borrowed = &mut *element.write().unwrap();
-                        element_borrowed.activate(element_activation * weight, false, false);
+                        element_borrowed.activate(
+                            element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                            false, 
+                            false
+                        );
                     }
                     let element_borrowed = &*element.read().unwrap();
                     neurons.append(
@@ -160,7 +165,11 @@ where
                 {
                     {
                         let element_borrowed = &mut *element.write().unwrap();
-                        element_borrowed.activate(element_activation * weight, false, false);
+                        element_borrowed.activate(
+                            element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                            false, 
+                            false
+                        );
                     }
                     let element_borrowed = &*element.read().unwrap();
                     neurons.append(

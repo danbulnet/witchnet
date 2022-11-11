@@ -428,11 +428,11 @@ mod tests {
         assert_eq!(neuron_15.read().unwrap().activation(), 0.0_f32);
 
         sl58.write().unwrap().activate(1.0, true, true);
-        assert_eq!(sl43.read().unwrap().activation(), 0.0_f32);
+        assert_eq!(sl43.read().unwrap().activation(), 0.6553647_f32);
         assert_eq!(sl57.read().unwrap().activation(), 0.9722222_f32);
         assert_eq!(sl58.read().unwrap().activation(), 1.0_f32);
         assert_eq!(sl59.read().unwrap().activation(), 0.9722222_f32);
-        assert_eq!(sl79.read().unwrap().activation(), 0.0_f32);
+        assert_eq!(sl79.read().unwrap().activation(), 0.55254406_f32);
         // assert_eq!(neuron_15.read().unwrap().activation(), 1.0_f32 / 7_f32);
         assert_eq!(neuron_15.read().unwrap().activation(), 1.0_f32 / 1_f32);
         // assert_eq!(neuron_16.read().unwrap().activation(), 0.9722222_f32 / 8_f32);
