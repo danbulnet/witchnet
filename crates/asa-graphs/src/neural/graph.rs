@@ -430,6 +430,45 @@ where
             element = new_element;
         }
     }
+
+    pub fn levels(&self) -> Vec<Vec<Vec<Rc<RefCell<Element<Key, ORDER>>>>>> {
+        let mut ret = Vec::new();
+
+        let mut height = 0;
+        let mut node = self.root.clone();
+        let mut queue: Vec<Vec<Rc<RefCell<Node<Key, ORDER>>>>> = vec![vec![]];
+        queue[0].push(node.clone());
+
+        loop {
+            ret.push(vec![]);
+            queue.push(vec![]);
+            for i in 0..(queue[height].len()) {
+                ret[height].push(vec![]);
+                node = queue[height][i].clone();
+                let node_lock = node.borrow();
+                let node_size = node_lock.size;
+                for j in 0..(node_size) {
+                    let element = node_lock.elements[j].as_ref().unwrap().clone();
+                    ret[height][i].push(element);
+                    if !node_lock.is_leaf {
+                        queue[height + 1].push(node_lock.children[j].as_ref().unwrap().clone());
+                    }
+                }
+                if !node_lock.is_leaf {
+                    queue[height + 1].push(
+                        node_lock.children[node_size].as_ref().unwrap().clone()
+                    );
+                }
+            }
+            if queue.last().unwrap().len() > 0 {
+                height += 1;
+            } else {
+                break
+            }
+        }
+
+        ret
+    }
 }
 
 impl<'a, Key, const ORDER: usize> IntoIterator for &'a ASAGraph<Key, ORDER> 

@@ -121,7 +121,7 @@ impl Default for NeuronAppearance {
             show: true,
             show_text: true,
 
-            size: 5f32,
+            size: 0.5f32,
             size_bounds: (0f32, 10f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 20f32),
@@ -174,7 +174,7 @@ impl Default for SensorAppearance {
             show: true,
             show_text: true,
 
-            size: 5f32,
+            size: 0.5f32,
             size_bounds: (0f32, 10f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 20f32),

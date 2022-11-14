@@ -22,6 +22,7 @@ path = "src/bin/main.rs"
 [dependencies]
 witchnet-common = { path = "../witchnet-common", version = "0.1.0" }
 magds = { path = "../magds", version = "0.1.0" }
+asa-graphs = { path = "../asa-graphs", version = "0.1.0" }
 bevy = { version = "0.8", default-features = true, features = ["bevy_render", "bevy_core_pipeline", "bevy_asset"] }
 egui = { version = "0.19.0", default-features = true, features = ["bytemuck"] }
 bevy_egui = "0.16.1"

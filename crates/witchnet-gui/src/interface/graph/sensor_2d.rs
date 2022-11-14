@@ -12,7 +12,7 @@ use magds::asynchronous::sensor::SensorConatiner;
 
 use witchnet_common::{
     sensor::{SensorAsync, SensorData},
-    data::{DataCategory, DataTypeValue}, neuron::NeuronID
+    data::DataTypeValue, neuron::NeuronID
 };
 
 use crate::{

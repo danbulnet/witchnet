@@ -6,7 +6,8 @@ use std::{
     cmp::Ordering,
     any::Any,
     marker::PhantomData,
-    mem
+    mem, 
+    collections::HashMap
 };
 
 use anyhow::Result;
@@ -17,7 +18,7 @@ use dyn_clone::DynClone;
 
 use crate::{
     data::{ DataCategory, DataType, DataTypeValue, DataDeductor, UnknownDataTypeMarker },
-    neuron::{ Neuron, NeuronAsync },
+    neuron::{ Neuron, NeuronAsync, NeuronID },
     distances::Distance
 };
 

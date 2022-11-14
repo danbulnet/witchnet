@@ -15,6 +15,7 @@ pub const ADDED_TO_MAGDS_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 
 pub const BIG_GAP_FACTOR: f32 = 5f32;
 pub const SMALL_GAP_FACTOR: f32 = 1f32;
+pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
 
 pub struct MainMAGDS(pub Arc<RwLock<MAGDS>>);
 
@@ -42,11 +43,16 @@ impl Default for LoadedDatasets {
 #[derive(Debug, Clone)]
 pub(crate) struct PositionXY {
     pub(crate) neurons: HashMap<NeuronID, (f64, f64)>,
-    pub(crate) sensors: HashMap<u32, (f64, f64)>
+    pub(crate) sensors: HashMap<u32, (f64, f64)>,
+    pub(crate) sensor_neurons: HashMap<NeuronID, (f64, f64)>
 }
 
 impl Default for PositionXY {
     fn default() -> Self {
-        PositionXY { neurons: HashMap::new(), sensors: HashMap::new() }
+        PositionXY { 
+            neurons: HashMap::new(), 
+            sensors: HashMap::new(),
+            sensor_neurons: HashMap::new()
+        }
     }
 }

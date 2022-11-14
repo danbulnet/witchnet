@@ -1,17 +1,20 @@
 use std::{
     sync::{ Arc, RwLock },
-    marker::PhantomData
+    marker::PhantomData, collections::HashMap
 };
 
 use anyhow::Result;
 
 use witchnet_common::{
     data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
-    neuron::NeuronAsync,
+    neuron::{ NeuronID, NeuronAsync },
     sensor::{ SensorAsync, SensorData }
 };
 
-use super::graph::ASAGraph;
+use super::{
+    graph::ASAGraph,
+    node::Node
+};
 
 impl<Key, const ORDER: usize> SensorAsync<Key> for ASAGraph<Key, ORDER> 
 where 
