@@ -5,11 +5,13 @@ use std::{
     marker::PhantomData
 };
 
+use rand::{thread_rng, Rng, seq::SliceRandom};
+
 use bevy::prelude::*;
 
 use witchnet_common::{
     sensor::{SensorAsync, SensorData},
-    neuron::NeuronID, 
+    neuron::{NeuronID, NeuronAsync}, 
     data::{ DataType, DataTypeValue, DataDeductor }
 };
 
@@ -73,143 +75,158 @@ fn sensor_positions(
         let sensor_id = sensor.id();
         position_xy_res.sensors.insert(sensor_id, sensor_points_vec[i]);
 
-        sensor_neurons_positions(sensor_points_vec[i], &sensor, &mut position_xy_res);
+        sensor_neurons_positions(
+            magds, sensor_points_vec[i], sensor_size, &sensor, &mut position_xy_res
+        );
     }
 }
 
 fn sensor_neurons_positions(
-    origin: (f64, f64), 
+    magds: &MAGDS,
+    origin: (f64, f64),
+    sensor_size: f32,
     sensor: &SensorConatiner,
     position_xy_res: &mut PositionXY
 ) {
-    let sensor_levels = sensor_to_asa_3_levels(&sensor);
+    let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
+    let gap = SMALL_GAP_FACTOR as f64;
+    // let unit_size = gap;
 
-    let mut y = origin.1;
+    let mut y = origin.1 + gap;
     for level in sensor_levels {
-        let mut x = origin.0;
+        let level_width: f64 = (&level).into_iter().map(
+            |n| n.len() as f64 * gap
+        ).map(|nw| nw + gap).sum();
+        let mut x = origin.0 - level_width / 2.0;
         for node in level {
             for neuron_id in node {
                 position_xy_res.sensor_neurons.insert(neuron_id, (x, y));
-                x += SMALL_GAP_FACTOR as f64;
+                x += gap;
             }
-            x += SMALL_GAP_FACTOR as f64;
+            x += gap;
         }
-        y += SMALL_GAP_FACTOR as f64;
+        y += 3.0 * gap;
     }
 }
 
 fn levels<T: SensorData + Send + Sync>(
+    magds: &MAGDS,
     graph: &ASAGraph<T, 3>
 ) -> Vec<Vec<Vec<NeuronID>>> where 
     PhantomData<T>: DataDeductor, 
     SensorConatiner: From<Box<dyn SensorAsync<T>>>,
     DataTypeValue: From<T>
 {
-    let parent_id = graph.id;
-    
     graph.levels().into_iter().map(
         |v| v.into_iter().map(
             |n| n.into_iter().map(
                 |e| {
-                    NeuronID { id: e.read().unwrap().id, parent_id }
+                    let element = e.read().unwrap();
+                    let sensor = magds.sensor(graph.id()).unwrap().read().unwrap();
+                    let value = element.value();
+                    sensor.search(&value).unwrap().read().unwrap().id()
                 }
             ).collect()
         ).collect()
     ).collect()
 }
 
-fn sensor_to_asa_3_levels(sensor: &SensorConatiner) -> Vec<Vec<Vec<NeuronID>>> {
+fn sensor_to_asa_3_levels(
+    magds: &MAGDS,
+    sensor: &SensorConatiner
+) -> Vec<Vec<Vec<NeuronID>>> {
     let sensor_id = sensor.id();
-    let data = sensor.values();
+    let mut data = sensor.values();
+    data.shuffle(&mut thread_rng());
     match sensor.data_type() {
         DataType::Bool => {
             let data: Vec<bool> = data.into_iter().map(|x| *x.as_bool().unwrap()).collect();
             let graph = ASAGraph::<bool, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::U8 => {
             let data: Vec<u8> = data.into_iter().map(|x| *x.as_u8().unwrap()).collect();
             let graph = ASAGraph::<u8, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::U16 => {
             let data: Vec<u16> = data.into_iter().map(|x| *x.as_u16().unwrap()).collect();
             let graph = ASAGraph::<u16, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::U32 => {
             let data: Vec<u32> = data.into_iter().map(|x| *x.as_u32().unwrap()).collect();
             let graph = ASAGraph::<u32, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::U64 => {
             let data: Vec<u64> = data.into_iter().map(|x| *x.as_u64().unwrap()).collect();
             let graph = ASAGraph::<u64, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::U128 => {
             let data: Vec<u128> = data.into_iter().map(|x| *x.as_u128().unwrap()).collect();
             let graph = ASAGraph::<u128, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::USize => {
             let data: Vec<usize> = data.into_iter().map(|x| *x.as_u_size().unwrap()).collect();
             let graph = ASAGraph::<usize, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::I8 => {
             let data: Vec<i8> = data.into_iter().map(|x| *x.as_i8().unwrap()).collect();
             let graph = ASAGraph::<i8, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::I16 => {
             let data: Vec<i16> = data.into_iter().map(|x| *x.as_i16().unwrap()).collect();
             let graph = ASAGraph::<i16, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::I32 => {
             let data: Vec<i32> = data.into_iter().map(|x| *x.as_i32().unwrap()).collect();
             let graph = ASAGraph::<i32, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::I64 => {
             let data: Vec<i64> = data.into_iter().map(|x| *x.as_i64().unwrap()).collect();
             let graph = ASAGraph::<i64, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::I128 => {
             let data: Vec<i128> = data.into_iter().map(|x| *x.as_i128().unwrap()).collect();
             let graph = ASAGraph::<i128, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::ISize => {
             let data: Vec<isize> = data.into_iter().map(|x| *x.as_i_size().unwrap()).collect();
             let graph = ASAGraph::<isize, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::F32 => {
             let data: Vec<f32> = data.into_iter().map(|x| *x.as_f32().unwrap()).collect();
             let graph = ASAGraph::<f32, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::F64 => {
             let data: Vec<f64> = data.into_iter().map(|x| *x.as_f64().unwrap()).collect();
             let graph = ASAGraph::<f64, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::ArcStr => {
             let data: Vec<Arc<str>> = data.into_iter().map(
                 |x| x.as_arc_str().unwrap().clone()
             ).collect();
             let graph = ASAGraph::<Arc<str>, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::String => {
             let data: Vec<String> = data.into_iter().map(
                 |x| x.as_string().unwrap().clone()
             ).collect();
             let graph = ASAGraph::<String, 3>::new_box_from_vec(sensor_id, &data);
-            levels(&graph)
+            levels(magds, &graph)
         }
         DataType::Unknown => panic!("unknown data type not allowed here")
     }

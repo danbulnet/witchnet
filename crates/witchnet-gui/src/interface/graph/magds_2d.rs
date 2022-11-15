@@ -33,25 +33,20 @@ pub(crate) fn magds(
     let mut current_top_x = 0.0f64;
     let mut current_bottom_x = 0.0f64;
     let mut sensor_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::new();
-   
-    let sensor_positions = &position_xy_res.sensors;
-    let neuron_positions = &position_xy_res.neurons;
 
     for sensor in sensors {
         let sensor_id = sensor.read().unwrap().id();
-        let sensor_name = magds.sensor_name(sensor_id).unwrap();
-
-        let position = sensor_positions[&sensor_id];
-        let (current_map, x) = sensor_2d::sensor(
+        sensor_2d::sensory_field(
             ui, 
-            &sensor_name,
-            position, 
-            sensor.clone(), 
+            &magds.sensor_name(sensor_id).unwrap(),
+            position_xy_res.sensors[&sensor_id], 
+            sensor.clone(),
+            position_xy_res,
             sensor_settings,
             connection_settings,
             false
         );
-        current_top_x += x + 2.0 * sensor_settings.size as f64;
+        // current_top_x += x + 2.0 * sensor_settings.size as f64;
 
         // if current_top_x < current_bottom_x {
         //     let (current_map, x) = sensor_2d::sensor(

@@ -123,7 +123,7 @@ pub(crate) fn neurons(
     ui: &mut PlotUi, 
     name: &str, 
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
-    position_xy_res: &mut ResMut<PositionXY>,
+    position_xy_res: &mut PositionXY,
     settings: &NeuronAppearance,
     connection_settings: &ConnectionAppearance,
 ) {

@@ -558,8 +558,9 @@ where Key: SensorData, [(); ORDER + 1]: {
 
 #[cfg(test)]
 pub mod tests {
-    use rand::Rng;
     use std::{ time::Instant };
+    
+    use rand::Rng;
 
     use super::ASAGraph;
 
@@ -769,5 +770,21 @@ pub mod tests {
         for i in 1..=25 { graph.insert(&i); }
 
         println!("{graph}");
+    }
+
+    #[test]
+    fn levels() {
+        let mut graph = ASAGraph::<i32, 3>::new(1);
+        for i in 1..=25 { graph.insert(&i); }
+        let lvlvs: Vec<Vec<Vec<i32>>> = graph.levels().into_iter().map(
+            |v| v.into_iter().map(
+                |n| n.into_iter().map(
+                    |e| {
+                        e.borrow().key
+                    }
+                ).collect()
+            ).collect()
+        ).collect();
+        println!("{:?}", lvlvs);
     }
 }

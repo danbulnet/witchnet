@@ -14,7 +14,7 @@ use magds::asynchronous::magds::MAGDS;
 pub const ADDED_TO_MAGDS_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 
 pub const BIG_GAP_FACTOR: f32 = 5f32;
-pub const SMALL_GAP_FACTOR: f32 = 1f32;
+pub const SMALL_GAP_FACTOR: f32 = 0.3f32;
 pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
 
 pub struct MainMAGDS(pub Arc<RwLock<MAGDS>>);

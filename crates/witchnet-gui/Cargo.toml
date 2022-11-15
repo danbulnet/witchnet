@@ -30,3 +30,4 @@ once_cell = "1.15.0"
 rfd = "0.10.0"
 polars = { version = "0.24.3", features = [ "zip_with", "csv-file", "temporal", "fmt", "dtype-slim" ] }
 ahash = { version = "0.8.1", default-features = false, features = [ "no-rng", "std"] }
+rand = "0.8.5"
