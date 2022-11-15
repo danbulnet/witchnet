@@ -96,16 +96,16 @@ fn sensor_neurons_positions(
     for level in sensor_levels {
         let level_width: f64 = (&level).into_iter().map(
             |n| n.len() as f64 * gap
-        ).map(|nw| nw + gap).sum();
+        ).map(|nw| nw + 0.5 * gap).sum();
         let mut x = origin.0 - level_width / 2.0;
         for node in level {
             for neuron_id in node {
                 position_xy_res.sensor_neurons.insert(neuron_id, (x, y));
                 x += gap;
             }
-            x += gap;
+            x += 0.5 * gap;
         }
-        y += 3.0 * gap;
+        y += 3.8 * gap;
     }
 }
 

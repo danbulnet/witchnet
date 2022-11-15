@@ -4,9 +4,13 @@ use std::{
     collections::BTreeMap
 };
 
+use rfd::{ MessageDialog, MessageLevel };
+
 use polars::prelude::*;
 
 use bevy_egui::egui::Color32;
+
+use witchnet_common::polars as polars_common;
 
 pub const DATA_PANEL_WIDTH: f32 = 180f32;
 pub const DATA_PANEL_SCROLL_WIDTH: f32 = 198f32;
@@ -39,5 +43,58 @@ impl DataFiles {
 impl Default for DataFiles {
     fn default() -> Self { 
         DataFiles{ current: None, history: Vec::new() } 
+    }
+}
+
+impl DataFiles {
+    pub fn load_data(file_path: PathBuf, data_files_res: &mut DataFiles) {
+        let file_name = match file_path.file_name() {
+            Some(file_name) => file_name.to_os_string().into_string().ok(),
+            None => None
+        };
+    
+        if let Some(file_name) = file_name {
+            let mut found = false;
+            for (i, data_file) in (&data_files_res.history).into_iter().enumerate() {
+                if &data_file.path ==  &file_path {
+                    data_files_res.current = Some(i);
+                    found = true;
+                    break
+                }
+            }
+    
+            if !found {
+                let data_frame = polars_common::csv_to_dataframe(
+                    file_path.as_os_str().to_str().unwrap(), &vec![]
+                ).ok();
+                let mut features: BTreeMap<String, bool> = BTreeMap::new();
+                if data_frame.is_none() {
+                    MessageDialog::new().set_level(MessageLevel::Error)
+                        .set_title("file loading error")
+                        .set_description(&format!("error converting {} to dataframe", file_name))
+                        .show();
+                    data_files_res.current = None;
+                } else {
+                    features.extend(
+                        data_frame.as_ref().unwrap()
+                            .get_column_names()
+                            .into_iter()
+                            .map(|x| (x.to_string(), true))
+                            .collect::<BTreeMap<String, bool>>()
+                    );
+                    let nrows = if let Some(df) = &data_frame { df.height() } else { 0 };
+                    let data_file = DataFile { 
+                        name: file_name, 
+                        path: file_path, 
+                        data_frame, 
+                        features,
+                        rows_limit: nrows,
+                        random_pick: false
+                    };
+                    data_files_res.history.push(data_file);
+                    data_files_res.current = Some(data_files_res.history.len() - 1);
+                }
+            }
+        }
     }
 }

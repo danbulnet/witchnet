@@ -1,5 +1,9 @@
+use std::env;
+
 use witchnet_gui::interface::app;
 
 fn main() {
-    app::app()
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    app::app(args)
 }

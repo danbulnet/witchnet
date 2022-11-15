@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use bevy_egui::EguiPlugin;
@@ -7,12 +9,13 @@ use crate::{
         appearance::Appearance,
         data::DataFiles,
         magds::{ MainMAGDS, LoadedDatasets, PositionXY },
-        layout::Layout
+        layout::Layout, 
+        args::ProgramArgs
     },
     interface::layout
 };
 
-pub fn app() {
+pub fn app(args: Vec<String>) {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
@@ -22,9 +25,11 @@ pub fn app() {
         .insert_resource(PositionXY::default())
         .insert_resource(DataFiles::default())
         .insert_resource(Appearance::default())
+        .insert_resource(ProgramArgs::from(args))
         .add_system(setup)
-        // .add_system(setup2)
+        .add_system(ProgramArgs::handle_args)
         .add_system(layout::app_layout)
+        // .add_system(setup2)
         .run();
 }
 

@@ -1,20 +1,14 @@
 use std::{
-    env,
-    collections::BTreeMap
+    env
 };
 
 use bevy::prelude::*;
 
 use bevy_egui::egui::{ self, Ui, RichText };
 
-use rfd::{ FileDialog, MessageDialog, MessageLevel };
+use rfd::FileDialog;
 
-use witchnet_common::{
-    polars,
-    sensor::SensorAsync
-};
-
-use magds::asynchronous::{ parser, magds::MAGDS };
+use magds::asynchronous::parser;
 
 use crate::{
     interface::{
@@ -31,9 +25,8 @@ use crate::{
             SMALL_TEXT_SIZE,
             STANDARD_MONOSPACE_TEXT_SIZE 
         },
-        data::{ 
-            DataFiles, 
-            DataFile, 
+        data::{
+            DataFiles,
             FILE_NAME_OK_COLOR,
             FILE_NAME_ERR_COLOR,
             DATA_PANEL_WIDTH
@@ -43,8 +36,7 @@ use crate::{
             LoadedDatasets,
             LoadedDataset,
             PositionXY,
-            ADDED_TO_MAGDS_COLOR,
-            BIG_GAP_FACTOR
+            ADDED_TO_MAGDS_COLOR
         }
     }
 };
@@ -119,65 +111,14 @@ pub fn file_button_row(
     ui.end_row();
 }
 
-fn load_button_clicked(extensions: &[&str], data_files_res: &mut ResMut<DataFiles>) {
+fn load_button_clicked(extensions: &[&str], mut data_files_res: &mut ResMut<DataFiles>) {
     let file_path = FileDialog::new()
         .add_filter("", extensions)
         .set_directory(env::current_dir().unwrap())
         .pick_file();
 
-    let file_name = match &file_path {
-        Some(file_path) => {
-            match file_path.file_name() {
-                Some(file_name) => file_name.to_os_string().into_string().ok(),
-                None => None
-            }
-        }
-        None => None
-    };
-
-    if let Some(file_name) = file_name {
-        let mut found = false;
-        for (i, data_file) in (&data_files_res.history).into_iter().enumerate() {
-            if &data_file.path ==  file_path.as_ref().unwrap() {
-                data_files_res.current = Some(i);
-                found = true;
-                break
-            }
-        }
-
-        if !found {
-            let file_path = file_path.unwrap();
-            let data_frame = polars::csv_to_dataframe(
-                file_path.as_os_str().to_str().unwrap(), &vec![]
-            ).ok();
-            let mut features: BTreeMap<String, bool> = BTreeMap::new();
-            if data_frame.is_none() {
-                MessageDialog::new().set_level(MessageLevel::Error)
-                    .set_title("file loading error")
-                    .set_description(&format!("error converting {} to dataframe", file_name))
-                    .show();
-                data_files_res.current = None;
-            } else {
-                features.extend(
-                    data_frame.as_ref().unwrap()
-                        .get_column_names()
-                        .into_iter()
-                        .map(|x| (x.to_string(), true))
-                        .collect::<BTreeMap<String, bool>>()
-                );
-                let nrows = if let Some(df) = &data_frame { df.height() } else { 0 };
-                let data_file = DataFile { 
-                    name: file_name, 
-                    path: file_path, 
-                    data_frame, 
-                    features,
-                    rows_limit: nrows,
-                    random_pick: false
-                };
-                data_files_res.history.push(data_file);
-                data_files_res.current = Some(data_files_res.history.len() - 1);
-            }
-        }
+    if let Some(fp) = file_path {
+        DataFiles::load_data(fp, &mut data_files_res)
     }
 }
 
