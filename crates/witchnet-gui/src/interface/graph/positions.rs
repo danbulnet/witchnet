@@ -100,25 +100,25 @@ fn sensor_neurons_positions(
         let level_y = y;
         for (li, node) in (&level).into_iter().enumerate() {
             let node_y = y;
-            if li > level.len() / 2 {
+            if li < level.len() / 2 {
                 for (i, neuron_id) in (&node).into_iter().enumerate() {
-                    if i % 2 == 0 { y = level_y - gap / 2.0; } else { y = level_y };
+                    if i % 2 == 0 { y = level_y; } else { y = level_y - gap / 2.0 };
                     position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
                     x += gap / 2.0;
                 }
             } else {
                 for (i, neuron_id) in (&node).into_iter().enumerate() {
-                    if i % 2 == 0 {
-                        if node.len() % 2 == 0 {
-                            y = level_y - gap / 2.0; 
-                        } else {
+                    if node.len() % 2 == 1 {
+                        if i % 2 == 0 {
                             y = level_y; 
+                        } else {
+                            y = level_y - gap / 2.0; 
                         }
                     } else {
-                        if node.len() % 2 == 0 {
-                            y = level_y; 
-                        } else {
+                        if i % 2 == 0 {
                             y = level_y - gap / 2.0; 
+                        } else {
+                            y = level_y; 
                         }
                     }
                     position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
