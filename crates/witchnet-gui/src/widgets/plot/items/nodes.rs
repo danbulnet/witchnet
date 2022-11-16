@@ -116,9 +116,12 @@ impl PlotItem for Nodes {
             .for_each(|(min, max)| {
                 match shape {
                     NodeShape::RoundedRectangle => {
+                        let rounding = (max[0] - min[0]) / 5.0;
                         shapes.push(Shape::Rect(epaint::RectShape {
                             rect: Rect { min, max },
-                            rounding: Rounding { nw: 1.5, ne: 1.5, sw: 1.5, se: 1.5 },
+                            rounding: Rounding { 
+                                nw: rounding, ne: rounding, sw: rounding, se: rounding 
+                            },
                             fill,
                             stroke,
                         }));

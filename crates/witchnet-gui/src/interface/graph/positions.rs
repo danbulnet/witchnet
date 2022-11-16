@@ -90,21 +90,45 @@ fn sensor_neurons_positions(
 ) {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
     let gap = SMALL_GAP_FACTOR as f64;
-    // let unit_size = gap;
 
     let mut y = origin.1 + gap;
     for level in sensor_levels {
         let level_width: f64 = (&level).into_iter().map(
-            |n| n.len() as f64 * gap
+            |n| n.len() as f64 * (gap / 2.0)
         ).map(|nw| nw + 0.5 * gap).sum();
         let mut x = origin.0 - level_width / 2.0;
-        for node in level {
-            for neuron_id in node {
-                position_xy_res.sensor_neurons.insert(neuron_id, (x, y));
-                x += gap;
+        let level_y = y;
+        for (li, node) in (&level).into_iter().enumerate() {
+            let node_y = y;
+            if li > level.len() / 2 {
+                for (i, neuron_id) in (&node).into_iter().enumerate() {
+                    if i % 2 == 0 { y = level_y - gap / 2.0; } else { y = level_y };
+                    position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    x += gap / 2.0;
+                }
+            } else {
+                for (i, neuron_id) in (&node).into_iter().enumerate() {
+                    if i % 2 == 0 {
+                        if node.len() % 2 == 0 {
+                            y = level_y - gap / 2.0; 
+                        } else {
+                            y = level_y; 
+                        }
+                    } else {
+                        if node.len() % 2 == 0 {
+                            y = level_y; 
+                        } else {
+                            y = level_y - gap / 2.0; 
+                        }
+                    }
+                    position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    x += gap / 2.0;
+                }
             }
             x += 0.5 * gap;
+            y = node_y;
         }
+        y = level_y;
         y += 3.8 * gap;
     }
 }

@@ -39,12 +39,10 @@ pub(crate) fn magds(
         sensor_2d::sensory_field(
             ui, 
             &magds.sensor_name(sensor_id).unwrap(),
-            position_xy_res.sensors[&sensor_id], 
             sensor.clone(),
             position_xy_res,
             sensor_settings,
-            connection_settings,
-            false
+            connection_settings
         );
         // current_top_x += x + 2.0 * sensor_settings.size as f64;
 

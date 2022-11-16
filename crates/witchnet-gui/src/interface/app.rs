@@ -26,8 +26,8 @@ pub fn app(args: Vec<String>) {
         .insert_resource(DataFiles::default())
         .insert_resource(Appearance::default())
         .insert_resource(ProgramArgs::from(args))
-        .add_system(setup)
-        .add_system(ProgramArgs::handle_args)
+        .add_startup_system(setup)
+        .add_startup_system(ProgramArgs::handle_args)
         .add_system(layout::app_layout)
         // .add_system(setup2)
         .run();

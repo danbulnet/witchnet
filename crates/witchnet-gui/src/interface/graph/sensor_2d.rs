@@ -211,12 +211,10 @@ pub(crate) fn sensor(
 pub(crate) fn sensory_field(
     ui: &mut PlotUi, 
     name: &str, 
-    origin: (f64, f64),
     sensor: Arc<RwLock<SensorConatiner>>,
     position_xy_res: &mut PositionXY,
     settings: &SensorAppearance,
-    connection_settings: &ConnectionAppearance,
-    flip: bool
+    connection_settings: &ConnectionAppearance
 ) {
     let size_f64 = settings.size as f64;
 

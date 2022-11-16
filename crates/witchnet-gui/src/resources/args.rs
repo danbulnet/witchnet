@@ -18,7 +18,8 @@ impl ProgramArgs {
         if let Some(index) = args.0.iter().position(|x| x == "--data") {
             if index + 1 < args.0.len() {
                 let file_path = PathBuf::from(&args.0[index + 1]);
-                if file_path.is_file() && file_path.ends_with(".csv") {
+                let file_name = file_path.file_name().unwrap().to_str().unwrap();
+                if file_path.is_file() && file_name.ends_with(".csv") {
                     DataFiles::load_data(file_path, &mut data_files_res);
                 }
             }
