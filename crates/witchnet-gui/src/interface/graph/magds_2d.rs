@@ -34,6 +34,15 @@ pub(crate) fn magds(
     let mut current_bottom_x = 0.0f64;
     let mut sensor_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::new();
 
+    neuron_2d::neurons(
+        ui, 
+        "neurons", 
+        neurons, 
+        position_xy_res,
+        neuron_settings, 
+        connection_settings,
+    );
+
     for sensor in sensors {
         let sensor_id = sensor.read().unwrap().id();
         sensor_2d::sensory_field(
@@ -83,12 +92,4 @@ pub(crate) fn magds(
     //     f64::max(current_top_x, current_bottom_x) - 2.0 * sensor_settings.size as f64,
     //     sensor_point_map
     // );
-    neuron_2d::neurons(
-        ui, 
-        "neurons", 
-        neurons, 
-        position_xy_res,
-        neuron_settings, 
-        connection_settings,
-    );
 }

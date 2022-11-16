@@ -130,7 +130,7 @@ pub(crate) fn neurons(
     let size_f64 = settings.size as f64;
 
     let neuron_positions = &position_xy_res.neurons;
-    let sensor_positions = &position_xy_res.sensors;
+    let sensor_positions = &position_xy_res.sensor_neurons;
 
     if neurons.is_empty() { return }
     let no_neurons = neurons.len();
@@ -161,20 +161,20 @@ pub(crate) fn neurons(
             .color(utils::color_bevy_to_egui(&settings.primary_color));    
         if settings.show { ui.nodes(nodes); }
 
-        let start_top = [point.0, point.1 + size_f64 * 0.05];
-        let start_bottom = [point.0, point.1 - size_f64 * 0.05];
+        let start_top = [point.0, point.1 + size_f64];
+        let start_bottom = [point.0, point.1 - size_f64];
 
         for sensor in neuron.explain() {
             let sensor = sensor.read().unwrap();
-            let end = sensor_positions[&sensor.id().parent_id];
+            let end = sensor_positions[&sensor.id()];
             let mut end = [end.0, end.1];
             let start: [f64; 2];
             if end[1] > start_top[1] {
                 start = start_top;
-                end[1] -= size_f64 * 0.05;
+                end[1] -= size_f64;
             } else {
                 start = start_bottom;
-                end[1] += size_f64 * 0.05;
+                end[1] += size_f64;
             }
             let connection_name = format!(
                 "{} <-> {} [{:.3}]", 
@@ -192,12 +192,12 @@ pub(crate) fn neurons(
                 .name(&connection_name)
                 .filled(true)
                 .shape(NodeShape::Circle)
-                .radius(size_f64 as f32 / 5f32)
+                .radius(size_f64 as f32 / connection_settings.connector_prop)
                 .color(utils::color_bevy_to_egui(&connection_settings.color));
     
             if connection_settings.show { 
-                ui.nodes(nodes);
                 ui.line(connections);
+                if connection_settings.show_connector { ui.nodes(nodes); }
             }
     }
 

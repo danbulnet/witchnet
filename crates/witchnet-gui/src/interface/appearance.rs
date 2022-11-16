@@ -65,11 +65,11 @@ fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         w::checkbox_row(ui, "rounded", &mut sensor.rounded);
 
         w::color_picker_row(ui, "primary color", &mut sensor.primary_color);
-        w::color_picker_row(ui, "primary hover color", &mut sensor.primary_hover_color);
+        w::color_picker_row(ui, "primary marked color", &mut sensor.primary_marked_color);
         w::color_picker_row(ui, "primary active color", &mut sensor.primary_active_color);
 
         w::color_picker_row(ui, "secondary color", &mut sensor.secondary_color);
-        w::color_picker_row(ui, "secondary hover color", &mut sensor.secondary_hover_color);
+        w::color_picker_row(ui, "secondary marked color", &mut sensor.secondary_marked_color);
         w::color_picker_row(ui, "secondary active color", &mut sensor.secondary_active_color);
         
         w::checkbox_row(ui, "show text", &mut sensor.show_text);
@@ -78,7 +78,7 @@ fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         w::slider_row(ui, "text size", &mut sensor.text_size, text_size_bounds);
         
         w::color_picker_row(ui, "text color", &mut sensor.text_color);
-        w::color_picker_row(ui, "text hover color", &mut sensor.text_hover_color);
+        w::color_picker_row(ui, "text marked color", &mut sensor.text_marked_color);
         w::color_picker_row(ui, "text active color", &mut sensor.text_active_color);
     });
 }
@@ -105,11 +105,11 @@ fn neuron_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         w::checkbox_row(ui, "rounded", &mut neuron.rounded);
 
         w::color_picker_row(ui, "primary color", &mut neuron.primary_color);
-        w::color_picker_row(ui, "primary hover color", &mut neuron.primary_hover_color);
+        w::color_picker_row(ui, "primary marked color", &mut neuron.primary_marked_color);
         w::color_picker_row(ui, "primary active color", &mut neuron.primary_active_color);
 
         w::color_picker_row(ui, "secondary color", &mut neuron.secondary_color);
-        w::color_picker_row(ui, "secondary hover color", &mut neuron.secondary_hover_color);
+        w::color_picker_row(ui, "secondary marked color", &mut neuron.secondary_marked_color);
         w::color_picker_row(ui, "secondary active color", &mut neuron.secondary_active_color);
         
         w::checkbox_row(ui, "show text", &mut neuron.show_text);
@@ -118,7 +118,7 @@ fn neuron_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         w::slider_row(ui, "text size", &mut neuron.text_size, text_size_bounds);
         
         w::color_picker_row(ui, "text color", &mut neuron.text_color);
-        w::color_picker_row(ui, "text hover color", &mut neuron.text_hover_color);
+        w::color_picker_row(ui, "text marked color", &mut neuron.text_marked_color);
         w::color_picker_row(ui, "text active color", &mut neuron.text_active_color);
     });
 }
@@ -141,11 +141,15 @@ fn connection_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
 
         let thickness_bounds = connection.thickness_bounds;
         w::slider_row(ui, "thickness", &mut connection.thickness, thickness_bounds);
+        
+        w::checkbox_row(ui, "show connector", &mut connection.show_connector);
+        let connector_bounds = connection.connector_prop_bounds;
+        w::slider_row(ui, "cn-ratio", &mut connection.connector_prop, connector_bounds);
 
         w::checkbox_row(ui, "curved", &mut connection.curved);
 
         w::color_picker_row(ui, "color", &mut connection.color);
-        w::color_picker_row(ui, "hover color", &mut connection.hover_color);
+        w::color_picker_row(ui, "marked color", &mut connection.marked_color);
         w::color_picker_row(ui, "active color", &mut connection.active_color);
         
         w::checkbox_row(ui, "show text", &mut connection.show_text);
@@ -154,7 +158,7 @@ fn connection_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
         w::slider_row(ui, "text size", &mut connection.text_size, text_size_bounds);
         
         w::color_picker_row(ui, "text color", &mut connection.text_color);
-        w::color_picker_row(ui, "text hover color", &mut connection.text_hover_color);
+        w::color_picker_row(ui, "text marked color", &mut connection.text_marked_color);
         w::color_picker_row(ui, "text active color", &mut connection.text_active_color);
     });
 }

@@ -9,7 +9,7 @@ pub struct RichText {
     pub(crate) highlight: bool,
     pub(crate) color: Color32,
     pub(crate) anchor: Align2,
-    pub(crate) text_style: TextStyle,
+    pub(crate) text_size: f32,
     pub(crate) available_width: f32
 }
 
@@ -22,7 +22,7 @@ impl RichText {
             highlight: false,
             color: Color32::TRANSPARENT,
             anchor: Align2::CENTER_CENTER,
-            text_style: TextStyle::Small,
+            text_size: 20.0f32,
             available_width: f32::INFINITY
         }
     }
@@ -45,8 +45,8 @@ impl RichText {
         self
     }
 
-    pub fn text_style(mut self, text_style: TextStyle) -> Self {
-        self.text_style = text_style;
+    pub fn text_size(mut self, text_size: f32) -> Self {
+        self.text_size = text_size;
         self
     }
 
@@ -76,10 +76,16 @@ impl PlotItem for RichText {
             self.color
         };
 
+        let font_size = f32::max(
+            transform.dpos_dvalue_x() as f32 / 100.0 * self.text_size, 
+            1.0f32
+        );
         let galley =
             self.text
                 .clone()
-                .into_galley(ui, Some(true), self.available_width, self.text_style.clone());
+                .into_galley(
+                    ui, Some(true), self.available_width, FontId::proportional(font_size)
+                );
 
         let pos = transform.position_from_point(&self.position);
         let rect = self

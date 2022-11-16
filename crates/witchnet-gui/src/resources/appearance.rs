@@ -103,15 +103,15 @@ pub struct NeuronAppearance {
     pub rounded: bool,
 
     pub primary_color: Color,
-    pub primary_hover_color: Color,
+    pub primary_marked_color: Color,
     pub primary_active_color: Color,
 
     pub secondary_color: Color,
-    pub secondary_hover_color: Color,
+    pub secondary_marked_color: Color,
     pub secondary_active_color: Color,
     
     pub text_color: Color,
-    pub text_hover_color: Color,
+    pub text_marked_color: Color,
     pub text_active_color: Color
 }
 
@@ -121,24 +121,24 @@ impl Default for NeuronAppearance {
             show: true,
             show_text: true,
 
-            size: 0.1f32,
-            size_bounds: (0f32, 1f32),
-            text_size: 10f32,
-            text_size_bounds: (0f32, 20f32),
+            size: 0.08f32,
+            size_bounds: (0f32, 0.1f32),
+            text_size: 5.3f32,
+            text_size_bounds: (1.0f32, 10f32),
 
             rounded: true,
 
-            primary_color: Color::rgba(0.0930, 0.316, 0.930, 1.0),
-            primary_hover_color: Color::rgba(0.352, 0.493, 0.880, 1.0),
+            primary_color: Color::rgba(0.8, 0.8, 0.8, 1.0),
+            primary_marked_color: Color::rgba(0.352, 0.493, 0.880, 1.0),
             primary_active_color: Color::rgba(0.583, 0.659, 0.870, 1.0),
         
             secondary_color: Color::rgba(0.500, 0.172, 0.0200, 1.0),
-            secondary_hover_color: Color::rgba(0.640, 0.364, 0.237, 1.0),
+            secondary_marked_color: Color::rgba(0.640, 0.364, 0.237, 1.0),
             secondary_active_color: Color::rgba(0.710, 0.564, 0.497, 1.0),
             
-            text_color: Color::rgba(0.530, 0.530, 0.535, 1.0),
-            text_hover_color: Color::rgba(0.680, 0.680, 0.680, 1.0),
-            text_active_color: Color::rgba(0.810, 0.810, 0.802, 1.0),
+            text_color: Color::rgba(0.0, 0.0, 0.0, 0.7),
+            text_marked_color: Color::rgba(0.0, 0.0, 0.0, 0.85),
+            text_active_color: Color::rgba(0.0, 0.0, 0.0, 1.0),
         }
     }
 }
@@ -156,15 +156,15 @@ pub struct SensorAppearance {
     pub rounded: bool,
 
     pub primary_color: Color,
-    pub primary_hover_color: Color,
+    pub primary_marked_color: Color,
     pub primary_active_color: Color,
 
     pub secondary_color: Color,
-    pub secondary_hover_color: Color,
+    pub secondary_marked_color: Color,
     pub secondary_active_color: Color,
     
     pub text_color: Color,
-    pub text_hover_color: Color,
+    pub text_marked_color: Color,
     pub text_active_color: Color
 }
 
@@ -175,23 +175,23 @@ impl Default for SensorAppearance {
             show_text: true,
 
             size: 0.08f32,
-            size_bounds: (0f32, 1f32),
-            text_size: 10f32,
-            text_size_bounds: (0f32, 20f32),
+            size_bounds: (0f32, 0.1f32),
+            text_size: 5.3f32,
+            text_size_bounds: (1.0f32, 10f32),
 
             rounded: true,
 
-            primary_color: Color::rgba(0.0276, 0.420, 0.0210, 1.0),
-            primary_hover_color: Color::rgba(0.278, 0.580, 0.273, 1.0),
+            primary_color: Color::rgba(0.8, 0.8, 0.8, 1.0),
+            primary_marked_color: Color::rgba(0.278, 0.580, 0.273, 1.0),
             primary_active_color: Color::rgba(0.459, 0.710, 0.454, 1.0),
         
             secondary_color: Color::rgba(0.571, 0.590, 0.0118, 1.0),
-            secondary_hover_color: Color::rgba(0.788, 0.810, 0.162, 1.0),
+            secondary_marked_color: Color::rgba(0.788, 0.810, 0.162, 1.0),
             secondary_active_color: Color::rgba(0.865, 0.880, 0.422, 1.0),
             
-            text_color: Color::rgba(0.530, 0.530, 0.535, 1.0),
-            text_hover_color: Color::rgba(0.680, 0.680, 0.680, 1.0),
-            text_active_color: Color::rgba(0.810, 0.810, 0.802, 1.0),
+            text_color: Color::rgba(0.0, 0.0, 0.0, 0.7),
+            text_marked_color: Color::rgba(0.0, 0.0, 0.0, 0.85),
+            text_active_color: Color::rgba(0.0, 0.0, 0.0, 1.0),
         }
     }
 }
@@ -206,14 +206,18 @@ pub struct ConnectionAppearance {
     pub text_size: f32,
     pub text_size_bounds: (f32, f32),
 
+    pub show_connector: bool,
+    pub connector_prop: f32,
+    pub connector_prop_bounds: (f32, f32),
+
     pub curved: bool,
 
     pub color: Color,
-    pub hover_color: Color,
+    pub marked_color: Color,
     pub active_color: Color,
 
     pub text_color: Color,
-    pub text_hover_color: Color,
+    pub text_marked_color: Color,
     pub text_active_color: Color
 }
 
@@ -224,18 +228,22 @@ impl Default for ConnectionAppearance {
             show_text: true,
             
             thickness: 0.1f32,
-            thickness_bounds: (0.01f32, 5f32),
+            thickness_bounds: (0.001f32, 1f32),
             text_size: 10f32,
             text_size_bounds: (0f32, 50f32),
 
+            show_connector: true,
+            connector_prop: 3.5f32,
+            connector_prop_bounds: (2f32, 10f32),
+
             curved: true,
 
-            color: Color::rgba(0.670, 0.670, 0.663, 1.0),
-            hover_color: Color::rgba(0.780, 0.780, 0.772, 1.0),
-            active_color: Color::rgba(0.880, 0.880, 0.880, 1.0),
+            color: Color::rgba(1.0, 1.0, 1.0, 0.5),
+            marked_color: Color::rgba(1.0, 1.0, 1.0, 0.75),
+            active_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
 
             text_color: Color::rgba(0.750, 0.750, 0.743, 1.0),
-            text_hover_color: Color::rgba(0.880, 0.880, 0.889, 1.0),
+            text_marked_color: Color::rgba(0.880, 0.880, 0.889, 1.0),
             text_active_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
         }
     }

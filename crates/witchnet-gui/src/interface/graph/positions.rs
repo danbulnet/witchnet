@@ -73,26 +73,26 @@ fn sensor_positions(
     for (i, sensor) in sensors.into_iter().enumerate() {
         let sensor = sensor.read().unwrap();
         let sensor_id = sensor.id();
-        position_xy_res.sensors.insert(sensor_id, sensor_points_vec[i]);
 
-        sensor_neurons_positions(
-            magds, sensor_points_vec[i], sensor_size, &sensor, &mut position_xy_res
+        let top_y = sensor_neurons_positions(
+            magds, sensor_points_vec[i], &sensor, &mut position_xy_res
         );
+        
+        position_xy_res.sensors.insert(sensor_id, (sensor_points_vec[i].0, top_y));
     }
 }
 
 fn sensor_neurons_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    sensor_size: f32,
     sensor: &SensorConatiner,
     position_xy_res: &mut PositionXY
-) {
+) -> f64 {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
     let gap = SMALL_GAP_FACTOR as f64;
 
     let mut y = origin.1 + gap;
-    for level in sensor_levels {
+    for level in sensor_levels.into_iter() {
         let level_width: f64 = (&level).into_iter().map(
             |n| n.len() as f64 * (gap / 2.0)
         ).map(|nw| nw + 0.5 * gap).sum();
@@ -131,6 +131,7 @@ fn sensor_neurons_positions(
         y = level_y;
         y += 3.8 * gap;
     }
+    y
 }
 
 fn levels<T: SensorData + Send + Sync>(

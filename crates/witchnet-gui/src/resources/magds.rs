@@ -17,6 +17,8 @@ pub const BIG_GAP_FACTOR: f32 = 5f32;
 pub const SMALL_GAP_FACTOR: f32 = 0.3f32;
 pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
 
+pub const SENSOR_TEXT_CUTOFF: usize = 6;
+
 pub struct MainMAGDS(pub Arc<RwLock<MAGDS>>);
 
 impl Default for MainMAGDS {
