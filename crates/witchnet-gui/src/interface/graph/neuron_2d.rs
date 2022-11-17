@@ -188,7 +188,8 @@ pub(crate) fn neurons(
                 .style(LineStyle::Solid)
                 .name(&connection_name)
                 .width(connection_settings.thickness);
-            let nodes = Nodes::new(vec![start, end])
+            // let nodes = Nodes::new(vec![start, end])
+            let nodes = Nodes::new(vec![start])
                 .name(&connection_name)
                 .filled(true)
                 .shape(NodeShape::Circle)
