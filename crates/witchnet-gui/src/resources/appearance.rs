@@ -229,8 +229,8 @@ impl Default for ConnectionAppearance {
             
             thickness: 0.1f32,
             thickness_bounds: (0.001f32, 1f32),
-            text_size: 10f32,
-            text_size_bounds: (0f32, 50f32),
+            text_size: 0.8f32,
+            text_size_bounds: (0.1f32, 1f32),
 
             show_connector: true,
             connector_prop: 3.5f32,
@@ -242,9 +242,9 @@ impl Default for ConnectionAppearance {
             marked_color: Color::rgba(1.0, 1.0, 1.0, 0.75),
             active_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
 
-            text_color: Color::rgba(0.750, 0.750, 0.743, 1.0),
-            text_marked_color: Color::rgba(0.880, 0.880, 0.889, 1.0),
-            text_active_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            text_color: Color::rgba(0.0, 0.0, 0.0, 0.7),
+            text_marked_color: Color::rgba(0.0, 0.0, 0.0, 0.85),
+            text_active_color: Color::rgba(0.0, 0.0, 0.0, 1.0),
         }
     }
 }

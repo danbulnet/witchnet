@@ -345,6 +345,7 @@ fn show_connections(
     sensor: &SensorConatiner
 ) {
     let no_elements = neurons.len();
+    if no_elements < 2 { return }
     let sensor_positions = &mut position_xy_res.sensor_neurons;
     let values = sensor.values();
 
@@ -356,43 +357,77 @@ fn show_connections(
     };
 
     if settings.show {
-        for i in 0..no_elements {
+        for i in 1..no_elements {
             let second_neuron = neurons[i].read().unwrap();
             let second_neuron_pos = sensor_positions[&second_neuron.id()];
 
-            if i == 0 {
-            } else if i > 0 {
-                let first_neuron = neurons[i - 1].read().unwrap();
-                let first_neuron_pos = sensor_positions[&first_neuron.id()];
+            let first_neuron = neurons[i - 1].read().unwrap();
+            let first_neuron_pos = sensor_positions[&first_neuron.id()];
 
-                let start = [first_neuron_pos.0 + neuron_size, first_neuron_pos.1];
-                let end = [second_neuron_pos.0 - neuron_size, second_neuron_pos.1];
+            let from_element = [first_neuron_pos.0 + neuron_size, first_neuron_pos.1];
+            let to_element = [second_neuron_pos.0 - neuron_size, second_neuron_pos.1];
+            let to_neuron = [second_neuron_pos.0, second_neuron_pos.1 - neuron_size];
 
-                let connection_name = format!(
-                    "{} <-> {} [{:.3}]", 
-                    first_neuron.explain_one(sensor_id).unwrap().to_string(),
-                    second_neuron.explain_one(sensor_id).unwrap().to_string(),
-                    weight(&values[i], &values[i - 1], range)
-                );
+            let elements_weight = weight(&values[i], &values[i - 1], range);
+            let connection_name = format!(
+                "{} <-> {} [{:.3}]", 
+                first_neuron.explain_one(sensor_id).unwrap().to_string(),
+                second_neuron.explain_one(sensor_id).unwrap().to_string(),
+                elements_weight
+            );
 
-                let connections = Line::new(PlotPoints::new(vec![start, end]))
-                    .color(utils::color_bevy_to_egui(&settings.color))
-                    .style(LineStyle::Solid)
-                    .name(&connection_name)
-                    .width(settings.thickness);
+            let connections = Line::new(PlotPoints::new(vec![from_element, to_element]))
+                .color(utils::color_bevy_to_egui(&settings.color))
+                .style(LineStyle::Solid)
+                .name(&connection_name)
+                .width(settings.thickness);
+            ui.line(connections);
+                
+            if settings.show_connector && settings.show {
+                let conn_size = neuron_size as f32 / settings.connector_prop;
+                let first_nodes = Nodes::new(vec![from_element, to_neuron])
+                    .name(&first_neuron.id())
+                    .filled(true)
+                    .shape(NodeShape::Circle)
+                    .radius(conn_size)
+                    .color(utils::color_bevy_to_egui(&settings.color));
+                let sencond_nodes_pos = if i == no_elements - 1 { 
+                    vec![to_element, to_neuron] 
+                } else {
+                    vec![to_element] 
+                };
+                let second_nodes = Nodes::new(sencond_nodes_pos)
+                    .name(&second_neuron.id())
+                    .filled(true)
+                    .shape(NodeShape::Circle)
+                    .radius(conn_size)
+                    .color(utils::color_bevy_to_egui(&settings.color));
+
+                ui.nodes(first_nodes);
+                ui.nodes(second_nodes);
+
+                if settings.show_text {
+                    let from_text = RichText::new(
+                        PlotPoint::new(from_element[0] + conn_size as f64 * 0.5, from_element[1]), 
+                        &format!("{:.02}", elements_weight)
+                    ).name(&format!("{} next weight", first_neuron.id()))
+                        .color(utils::color_bevy_to_egui(&settings.text_color))
+                        .text_size(settings.text_size)
+                        .available_width(f32::INFINITY)
+                        .anchor(Align2::CENTER_CENTER);
+
+                    let to_text = RichText::new(
+                        PlotPoint::new(to_element[0] - conn_size as f64 * 0.5, to_element[1]), 
+                        &format!("{:.02}", elements_weight)
+                    ).name(&format!("{} next weight", second_neuron.id()))
+                        .color(utils::color_bevy_to_egui(&settings.text_color))
+                        .text_size(settings.text_size)
+                        .available_width(f32::INFINITY)
+                        .anchor(Align2::CENTER_CENTER);
                     
-                if settings.show_connector && settings.show {
-                    let nodes = Nodes::new(vec![start, end])
-                        .name(&connection_name)
-                        .filled(true)
-                        .shape(NodeShape::Circle)
-                        .radius(neuron_size as f32 / settings.connector_prop)
-                        .color(utils::color_bevy_to_egui(&settings.color));
-
-                    ui.nodes(nodes);
+                        ui.rich_text(from_text);
+                    ui.rich_text(to_text);
                 }
-
-                ui.line(connections);
             }
         }
     }

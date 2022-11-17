@@ -30,7 +30,7 @@ pub(crate) fn simulation(
 
     let plot = Plot::new("lines_demo")
         .allow_scroll(false)
-        .allow_boxed_zoom(false)
+        .allow_boxed_zoom(true)
         .label_formatter(|name, _value| format!("{name}"))
         .show_background(true)
         .show_x(true)
