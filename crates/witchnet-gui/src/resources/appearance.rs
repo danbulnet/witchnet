@@ -152,6 +152,9 @@ pub struct SensorAppearance {
     pub size_bounds: (f32, f32),
     pub text_size: f32,
     pub text_size_bounds: (f32, f32),
+
+    pub level_gap: f32,
+    pub level_gap_bounds: (f32, f32),
     
     pub rounded: bool,
 
@@ -178,6 +181,9 @@ impl Default for SensorAppearance {
             size_bounds: (0f32, 0.1f32),
             text_size: 5.3f32,
             text_size_bounds: (1.0f32, 10f32),
+            
+            level_gap: 2.5f32,
+            level_gap_bounds: (1.0f32, 5.0f32),
 
             rounded: true,
 
@@ -227,7 +233,7 @@ impl Default for ConnectionAppearance {
             show: true,
             show_text: true,
             
-            thickness: 0.1f32,
+            thickness: 0.08f32,
             thickness_bounds: (0.001f32, 1f32),
             text_size: 0.8f32,
             text_size_bounds: (0.1f32, 1f32),

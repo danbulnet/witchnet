@@ -28,12 +28,13 @@ use crate::{
     utils,
     widgets::plot::{
         PlotUi,
-        MarkerShape,
         Line, 
         LineStyle,
         PlotPoints,
         Nodes,
-        NodeShape
+        NodeShape,
+        RichText,
+        PlotPoint
     }
 };
 
@@ -152,8 +153,12 @@ pub(crate) fn neurons(
         let neuron = neuron.read().unwrap();
         let neuron_value = format!("{} [{}]", neuron.id(), neuron.counter());
         let neuron_id = neuron.id();
-        let point = neuron_positions[&neuron_id];
-        let nodes = Nodes::new(vec![[point.0, point.1]])
+        let neuron_id_id = neuron.id().id;
+        let neuron_activation = neuron.activation();
+        let neuron_counter = neuron.counter();
+        let neuron_pos = neuron_positions[&neuron_id];
+        let neuron_name = format!("{name}: neuron_id_id");
+        let nodes = Nodes::new(vec![[neuron_pos.0, neuron_pos.1]])
             .name(&neuron_value)
             .filled(true)
             .shape(NodeShape::Circle)
@@ -161,8 +166,8 @@ pub(crate) fn neurons(
             .color(utils::color_bevy_to_egui(&settings.primary_color));    
         if settings.show { ui.nodes(nodes); }
 
-        let start_top = [point.0, point.1 + size_f64];
-        let start_bottom = [point.0, point.1 - size_f64];
+        let start_top = [neuron_pos.0, neuron_pos.1 + size_f64];
+        let start_bottom = [neuron_pos.0, neuron_pos.1 - size_f64];
 
         for sensor in neuron.explain() {
             let sensor = sensor.read().unwrap();
@@ -189,23 +194,49 @@ pub(crate) fn neurons(
                 .name(&connection_name)
                 .width(connection_settings.thickness);
             // let nodes = Nodes::new(vec![start, end])
-            let nodes = Nodes::new(vec![start])
-                .name(&connection_name)
-                .filled(true)
-                .shape(NodeShape::Circle)
-                .radius(size_f64 as f32 / connection_settings.connector_prop)
-                .color(utils::color_bevy_to_egui(&connection_settings.color));
+            // let nodes = Nodes::new(vec![start])
+            //     .name(&connection_name)
+            //     .filled(true)
+            //     .shape(NodeShape::Circle)
+            //     .radius(size_f64 as f32 / connection_settings.connector_prop)
+            //     .color(utils::color_bevy_to_egui(&connection_settings.color));
     
             if connection_settings.show { 
                 ui.line(connections);
-                if connection_settings.show_connector { ui.nodes(nodes); }
+                // if connection_settings.show_connector { ui.nodes(nodes); }
             }
-    }
+        }
 
-    for i in 0..no_neurons {
-        let neuron = neurons[i].read().unwrap();
-        
-
+        if settings.show_text {
+            let text = RichText::new(
+                PlotPoint::new(neuron_pos.0, neuron_pos.1 + size_f64 / 1.5), 
+                &format!("{:.3}", neuron_activation)
+            ).name(&format!("{neuron_name} activation"))
+                .color(utils::color_bevy_to_egui(&settings.text_color))
+                .text_size(settings.text_size / 2.0)
+                .available_width(f32::INFINITY)
+                .anchor(Align2::CENTER_CENTER);
+            ui.rich_text(text);
+    
+            let text = RichText::new(
+                PlotPoint::new(neuron_pos.0, neuron_pos.1), 
+                &neuron_id_id.to_string()
+            ).name(&neuron_name)
+                .color(utils::color_bevy_to_egui(&settings.text_marked_color))
+                .text_size(settings.text_size)
+                .available_width(f32::INFINITY)
+                .anchor(Align2::CENTER_CENTER);
+            ui.rich_text(text);
+    
+            let text = RichText::new(
+                PlotPoint::new(neuron_pos.0, neuron_pos.1 - size_f64 / 1.5), 
+                &neuron_counter.to_string()
+            ).name(&format!("{neuron_name} counter"))
+                .color(utils::color_bevy_to_egui(&settings.text_color))
+                .text_size(settings.text_size / 2.0)
+                .available_width(f32::INFINITY)
+                .anchor(Align2::CENTER_CENTER);
+            ui.rich_text(text);
         }
     }
 }

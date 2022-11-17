@@ -61,6 +61,7 @@ fn sensor_positions(
     let sensors = magds.sensors();
 
     let sensor_size = appearance_res.sensors[&Selector::All].size;
+    let level_gap = appearance_res.sensors[&Selector::All].level_gap;
 
     let sensor_points_vec = empty_circle_positions(
         origin,
@@ -74,22 +75,28 @@ fn sensor_positions(
         let sensor = sensor.read().unwrap();
         let sensor_id = sensor.id();
 
-        let top_y = sensor_neurons_positions(
-            magds, sensor_points_vec[i], &sensor, &mut position_xy_res
+        let (position, angle) = sensor_points_vec[i];
+        let angle = angle - PI / 2.0;
+        let title_pos = sensor_neurons_positions(
+            magds, position, angle, level_gap as f64, &sensor, &mut position_xy_res
         );
         
-        position_xy_res.sensors.insert(sensor_id, (sensor_points_vec[i].0, top_y));
+        position_xy_res.sensors.insert(sensor_id, (title_pos, angle));
     }
 }
 
 fn sensor_neurons_positions(
     magds: &MAGDS,
     origin: (f64, f64),
+    angle: f64,
+    level_gap: f64,
     sensor: &SensorConatiner,
     position_xy_res: &mut PositionXY
-) -> f64 {
+) -> (f64, f64) {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
     let gap = SMALL_GAP_FACTOR as f64;
+
+    let mut unrotated_points: HashMap<NeuronID, (f64, f64)> = HashMap::new();
 
     let mut y = origin.1 + gap;
     for level in sensor_levels.into_iter() {
@@ -103,7 +110,8 @@ fn sensor_neurons_positions(
             if li < level.len() / 2 {
                 for (i, neuron_id) in (&node).into_iter().enumerate() {
                     if i % 2 == 0 { y = level_y; } else { y = level_y - gap / 2.0 };
-                    position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    // position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    unrotated_points.insert(neuron_id.clone(), (x, y));
                     x += gap / 2.0;
                 }
             } else {
@@ -121,7 +129,8 @@ fn sensor_neurons_positions(
                             y = level_y; 
                         }
                     }
-                    position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    // position_xy_res.sensor_neurons.insert(neuron_id.clone(), (x, y));
+                    unrotated_points.insert(neuron_id.clone(), (x, y));
                     x += gap / 2.0;
                 }
             }
@@ -129,9 +138,39 @@ fn sensor_neurons_positions(
             y = node_y;
         }
         y = level_y;
-        y += 3.8 * gap;
+        y += level_gap * gap;
     }
-    y
+
+    rotate_by_angle(&unrotated_points, angle, origin, position_xy_res);
+    
+    rotate_point_around_origin((origin.0, y), origin, angle)
+}
+
+fn rotate_by_angle(
+    points: &HashMap<NeuronID, (f64, f64)>,
+    angle_in_radians: f64,
+    origin: (f64, f64),
+    position_xy_res: &mut PositionXY
+) {
+    for (id, point) in &mut points.into_iter() {
+        let point = rotate_point_around_origin(*point, origin, angle_in_radians);
+        position_xy_res.sensor_neurons.insert(id.clone(), point);
+    }
+}
+
+pub fn rotate_point_around_origin(
+    mut point: (f64, f64), origin: (f64, f64), angle_in_radians: f64
+) -> (f64, f64) {
+    point = (point.0 - origin.0, point.1 - origin.1);
+
+    let s = f64::sin(angle_in_radians);
+    let c = f64::cos(angle_in_radians);
+
+    point = (point.0 * c - point.1 * s, point.0 * s + point.1 * c);
+
+    point = (point.0 + origin.0, point.1 + origin.1);
+
+    point
 }
 
 fn levels<T: SensorData + Send + Sync>(
@@ -289,13 +328,13 @@ pub(crate) fn empty_circle_positions(
     n: usize, 
     size: f64, 
     gap: f64
-) -> Vec<(f64, f64)> {
+) -> Vec<((f64, f64), f64)> {
     if n == 0 {
         vec![]
     } else if n == 1 {
         let l_total = circle_r_to_l(r);
         let (x, y, _alpha) = circle_geometry(0f64, l_total);
-        vec![(x + origin.0, y + origin.1)]
+        vec![((x + origin.0, y + origin.1), 0.0)]
     } else {
         let mut points = Vec::new();
 
@@ -307,8 +346,8 @@ pub(crate) fn empty_circle_positions(
             let circle_space = l_total / n as f64;
             for i in 0..n {
                 let l_current = i as f64 * circle_space;
-                let (x, y, _alpha) = circle_geometry(l_current, l_total);
-                points.push((x + origin.0, y + origin.1));
+                let (x, y, alpha) = circle_geometry(l_current, l_total);
+                points.push(((x + origin.0, y + origin.1), alpha));
                 current_position += 1;
             }
         }

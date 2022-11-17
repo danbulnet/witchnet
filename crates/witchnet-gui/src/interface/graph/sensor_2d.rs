@@ -25,14 +25,13 @@ use crate::{
         RichText,
         PlotUi,
         PlotPoint,
-        Points,
-        MarkerShape,
         Line, 
         LineStyle,
         PlotPoints,
         Nodes,
         NodeShape
-    }
+    },
+    interface::graph::positions
 };
 
 fn weight(first: &DataTypeValue, second: &DataTypeValue, range: f32) -> f32 {
@@ -225,7 +224,15 @@ pub(crate) fn sensory_field(
 
     if values.is_empty() { return }
 
-    // let title_point = position_xy_res.sensors[&sensor_id];
+    let (title_point, angle) = position_xy_res.sensors[&sensor_id];
+
+    let title = RichText::new(PlotPoint::new(title_point.0, title_point.1), name)
+        .name(name)
+        .color(utils::color_bevy_to_egui(&settings.primary_color))
+        .text_size(settings.text_size * 2.0)
+        .available_width(f32::INFINITY)
+        .anchor(Align2::CENTER_CENTER);
+    ui.rich_text(title);
 
     show_connections(
         ui, 
@@ -233,6 +240,7 @@ pub(crate) fn sensory_field(
         &neurons,
         position_xy_res,
         size_f64,
+        angle,
         &sensor
     );
     
@@ -290,50 +298,6 @@ pub(crate) fn sensory_field(
             ui.rich_text(text);
         }
     }
-
-    // let sensor_node = Nodes::new(vec![[title_point.0, title_point.1]])
-    //     .name(name)
-    //     .filled(true)
-    //     .shape(NodeShape::Circle)
-    //     .radius(size_f64 as f32)
-    //     .color(utils::color_bevy_to_egui(&settings.text_active_color));    
-    // if settings.show { ui.nodes(sensor_node); }
-
-    // let first_value = values[0].to_string();
-    // let text = RichText::new(
-    //     PlotPoint::new(
-    //         points_vec[0][0] - 0.25 * size_f64, 
-    //         points_vec[0][1]
-    //     ), 
-    //     &first_value
-    // )
-    //     .name(&first_value)
-    //     .color(utils::color_bevy_to_egui(&settings.primary_color))
-    //     .text_style(TextStyle::Small)
-    //     .available_width(35.0 * size_f64 as f32)
-    //     .anchor(Align2::RIGHT_CENTER);
-    // ui.rich_text(text);
-
-    // let last_value = values.last().unwrap().to_string();
-    // let text = RichText::new(
-    //     PlotPoint::new(
-    //         points_vec.last().unwrap()[0] + 0.25 * size_f64, 
-    //         points_vec.last().unwrap()[1]
-    //     ), 
-    //     &last_value
-    // )
-    //     .name(&last_value)
-    //     .color(utils::color_bevy_to_egui(&settings.primary_color))
-    //     .text_style(TextStyle::Small)
-    //     .available_width(35.0 * size_f64 as f32)
-    //     .anchor(Align2::LEFT_CENTER);
-    // ui.rich_text(text);
-
-    // let value_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::from_iter(
-    //     neurons.into_iter().map(|x| x.read().unwrap().id()).zip(points_vec.clone().into_iter())
-    // );
-
-    // (value_point_map, points_vec.last().unwrap()[0] - points_vec[0][0])
 }
 
 fn show_connections(
@@ -342,6 +306,7 @@ fn show_connections(
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
     position_xy_res: &mut PositionXY,
     neuron_size: f64,
+    angle: f64,
     sensor: &SensorConatiner
 ) {
     let no_elements = neurons.len();
@@ -364,9 +329,17 @@ fn show_connections(
             let first_neuron = neurons[i - 1].read().unwrap();
             let first_neuron_pos = sensor_positions[&first_neuron.id()];
 
-            let from_element = [first_neuron_pos.0 + neuron_size, first_neuron_pos.1];
-            let to_element = [second_neuron_pos.0 - neuron_size, second_neuron_pos.1];
-            let to_neuron = [second_neuron_pos.0, second_neuron_pos.1 - neuron_size];
+            let from_element = {
+                let mut point = (first_neuron_pos.0 + neuron_size, first_neuron_pos.1);
+                point = positions::rotate_point_around_origin(point, first_neuron_pos, angle);
+                [point.0, point.1]
+            };
+            let to_element = {
+                let mut point = (second_neuron_pos.0 - neuron_size, second_neuron_pos.1);
+                point = positions::rotate_point_around_origin(point, second_neuron_pos, angle);
+                [point.0, point.1]
+            };
+            let to_neuron = [second_neuron_pos.0, second_neuron_pos.1];
 
             let elements_weight = weight(&values[i], &values[i - 1], range);
             let connection_name = format!(
@@ -407,8 +380,15 @@ fn show_connections(
                 ui.nodes(second_nodes);
 
                 if settings.show_text {
+                    let from_element = {
+                        let mut point = (from_element[0] + conn_size as f64 * 0.5, from_element[1]);
+                        point = positions::rotate_point_around_origin(
+                            point, (from_element[0], from_element[1]), angle
+                        );
+                        [point.0, point.1]
+                    };
                     let from_text = RichText::new(
-                        PlotPoint::new(from_element[0] + conn_size as f64 * 0.5, from_element[1]), 
+                        PlotPoint::new(from_element[0], from_element[1]), 
                         &format!("{:.02}", elements_weight)
                     ).name(&format!("{} next weight", first_neuron.id()))
                         .color(utils::color_bevy_to_egui(&settings.text_color))
@@ -416,8 +396,15 @@ fn show_connections(
                         .available_width(f32::INFINITY)
                         .anchor(Align2::CENTER_CENTER);
 
+                    let to_element = {
+                        let mut point = (to_element[0] - conn_size as f64 * 0.5, to_element[1]);
+                        point = positions::rotate_point_around_origin(
+                            point, (to_element[0], to_element[1]), angle
+                        );
+                        [point.0, point.1]
+                    };
                     let to_text = RichText::new(
-                        PlotPoint::new(to_element[0] - conn_size as f64 * 0.5, to_element[1]), 
+                        PlotPoint::new(to_element[0], to_element[1]), 
                         &format!("{:.02}", elements_weight)
                     ).name(&format!("{} next weight", second_neuron.id()))
                         .color(utils::color_bevy_to_egui(&settings.text_color))

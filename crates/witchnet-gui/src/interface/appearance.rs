@@ -59,8 +59,9 @@ fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
 
         w::checkbox_row(ui, "show", &mut sensor.show);
 
-        let size_bounds = sensor.size_bounds;
-        w::slider_row(ui, "size", &mut sensor.size, size_bounds);
+        w::slider_row(ui, "size", &mut sensor.size, sensor.size_bounds);
+
+        w::slider_row(ui, "level gap", &mut sensor.level_gap, sensor.level_gap_bounds);
 
         w::checkbox_row(ui, "rounded", &mut sensor.rounded);
 
