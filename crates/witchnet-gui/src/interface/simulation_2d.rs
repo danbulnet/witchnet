@@ -23,7 +23,7 @@ use crate::{
 pub(crate) fn simulation(
     ui: &mut Ui,
     magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<PositionXY>,
+    mut position_xy_res: &mut ResMut<PositionXY>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     let simulation_settings = &mut appearance_res.simulation2d;

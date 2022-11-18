@@ -158,12 +158,15 @@ pub(crate) fn neurons(
         let neuron_counter = neuron.counter();
         let neuron_pos = neuron_positions[&neuron_id];
         let neuron_name = format!("{name}: neuron_id_id");
+        let neuron_color = if neuron_activation >= 4.0 { 
+            &settings.primary_active_color
+        } else { &settings.primary_color };
         let nodes = Nodes::new(vec![[neuron_pos.0, neuron_pos.1]])
             .name(&neuron_value)
             .filled(true)
             .shape(NodeShape::Circle)
             .radius(size_f64 as f32)
-            .color(utils::color_bevy_to_egui(&settings.primary_color));    
+            .color(utils::color_bevy_to_egui(&neuron_color));    
         if settings.show { ui.nodes(nodes); }
 
         let start_top = [neuron_pos.0, neuron_pos.1 + size_f64];

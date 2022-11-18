@@ -217,7 +217,7 @@ pub(crate) fn sensory_field(
 ) {
     let size_f64 = settings.size as f64;
 
-    let sensor = sensor.read().unwrap();
+    let mut sensor = sensor.write().unwrap();
     let sensor_id = sensor.id();
     let values = sensor.values();
     let neurons = sensor.neurons();
@@ -255,12 +255,15 @@ pub(crate) fn sensory_field(
         let value_name = format!("{name}: {value_string} [{neuron_count}]");
 
         let neuron_pos = sensor_positions[&neuron.id()];
+        let neuron_color = if neuron_activation >= 1.0 { 
+            &settings.primary_active_color
+        } else { &settings.primary_color };
         let nodes = Nodes::new(vec![[neuron_pos.0, neuron_pos.1]])
             .name(&value_name)
             .filled(true)
             .shape(NodeShape::Circle)
             .radius(size_f64 as f32)
-            .color(utils::color_bevy_to_egui(&settings.primary_color));    
+            .color(utils::color_bevy_to_egui(&neuron_color));    
         if settings.show { ui.nodes(nodes); }
   
         let value_displayed = if value_chars.count() <= SENSOR_TEXT_CUTOFF { value_string } else {
@@ -296,6 +299,19 @@ pub(crate) fn sensory_field(
                 .available_width(f32::INFINITY)
                 .anchor(Align2::CENTER_CENTER);
             ui.rich_text(text);
+        }
+
+        if ui.plot_clicked() {
+            let pointer =  ui.pointer_coordinate();
+            let sensor_size = settings.size as f64;
+            if let Some(p) = pointer {
+                if p.x >= neuron_pos.0 - sensor_size && p.x <= neuron_pos.0 + sensor_size {
+                    if p.y >= neuron_pos.1 - sensor_size && p.y <= neuron_pos.1 + sensor_size {
+                        // let _ = sensor.activate(&neuron.value(), 1.0f32, true, true);
+                        println!("id {}", neuron.id());
+                    }
+                }
+            }
         }
     }
 }

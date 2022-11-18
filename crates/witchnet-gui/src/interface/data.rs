@@ -8,6 +8,8 @@ use bevy_egui::egui::{ self, Ui, RichText };
 
 use rfd::FileDialog;
 
+use witchnet_common::sensor::SensorAsync;
+
 use magds::asynchronous::parser;
 
 use crate::{
@@ -178,6 +180,11 @@ pub(crate) fn add_magds_button_row(
                     }
 
                     let magds = magds_res.0.read().unwrap();
+                    for sensor in magds.sensors() {
+                        let mut sensor = sensor.write().unwrap();
+                        let value = sensor.values().first().unwrap().clone();
+                        let _ = sensor.activate(&value, 1.0f32, true, true);
+                    }
                     
                     let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
                     for sensor_name in magds.sensors_names() {
