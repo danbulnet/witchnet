@@ -1,6 +1,6 @@
-using DataFrames
-using Random
+export pred, predeval
 
+import Random
 import MLJ
 
 """
@@ -14,15 +14,15 @@ function pred(modelfactory, X, y; ttratio=0.7, seed=58)
 
     train, test = MLJ.partition(
         eachindex(y), ttratio;
-        shuffle=true, rng=MersenneTwister(seed)
+        shuffle=true, rng=Random.MersenneTwister(seed)
     )
     MLJ.fit!(mach; rows=train, verbosity=0)
     y[test], MLJ.predict_mode(mach, X[test, :])
 end
 
-function predacc(modelfactory, X, y; ttratio=0.7, seed=58)
+function predeval(modelfactory, X, y, measure::Symbol; ttratio=0.7, seed=58)
     ytest, ŷtest = pred(modelfactory, X, y; ttratio=ttratio, seed=seed)
-    acc = MLJ.accuracy(ŷtest, ytest)
-    @info "accuracy: ", acc
-    acc
+    result = getproperty(MLJ, measure)(ŷtest, ytest)
+    @info string(measure, ": ", result)
+    result
 end

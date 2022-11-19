@@ -1,9 +1,7 @@
 module WitchnetBenchmark
 
-export pred, predacc
+export pred, predeval
 
-include("mlj.jl")
-
-greet() = print("Hello World!")
+include("predeval.jl")
 
 end # module WitchnetBenchmark
