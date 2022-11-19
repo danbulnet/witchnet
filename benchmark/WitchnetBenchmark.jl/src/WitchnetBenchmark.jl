@@ -1,7 +1,8 @@
 module WitchnetBenchmark
 
-export pred, predeval
-
 include("predeval.jl")
+include("plots.jl")
+include("models.jl")
+include("classification.jl")
 
 end # module WitchnetBenchmark

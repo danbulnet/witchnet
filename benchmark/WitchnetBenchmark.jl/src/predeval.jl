@@ -1,7 +1,8 @@
-export pred, predeval
+export pred, predeval, evalmodels
 
 import Random
 import MLJ
+using DataFrames
 
 """
     example: 
@@ -25,4 +26,16 @@ function predeval(modelfactory, X, y, measure::Symbol; ttratio=0.7, seed=58)
     result = getproperty(MLJ, measure)(ŷtest, ytest)
     @info string(measure, ": ", result)
     result
+end
+
+function evalmodels(X, y, models::Dict, metric::Symbol)::DataFrame
+    results = []
+    for model in values(models)
+        push!(results, predeval(model, X, y, metric))
+    end
+
+    resultdf = DataFrame(:model => collect(keys(models)), metric => results)
+    sort!(resultdf, metric, rev=true)
+
+    resultdf
 end
