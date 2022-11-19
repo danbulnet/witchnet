@@ -15,7 +15,7 @@ function accplot(
     set_default_plot_size(width, height)
     plot(
         df, y=x, x=y, 
-        color=y, 
+        color=x, 
         Coord.cartesian(yflip=true), Scale.y_discrete,
         Geom.bar(orientation=:horizontal),
         Theme(bar_spacing=barspacing, key_position=:none),
