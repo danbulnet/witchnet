@@ -1,11 +1,11 @@
-export accplot
+export percentplot
 
 using Gadfly
 using DataFrames
 using ColorSchemes
 using Compose
 
-function accplot(
+function percentplot(
     df::DataFrame, x::Symbol, y::Symbol, title::String;
     width=15cm, height=8cm,
     barspacing=2.0mm,
