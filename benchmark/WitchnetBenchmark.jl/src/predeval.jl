@@ -12,8 +12,9 @@ import CategoricalArrays.CategoricalValue
         modelfactory = @load RandomForestClassifier pkg = ScikitLearn
         predictmlj(modelfactory, X, y)
 """
-function pred(modelfactory, X, y; ttratio=0.7, seed=58)
-    model = modelfactory()
+function pred(modelfactory, X, y, measure; ttratio=0.7, seed=58)
+    outs = measure in [:rmse, :mae] ? 1 : length(unique(y))
+    model = modelfactory(ncol(X), outs)
     mach = MLJ.machine(model, X, y)
 
     train, test = ttindices(y, ttratio; seed=seed)
@@ -30,7 +31,7 @@ function ttindices(y, ttratio=0.7; seed=58)
 end
 
 function predeval(modelfactory, X, y, measure::Symbol; ttratio=0.7, seed=58)
-    ytest, ŷtest = pred(modelfactory, X, y; ttratio=ttratio, seed=seed)
+    ytest, ŷtest = pred(modelfactory, X, y, measure; ttratio=ttratio, seed=seed)
     result = getproperty(MLJ, measure)(ŷtest, ytest)
     @info string(measure, ": ", result)
     result
@@ -40,6 +41,8 @@ function evalmodels(
     data::DataFrame, target::Symbol, models::Dict, metric::Symbol;
     ttratio=0.7, seed=58
 )::DataFrame
+    MLJ.default_resource(CPUProcesses())
+
     y, X = MLJ.unpack(data, ==(target), colname -> true)
     encodermach = MLJ.machine(MLJ.ContinuousEncoder(), X) |> MLJ.fit!
     Xencoded = MLJ.transform(encodermach, X)

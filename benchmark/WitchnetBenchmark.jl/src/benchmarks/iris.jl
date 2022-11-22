@@ -1,5 +1,5 @@
 export irisclassify, irisclassify_df, irisclassify_plot
-export irisregession, irisregession_df, irisregession_plot
+export irisreg, irisreg_df, irisreg_plot
 
 using WitchnetBenchmark
 using RDatasets
@@ -14,7 +14,7 @@ function irisclassify(measure::Symbol=:accuracy)
     resultdf = evalmodels(data, :Species, models, measure)
 
     resultplot = if measure == :accuracy 
-        percentplot(
+        percent_barplot(
             resultdf, :model, measure, "iris species classification $measure"
         )
     else nothing end
@@ -26,22 +26,25 @@ irisclassify_df(measure::Symbol=:accuracy) = irisclassify(measure)[1]
 
 irisclassify_plot(measure::Symbol=:accuracy) = irisclassify(measure)[2]
 
-function irisregession(target::Symbol=:SepalLength, measure::Symbol=:rmse)
+function irisreg(target::Symbol=:SepalLength, measure::Symbol=:rmse)
     data = RDatasets.dataset("datasets", "iris")
+    @info describe(data)
     
     models = regression_models()
 
     resultdf = evalmodels(data, target, models, measure)
 
-    resultplot = nothing
+    resultplot = resultplot = value_barplot(
+        resultdf, :model, measure, "iris $target regression $measure"
+    )
 
     resultdf, resultplot
 end
 
-irisregession_df(
+irisreg_df(
     target::Symbol=:SepalLength, measure::Symbol=:rmse
-) = irisregession(target, measure)[1]
+) = irisreg(target, measure)[1]
 
-irisregession_plot(
+irisreg_plot(
     target::Symbol=:SepalLength, measure::Symbol=:rmse
-) = irisregession(target, measure)[2]
+) = irisreg(target, measure)[2]

@@ -13,7 +13,7 @@ keywords.workspace = true
 [lib]
 name = "magds"
 path = "src/lib.rs"
-crate-type = ["dylib"]
+crate-type = ["lib", "dylib"]
 
 [[bin]]
 name = "magds"
