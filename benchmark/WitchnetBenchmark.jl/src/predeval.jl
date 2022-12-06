@@ -48,6 +48,8 @@ function evalmodels(
     Xencoded = MLJ.transform(encodermach, X)
     modelnames = []
     results = []
+    times = []
+    memory = []
 
     for (name, model) in models
         if name == :MAGDS
@@ -66,20 +68,42 @@ function evalmodels(
 
             magds_predict = getproperty(@__MODULE__, Symbol("magds_" * string(metric)))
             push!(modelnames, :sync_magds)
-            push!(results, magds_predict(trainpath, testpath, string(target)))
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(trainpath, testpath, string(target))
+            end
+            push!(results, result)
+            push!(memory, mem)
+            push!(times, time)
             
             asyncmagds_predict = getproperty(@__MODULE__, Symbol("asyncmagds_" * string(metric)))
             push!(modelnames, :async_magds)
-            push!(results, asyncmagds_predict(trainpath, testpath, string(target)))
+            time = @elapsed begin
+                mem = @allocated result = asyncmagds_predict(trainpath, testpath, string(target))
+            end
+            push!(results, result)
+            push!(memory, mem)
+            push!(times, time)
 
             rm(tmpdir; recursive=true)
         else
             push!(modelnames, name)
-            push!(results, predeval(model, Xencoded, y, metric; ttratio=ttratio, seed=seed))
+            time = @elapsed begin
+                mem = @allocated result = predeval(
+                    model, Xencoded, y, metric; ttratio=ttratio, seed=seed
+                )
+            end
+            push!(results, result)
+            push!(memory, mem)
+            push!(times, time)
         end
     end
 
-    resultdf = DataFrame(:model => modelnames, metric => results)
+    resultdf = DataFrame(
+        :model => modelnames, 
+        metric => results, 
+        :time => times,
+        :memory => memory
+    )
     sort!(resultdf, metric, rev=true)
 
     resultdf

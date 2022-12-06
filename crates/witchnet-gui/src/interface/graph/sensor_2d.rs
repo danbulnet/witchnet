@@ -308,7 +308,8 @@ pub(crate) fn sensory_field(
                 if p.x >= neuron_pos.0 - sensor_size && p.x <= neuron_pos.0 + sensor_size {
                     if p.y >= neuron_pos.1 - sensor_size && p.y <= neuron_pos.1 + sensor_size {
                         // let _ = sensor.activate(&neuron.value(), 1.0f32, true, true);
-                        println!("id {}", neuron.id());
+                        println!("id {} value {}", neuron.id(), neuron.value());
+                        let _ = sensor.activate(&neuron.value(), 1.0, true, true);
                     }
                 }
             }

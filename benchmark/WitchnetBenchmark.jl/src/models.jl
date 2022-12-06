@@ -24,7 +24,7 @@ classification_models() = Dict(
             )
         end
         @load(NeuralNetworkClassifier, pkg=MLJFlux, verbosity=true)(
-            builder=builder, rng=123, epochs=20, acceleration=CUDALibs()
+            builder=builder, rng=123, epochs=50, acceleration=CUDALibs()
         )
     end,
 )

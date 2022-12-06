@@ -43,3 +43,7 @@ path = "examples/carscom/carscom-price.rs"
 [[example]]
 name = "carscom-brand"
 path = "examples/carscom/carscom-brand.rs"
+
+[[example]]
+name = "star-memtime"
+path = "examples/carscom/star-memtime.rs"
