@@ -7,6 +7,7 @@ use witchnet_common::{
 
 use crate::synchronous::magds::MAGDS;
 
+#[derive(Debug, Clone)]
 pub enum DataValueFilter {
     Empty,
     One(DataTypeValue),
