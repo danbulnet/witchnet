@@ -162,6 +162,18 @@ impl Debug for OneOverOutsUpperHalfAsync {
     fn fmt(&self, f: &mut Formatter) -> FmtResult { write!(f, "one_over_outs_upper_half") }
 }
 
+pub struct OneOverOutsUpperQuarterAsync;
+
+impl DefiningWeightingStrategyAsync for OneOverOutsUpperQuarterAsync {
+    fn weight(&self, defining_connections: &DefiningConnectionsAsync) -> f32 {
+        0.75f32 + (1.0f32 / f32::max(defining_connections.connections.len() as f32, 1.0f32) / 4f32)
+    }
+}
+
+impl Debug for OneOverOutsUpperQuarterAsync {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult { write!(f, "one_over_outs_upper_half") }
+}
+
 #[derive(Debug, Clone)]
 pub struct DefiningConnectionsAsync {
     pub connections: Vec<Arc<RwLock<dyn NeuronAsync>>>,
