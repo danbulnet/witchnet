@@ -218,7 +218,7 @@ mod tests {
         assert!(recommendations.first().unwrap().1 > 0f32);
         println!("recommendations filtered by setosa and versicolor {:?}", recommendations);
         
-        let pred = prediction::predict(&mut magds, &features, variety_sensor_id, true);
+        let pred = prediction::predict(&mut magds, &features, variety_sensor_id);
         println!("pred {:?}", pred);
     }
 }

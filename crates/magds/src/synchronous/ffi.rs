@@ -29,8 +29,12 @@ unsafe fn extern_supervised_performance(
     test_file_ptr: *const i8,
     target_ptr: *const i8,
     weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
     interelement_activation_threshold: f32,
-    interelement_activation_exponent: i32
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
 ) -> SupervisedPerformance {
     let name = CStr::from_ptr(name_ptr).to_str().unwrap().to_owned();
     let train_file = CStr::from_ptr(train_file_ptr).to_str().unwrap().to_owned();
@@ -67,8 +71,14 @@ unsafe fn extern_supervised_performance(
         .finish()
         .unwrap();
 
-    prediction::prediction_score_df(
-        &mut magds_train, &test, (target.as_str()).into(), true, false
+    prediction::prediction_score_df_custom(
+        &mut magds_train,
+        &test,
+        (target.as_str()).into(),
+        fuzzy,
+        weighted,
+        winners_limit,
+        weight_ratio
     ).unwrap()
 }
 
@@ -79,8 +89,12 @@ unsafe extern "C" fn magds_classification_accuracy(
     test_file_ptr: *const i8,
     target_ptr: *const i8,
     weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
     interelement_activation_threshold: f32,
-    interelement_activation_exponent: i32
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
 ) -> f64 {
     match panic::catch_unwind(|| {
         extern_supervised_performance(
@@ -89,8 +103,12 @@ unsafe extern "C" fn magds_classification_accuracy(
             test_file_ptr,
             target_ptr,
             weighting_strategy_ptr,
+            fuzzy,
+            weighted,
             interelement_activation_threshold,
-            interelement_activation_exponent
+            interelement_activation_exponent,
+            winners_limit,
+            weight_ratio
         ).accuracy().unwrap()
     }) {
         Ok(r) => r,
@@ -105,8 +123,12 @@ unsafe extern "C" fn magds_regression_rmse(
     test_file_ptr: *const i8,
     target_ptr: *const i8,
     weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
     interelement_activation_threshold: f32,
-    interelement_activation_exponent: i32
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
 ) -> f64 {
     match panic::catch_unwind(|| {
         extern_supervised_performance(
@@ -115,8 +137,12 @@ unsafe extern "C" fn magds_regression_rmse(
             test_file_ptr,
             target_ptr,
             weighting_strategy_ptr,
+            fuzzy,
+            weighted,
             interelement_activation_threshold,
-            interelement_activation_exponent
+            interelement_activation_exponent,
+            winners_limit,
+            weight_ratio
         ).rmse().unwrap()
     }) {
         Ok(r) => r,
@@ -131,8 +157,12 @@ unsafe extern "C" fn magds_regression_mae(
     test_file_ptr: *const i8,
     target_ptr: *const i8,
     weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
     interelement_activation_threshold: f32,
-    interelement_activation_exponent: i32
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
 ) -> f64 {
     match panic::catch_unwind(|| {
         extern_supervised_performance(
@@ -141,8 +171,12 @@ unsafe extern "C" fn magds_regression_mae(
             test_file_ptr,
             target_ptr,
             weighting_strategy_ptr,
+            fuzzy,
+            weighted,
             interelement_activation_threshold,
-            interelement_activation_exponent
+            interelement_activation_exponent,
+            winners_limit,
+            weight_ratio
         ).mae().unwrap()
     }) {
         Ok(r) => r,

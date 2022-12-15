@@ -1,7 +1,8 @@
 export magds_accuracy, magds_rmse, magds_mae
 export asyncmagds_accuracy, asyncmagds_rmse, asyncmagds_mae
 
-const libpath::String = "benchmark/WitchnetBenchmark.jl/lib/magds.dll"
+# const libpath::String = "benchmark/WitchnetBenchmark.jl/lib/magds.dll"
+const libpath::String = "target/release/magds.dll"
 
 """
 example:
@@ -16,20 +17,28 @@ function magds_accuracy(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:magds_classification_accuracy, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32), 
         "magds_accuracy",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("magds accuracy: ", result)
     result
@@ -48,20 +57,28 @@ function magds_rmse(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:magds_regression_rmse, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
         "magds_rmse",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("magds rmse: ", result)
     result
@@ -80,20 +97,28 @@ function magds_mae(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:magds_regression_mae, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
         "magds_mae",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("magds mae: ", result)
     result
@@ -112,20 +137,28 @@ function asyncmagds_accuracy(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:async_magds_classification_accuracy, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
         "asyncmagds_accuracy",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("async magds accuracy: ", result)
     result
@@ -144,20 +177,28 @@ function asyncmagds_rmse(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:async_magds_regression_rmse, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
         "asyncmagds_rmse",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("async magds rmse: ", result)
     result
@@ -176,20 +217,28 @@ function asyncmagds_mae(
     test_file::String, 
     target::String,
     weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
     interelement_activation_threshold::Float32,
-    interelement_activation_exponent::Int32
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
 )::Float64
     result = ccall(
         (:async_magds_regression_mae, libpath), 
         Float64, 
-        (Cstring, Cstring, Cstring, Cstring, Cstring, Float32, Int32), 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
         "asyncmagds_mae",
         train_file,
         test_file,
         target,
         weighting_strategy,
+        fuzzy,
+        weighted,
         interelement_activation_threshold,
-        interelement_activation_exponent
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
     )
     @info string("async magds mae: ", result)
     result

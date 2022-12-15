@@ -12,9 +12,8 @@ using CSV
 using Gadfly
 
 "classification task on the palmer penguins dataset"
-function classify(;target::Symbol=:species, measure::Symbol=:accuracy)::DataFrame
+function classify(;target::Symbol=:species, measure::Symbol=:accuracy, models=classification_models())::DataFrame
     data = dataset()
-    models = classification_models()
     result = evalmodels(data, target, models, measure)
     
     Utils.writecsv(result, "penguin", "classify", target)
@@ -27,9 +26,8 @@ function classify(;target::Symbol=:species, measure::Symbol=:accuracy)::DataFram
 end
 
 "regression task on the palmer penguins dataset"
-function estimate(;target::Symbol=:body_mass_g, measure::Symbol=:rmse)::DataFrame
+function estimate(;target::Symbol=:body_mass_g, measure::Symbol=:rmse, models=regression_models())::DataFrame
     data = dataset()
-    models = regression_models()
     result = evalmodels(data, target, models, measure)
     
     Utils.writecsv(result, "penguin", "estimate", target)

@@ -1,4 +1,4 @@
-export classification_models, regression_models
+export classification_models, regression_models, magds_models
 
 using MLJ
 using MLJFlux
@@ -51,4 +51,8 @@ regression_models() = Dict(
             builder=builder, rng=58, epochs=20
         )
     end,
+)
+
+magds_models() = Dict(
+    :MAGDS => nothing
 )

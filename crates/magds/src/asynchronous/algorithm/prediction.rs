@@ -26,20 +26,35 @@ use crate::{
 pub fn predict(
     magds: &mut MAGDS, 
     features: &Vec<(u32, DataTypeValue)>,
-    target: u32,
-    fuzzy: bool
+    target: u32
 ) -> Option<DataProbability> {
     let features: Vec<(u32, DataTypeValue, f32)> = features.into_iter()
         .map(|(id, value)| (*id, value.clone(), 1.0f32))
         .collect();
-    predict_weighted(magds, &features, target, fuzzy)
+    predict_weighted(magds, &features, target, true, 12, f32::ln(features.len() as f32))
+}
+
+pub fn predict_custom(
+    magds: &mut MAGDS, 
+    features: &Vec<(u32, DataTypeValue)>,
+    target: u32,
+    fuzzy: bool,
+    winners_limit: usize,
+    weight_ratio: f32
+) -> Option<DataProbability> {
+    let features: Vec<(u32, DataTypeValue, f32)> = features.into_iter()
+        .map(|(id, value)| (*id, value.clone(), 1.0f32))
+        .collect();
+    predict_weighted(magds, &features, target, fuzzy, winners_limit, weight_ratio)
 }
 
 pub fn predict_weighted(
     magds: &mut MAGDS, 
     features: &Vec<(u32, DataTypeValue, f32)>,
     target: u32,
-    fuzzy: bool
+    fuzzy: bool,
+    winners_limit: usize,
+    weight_ratio: f32
 ) -> Option<DataProbability> {
     let mut max_activation_sum = 0.0f32;
     
@@ -90,7 +105,7 @@ pub fn predict_weighted(
     let neurons_len = neurons.len();
     if neurons_len == 0 { return None }
 
-    let winners_limit = usize::min(12usize, neurons_len);
+    // let winners_limit = usize::min(12usize, neurons_len);
 
     let mut neurons_sorted: Vec<(f32, Arc<RwLock<dyn NeuronAsync>>)> = neurons.into_iter()
         .map(
@@ -109,7 +124,7 @@ pub fn predict_weighted(
     };
     let target_data_type = magds.sensor(target).unwrap().read().unwrap().data_type();
 
-    let weight_ratio = f32::ln(features.len() as f32);
+    // let weight_ratio = f32::ln(features.len() as f32);
 
     match target_data_category {
         DataCategory::Numerical => {
@@ -206,9 +221,21 @@ pub fn predict_weighted(
 pub fn prediction_score(
     train: &mut MAGDS, 
     test: &mut MAGDS, 
+    target: Arc<str>
+) -> anyhow::Result<SupervisedPerformance> {
+    prediction_score_custom(
+        train, test, target, true, false, 12, f32::ln(train.neurons.len() as f32)
+    )
+}
+
+pub fn prediction_score_custom(
+    train: &mut MAGDS, 
+    test: &mut MAGDS, 
     target: Arc<str>, 
     fuzzy: bool,
-    weighted: bool
+    weighted: bool,
+    winners_limit: usize,
+    weight_ratio: f32
 ) -> anyhow::Result<SupervisedPerformance> {
     let y_len = test.neurons.len();
     let n_features = test.sensors.len();
@@ -254,7 +281,9 @@ pub fn prediction_score(
             anyhow::bail!("test_reference_value shouldn't be unknown");
         }
 
-        let data_proba = match predict_weighted(train, &features, target_id, fuzzy) {
+        let data_proba = match predict_weighted(
+            train, &features, target_id, fuzzy, winners_limit, weight_ratio
+        ) {
             Some(dp) => dp,
             None => { train.deactivate(); continue }
         };
@@ -284,9 +313,21 @@ pub fn prediction_score(
 pub fn prediction_score_df(
     train: &mut MAGDS, 
     test: &DataFrame, 
+    target: &str
+) -> anyhow::Result<SupervisedPerformance> {
+    prediction_score_df_custom(
+        train, test, target, true, false, 12, f32::ln(train.neurons.len() as f32)
+    )
+}
+
+pub fn prediction_score_df_custom(
+    train: &mut MAGDS, 
+    test: &DataFrame, 
     target: &str, 
     fuzzy: bool,
-    weighted: bool
+    weighted: bool,
+    winners_limit: usize,
+    weight_ratio: f32
 ) -> anyhow::Result<SupervisedPerformance> {
     let y_len = test.height();
     let n_features = test.width();
@@ -335,7 +376,9 @@ pub fn prediction_score_df(
                 }
             }
 
-            let data_proba = match predict_weighted(train, &features, target_id, fuzzy) {
+            let data_proba = match predict_weighted(
+                train, &features, target_id, fuzzy, winners_limit, weight_ratio
+            ) {
                 Some(dp) => dp,
                 None => { train.deactivate(); continue }
             };
@@ -390,7 +433,7 @@ mod tests {
         let mut magds_test = parser::magds_from_csv("iris_test", test_file, &vec![]).unwrap();
 
         let performance = prediction::prediction_score(
-            &mut magds_train, &mut magds_test, "variety".into(), true, false
+            &mut magds_train, &mut magds_test, "variety".into()
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
@@ -398,8 +441,15 @@ mod tests {
         assert!(accuracy > 0.90);
         assert!(proba > 0.0);
 
-        let performance = prediction::prediction_score(
-            &mut magds_train, &mut magds_test, "variety".into(), true, true
+        let train_len = magds_train.neurons.len() as f32;
+        let performance = prediction::prediction_score_custom(
+            &mut magds_train,
+            &mut magds_test,
+            "variety".into(),
+            true,
+            true,
+            12,
+            f32::ln(train_len)
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
@@ -421,7 +471,7 @@ mod tests {
             .unwrap();
 
         let performance = prediction::prediction_score_df(
-            &mut magds_train, &test, "variety".into(), true, false
+            &mut magds_train, &test, "variety".into()
         ).unwrap();
         println!("performance.predictions() {:?}", performance.predictions());
         println!("performance.references() {:?}", performance.references());
@@ -432,8 +482,15 @@ mod tests {
         assert!(accuracy > 0.90);
         assert!(proba > 0.0);
 
-        let performance = prediction::prediction_score_df(
-            &mut magds_train, &test, "variety".into(), true, true
+        let train_len = magds_train.neurons.len() as f32;
+        let performance = prediction::prediction_score_df_custom(
+            &mut magds_train,
+            &test,
+            "variety".into(),
+            true,
+            true,
+            12,
+            f32::ln(train_len)
         ).unwrap();
         let accuracy = performance.accuracy().unwrap();
         let proba = performance.mean_probability().unwrap();
@@ -446,7 +503,15 @@ mod tests {
     fn predict_weighted_empty() {
         let train_file = "data/iris_original_train.csv";
         let mut magds_train = parser::magds_from_csv("iris_train", train_file, &vec![]).unwrap();
-        let data_proba = prediction::predict_weighted(&mut magds_train, &vec![], 1u32, true);
+        let train_len = magds_train.neurons.len() as f32;
+        let data_proba = prediction::predict_weighted(
+            &mut magds_train, 
+            &vec![], 
+            1u32, 
+            true,
+            12,
+            f32::ln(train_len)
+        );
         assert!(data_proba.is_none());
     }
 }

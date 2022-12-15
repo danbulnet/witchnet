@@ -38,7 +38,7 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "Sx".into(), true, false
+            &mut magds_train, &test_df, "Sx".into()
         ).unwrap()
     });
     let accuracy = performance.accuracy().unwrap();

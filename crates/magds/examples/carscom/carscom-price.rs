@@ -1,10 +1,10 @@
 use std::{
-    rc::Rc
+    sync::Arc
 };
 
 use env_logger;
 
-use magds::synchronous::{
+use magds::asynchronous::{
     algorithm::prediction,
     parser
 };
@@ -51,7 +51,7 @@ fn main() {
             &vec![],
             0,
             false,
-            Rc::new(ConstantOneWeight),
+            Arc::new(ConstantOneWeightAsync),
             0.98,
             2
         )
@@ -59,7 +59,7 @@ fn main() {
 
     let performance = benchmark::timeit("magds prediction", move || {
         prediction::prediction_score_df(
-            &mut magds_train, &test_df, "price".into(), true, false
+            &mut magds_train, &test_df, "price".into()
         ).unwrap()
     });
     let rmse = performance.rmse().unwrap();
