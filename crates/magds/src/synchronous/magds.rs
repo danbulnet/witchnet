@@ -297,7 +297,7 @@ mod tests {
         neuron::NeuronID,
         sensor::Sensor,
         data::DataType,
-        polars as polars_common
+        polars as polars_common, connection::collective::defining::ConstantOneWeight
     };
     
     use crate::neuron::simple_neuron::SimpleNeuron;
@@ -394,7 +394,9 @@ mod tests {
     #[test]
     fn magds_activation() {
         let df = polars_common::csv_to_dataframe("data/iris.csv", &vec![]).unwrap();
-        let magds = parser::magds_from_df("iris", &df);
+        let magds = parser::magds_from_df_custom(
+            "iris", &df, &vec![], 0, false, Rc::new(ConstantOneWeight), 0.98, 2
+        );
         println!("{magds}");
 
         let sepal_length_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();

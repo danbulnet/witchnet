@@ -12,18 +12,18 @@ use std::{
 
 use crate::neuron::{ Neuron, NeuronAsync };
 
-pub trait CollectiveConnections {
-    fn add(&mut self, other: Rc<RefCell<dyn Neuron>>);
-
+pub trait WeightingStrategy {
     fn common_weight(&self) -> f32;
+}
+
+pub trait CollectiveConnections: WeightingStrategy {
+    fn add(&mut self, other: Rc<RefCell<dyn Neuron>>);
 
     fn connected_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>];
 }
 
-pub trait CollectiveConnectionsAsync {
+pub trait CollectiveConnectionsAsync: WeightingStrategy {
     fn add(&mut self, other: Arc<RwLock<dyn NeuronAsync>>);
-
-    fn common_weight(&self) -> f32;
 
     fn connected_neurons(&self) -> &[Arc<RwLock<dyn NeuronAsync>>];
 }

@@ -12,7 +12,12 @@ use witchnet_common::{
         ConnectionKind,
         collective::{
             CollectiveConnectionsAsync,
-            defining::DefiningConnectionsAsync
+            WeightingStrategy,
+            defining::{
+                DefiningConnectionsAsync,
+                ConstantOneWeightAsync, 
+                DefiningWeightingStrategyAsync
+            }
         }
     },
     sensor::SensorData,
@@ -31,7 +36,9 @@ where Key: SensorData, [(); ORDER + 1]: {
     pub next: Option<(Weak<RwLock<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RwLock<Element<Key, ORDER>>>, f32)>,
     pub definitions: DefiningConnectionsAsync,
-    pub(crate) data_type: PhantomData<Key>
+    pub(crate) data_type: PhantomData<Key>,
+    pub interelement_activation_threshold: f32,
+    pub interelement_activation_exponent: i32
 }
 
 impl<Key, const ORDER: usize> Element<Key, ORDER> 
@@ -41,11 +48,9 @@ where
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
-    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.00001;
-    pub const INTERELEMENT_ACTIVATION_EXPONENT: i32 = 1;
-
     pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Arc<RwLock<Element<Key, ORDER>>> {
+        let weighting_strategy = Arc::new(ConstantOneWeightAsync);
         let element_ptr = Arc::new(
             RwLock::new(
                 Element {
@@ -57,8 +62,40 @@ where
                     self_ptr: Weak::new(),
                     next: None,
                     prev: None,
-                    definitions: DefiningConnectionsAsync::new(),
-                    data_type: PhantomData
+                    definitions: DefiningConnectionsAsync::new(weighting_strategy),
+                    data_type: PhantomData,
+                    interelement_activation_threshold: 1.0,
+                    interelement_activation_exponent: 1
+                }
+            )
+        );
+        element_ptr.write().unwrap().self_ptr = Arc::downgrade(&element_ptr);
+        element_ptr
+    }
+    
+    pub fn new_custom(
+        key: &Key, 
+        id: u32, 
+        parent_id: u32,
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Arc<RwLock<Element<Key, ORDER>>> {
+        let element_ptr = Arc::new(
+            RwLock::new(
+                Element {
+                    id,
+                    parent_id,
+                    key: *dyn_clone::clone_box(key),
+                    counter: 1,
+                    activation: 0.0f32,
+                    self_ptr: Weak::new(),
+                    next: None,
+                    prev: None,
+                    definitions: DefiningConnectionsAsync::new(weighting_strategy),
+                    data_type: PhantomData,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
                 }
             )
         );
@@ -117,13 +154,13 @@ where
         if let Some(next) = &self.next {
             let mut element = next.0.upgrade().unwrap();
             let mut weight = next.1;
-            while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
+            while element_activation > self.interelement_activation_threshold {
                 let new_element;
                 {
                     {
                         let element_borrowed = &mut *element.write().unwrap();
                         element_borrowed.activate(
-                            element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                            element_activation * weight.powi(self.interelement_activation_exponent), 
                             false, 
                             false
                         );
@@ -160,13 +197,13 @@ where
         if let Some(prev) = &self.prev {
             let mut element = prev.0.upgrade().unwrap();
             let mut weight = prev.1;
-            while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
+            while element_activation > self.interelement_activation_threshold {
                 let new_element;
                 {
                     {
                         let element_borrowed = &mut *element.write().unwrap();
                         element_borrowed.activate(
-                            element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                            element_activation * weight.powi(self.interelement_activation_exponent), 
                             false, 
                             false
                         );
@@ -519,7 +556,7 @@ mod tests {
 
     #[test]
     fn fuzzy_activate_deactivate() {
-        let threshold = Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD;
+        let threshold = Element::<i32, 3>::new(&1, 0, 0).read().unwrap().interelement_activation_threshold;
 
         let graph = Arc::new(
             RwLock::new(ASAGraph::<i32, 3>::new(1))

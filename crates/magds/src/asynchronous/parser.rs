@@ -13,7 +13,7 @@ use asa_graphs::neural_async::graph::ASAGraph;
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
     neuron::{ NeuronAsync, NeuronID },
-    connection::ConnectionKind,
+    connection::{ConnectionKind, collective::defining::{ConstantOneWeightAsync, DefiningWeightingStrategyAsync}},
     sensor::{ SensorAsync, SensorData },
     data::{ DataDeductor, DataTypeValue, DataType }
 };
@@ -28,7 +28,12 @@ use crate::{
 
 #[allow(dead_code)]
 pub(crate) fn sensor_from_datavec(
-    magds: &mut MAGDS, name: &str, data: &DataVec
+    magds: &mut MAGDS,
+    name: &str,
+    data: &DataVec,
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) -> (Arc<RwLock<SensorConatiner>>, u32) {
     let new_id: u32 = *magds.sensors.keys().max().unwrap_or(&0) + 1;
     match data {
@@ -37,109 +42,295 @@ pub(crate) fn sensor_from_datavec(
         }
         DataVec::BoolVec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<bool>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<bool>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::UInt8Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<u8>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<u8>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::UInt16Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<u16>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<u16>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::UInt32Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<u32>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<u32>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::UInt64Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<u64>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<u64>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Int8Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<i8>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<i8>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Int16Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<i16>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<i16>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Int32Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<i32>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<i32>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Int64Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<i64>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<i64>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Float32Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<f32>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<f32>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Float64Vec(vec) => {
             let graph = 
-                ASAGraph::<_>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<f64>>;
+                ASAGraph::<_>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<f64>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
         DataVec::Utf8Vec(vec) => {
             let graph = 
-                ASAGraph::<Arc<str>>::new_box_from_vec(new_id, vec) as Box<dyn SensorAsync<Arc<str>>>;
+                ASAGraph::<Arc<str>>::new_box_from_vec_custom(
+                    new_id, 
+                    vec, 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                ) as Box<dyn SensorAsync<Arc<str>>>;
             magds.add_sensor(name, Arc::new(RwLock::new(graph.into())))
         }
     }
 }
 
 pub(crate) fn connected_sensor_from_datavec(
-    mut magds: &mut MAGDS, name: &str, data: &DataVecOption, neurons: &[Arc<RwLock<SimpleNeuron>>]
+    mut magds: &mut MAGDS,
+    name: &str,
+    data: &DataVecOption,
+    neurons: &[Arc<RwLock<SimpleNeuron>>],
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) -> (Arc<RwLock<SensorConatiner>>, u32) {
     match data {
         DataVecOption::Unknown => {
             panic!("can't parse vec data type for sensor {name}")
         }
         DataVecOption::BoolVec(vec) => {
-            connector(&mut magds, name, DataType::Bool, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::Bool, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::UInt8Vec(vec) => {
-            connector(&mut magds, name, DataType::U8, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::U8, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::UInt16Vec(vec) => {
-            connector(&mut magds, name, DataType::U16, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::U16, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::UInt32Vec(vec) => {
-            connector(&mut magds, name, DataType::U32, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::U32, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::UInt64Vec(vec) => {
-            connector(&mut magds, name, DataType::U64, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::U64, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Int8Vec(vec) => {
-            connector(&mut magds, name, DataType::I8, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::I8, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Int16Vec(vec) => {
-            connector(&mut magds, name, DataType::I16, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::I16, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Int32Vec(vec) => {
-            connector(&mut magds, name, DataType::I32, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::I32, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Int64Vec(vec) => {
-            connector(&mut magds, name, DataType::I64, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::I64, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Float32Vec(vec) => {
-            connector(&mut magds, name, DataType::F32, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::F32, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Float64Vec(vec) => {
-            connector(&mut magds, name, DataType::F64, vec, neurons)
+            connector(
+                &mut magds, 
+                name, 
+                DataType::F64, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
         DataVecOption::Utf8Vec(vec) => {
-            connector_string(&mut magds, name, DataType::ArcStr, vec, neurons)
+            connector_string(
+                &mut magds, 
+                name, 
+                DataType::ArcStr, 
+                vec, 
+                neurons, 
+                weighting_strategy,
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            )
         }
     }
 }
@@ -149,7 +340,10 @@ fn connector_string(
     name: &str,
     data_type: DataType,
     vec: &[Option<Arc<str>>], 
-    neurons: &[Arc<RwLock<SimpleNeuron>>]
+    neurons: &[Arc<RwLock<SimpleNeuron>>],
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) -> (Arc<RwLock<SensorConatiner>>, u32) 
 where 
     PhantomData<String>: DataDeductor, 
@@ -176,7 +370,12 @@ where
                 .map(|x| Arc::<str>::from(x))
                 .collect();
             for key in key_vec {
-                let element = sensor.write().unwrap().insert(&key.into());
+                let element = sensor.write().unwrap().insert_custom(
+                    &key.into(), 
+                    weighting_strategy.clone(),
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                );
                 let mut element = element.write().unwrap();
                 if let Err(e) = element.connect_bilateral(
                     neuron_ptr.clone(), false, ConnectionKind::Defining
@@ -201,7 +400,10 @@ fn connector<T: SensorData + Sync + Send>(
     name: &str,
     data_type: DataType,
     vec: &[Option<T>], 
-    neurons: &[Arc<RwLock<SimpleNeuron>>]
+    neurons: &[Arc<RwLock<SimpleNeuron>>],
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) -> (Arc<RwLock<SensorConatiner>>, u32)
 where 
     PhantomData<T>: DataDeductor, 
@@ -220,7 +422,12 @@ where
     for (i, key) in vec.into_iter().enumerate() {
         if let Some(key) = key {
             let key_converted = &(*dyn_clone::clone_box(key)).into();
-            let element = sensor.write().unwrap().insert(key_converted);
+            let element = sensor.write().unwrap().insert_custom(
+                key_converted, 
+                weighting_strategy.clone(),
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            );
             let mut element = element.write().unwrap();
             let neuron_ptr = neurons[i].clone();
             if let Err(e) = element.connect_bilateral(
@@ -240,21 +447,47 @@ where
     (sensor.clone(), id)
 }
 
-pub fn magds_from_df(df_name: &str, df: &DataFrame) -> MAGDS {
+pub fn magds_from_df(
+    df_name: &str, 
+    df: &DataFrame
+) -> MAGDS {
     let mut magds = MAGDS::new();
-    add_df_to_magds(&mut magds, df_name, df, &vec![], 0, false);
+    add_df_to_magds(
+        &mut magds, 
+        df_name, 
+        df, 
+        &vec![], 
+        0, 
+        false,
+        Arc::new(ConstantOneWeightAsync),
+        0.00001,
+        1
+    );
     magds
 }
 
-pub fn magds_from_df_limit(
+pub fn magds_from_df_custom(
     df_name: &str, 
     df: &DataFrame, 
     skip_columns: &[&str],
     limit: usize, 
-    random: bool
+    random: bool, 
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) -> MAGDS {
     let mut magds = MAGDS::new();
-    add_df_to_magds(&mut magds, df_name, df, skip_columns, limit, random);
+    add_df_to_magds(
+        &mut magds,
+        df_name,
+        df,
+        skip_columns,
+        limit,
+        random,
+        weighting_strategy,
+        interelement_activation_threshold,
+        interelement_activation_exponent
+    );
     magds
 }
 
@@ -264,11 +497,14 @@ pub fn add_df_to_magds(
     df: &DataFrame,
     skip_columns: &[&str],
     limit: usize, 
-    random: bool
+    random: bool,
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
 ) {
     log::info!("magds_from_df: df size: {} (cols) x {} (rows)", df.width(), df.height());
     log::info!("magds_from_df: df columns: {:?}", df.get_column_names());
-
+    
     let neuron_group_id: u32 = *magds.neuron_group_names.keys().max().unwrap_or(&0) + 1;
     let mut neurons: Vec<Arc<RwLock<SimpleNeuron>>> = Vec::new();
 
@@ -276,11 +512,12 @@ pub fn add_df_to_magds(
     if random { all_indices.shuffle(&mut thread_rng()) };
     let limit = if limit == 0 { df.height() } else { usize::min(limit, df.height()) };
     let indices = &all_indices[0..limit];
-
+    
     for i in indices {
         let i = i + 1;
-        let neuron = SimpleNeuron::new(
-            NeuronID{ id: i as u32, parent_id: neuron_group_id }
+        let neuron = SimpleNeuron::new_custom(
+            NeuronID{ id: i as u32, parent_id: neuron_group_id },
+            weighting_strategy.clone()
         );
         neurons.push(neuron.clone());
         magds.add_neuron(neuron as Arc<RwLock<dyn NeuronAsync>>);
@@ -298,7 +535,15 @@ pub fn add_df_to_magds(
                     continue
                 }
             };
-            connected_sensor_from_datavec(magds, column_name, &datavec, &neurons);
+            connected_sensor_from_datavec(
+                magds,
+                column_name,
+                &datavec,
+                &neurons,
+                weighting_strategy.clone(),
+                interelement_activation_threshold,
+                interelement_activation_exponent
+            );
         }
     }
 }
@@ -311,6 +556,30 @@ pub fn magds_from_csv(name: &str, file_path: &str, skip: &[&str]) -> Option<MAGD
     Some(magds)
 }
 
+pub fn magds_from_csv_custom(
+    name: &str, 
+    file_path: &str, 
+    skip: &[&str],
+    weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32
+) -> Option<MAGDS> {
+    let path = Path::new(file_path);
+    if !path.is_file() || !file_path.ends_with(".csv") { return None }
+    let df = polars_common::csv_to_dataframe(file_path, &skip).ok()?;
+    let magds = magds_from_df_custom(
+        name,
+        &df,
+        &vec![],
+        0,
+        false,
+        weighting_strategy,
+        interelement_activation_threshold,
+        interelement_activation_exponent
+    );
+    Some(magds)
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
@@ -320,7 +589,7 @@ mod tests {
     use witchnet_common::{
         polars as polars_common,
         sensor::SensorAsync,
-        data::DataTypeValue
+        data::DataTypeValue, connection::collective::defining::ConstantOneWeightAsync
     };
 
     use crate::asynchronous::magds::MAGDS;
@@ -430,11 +699,13 @@ mod tests {
         let df = df.unwrap();
         println!("{}", df);
 
+        let weighting_strategy = Arc::new(ConstantOneWeightAsync);
+
         let variety_df = df.column("variety").unwrap();
         assert_eq!(*variety_df.dtype(), DataType::Utf8);
         let variety_df_datavec = polars_common::series_to_datavec_skipna(variety_df).unwrap();
         let variety_graph = super::sensor_from_datavec(
-            &mut magds, "variety", &variety_df_datavec
+            &mut magds, "variety", &variety_df_datavec, weighting_strategy.clone(), 0.00001, 1
         );
         let variety_sensor_id = *magds.sensor_ids("variety").unwrap().first().unwrap();
         println!("{}", variety_graph.0.read().unwrap());
@@ -450,7 +721,7 @@ mod tests {
         let sepal_length_df_datavec = 
             polars_common::series_to_datavec_skipna(sepal_length_df).unwrap();
         let sepal_length_graph = super::sensor_from_datavec(
-            &mut magds, "sepal.length", &sepal_length_df_datavec
+            &mut magds, "sepal.length", &sepal_length_df_datavec, weighting_strategy.clone(), 0.00001, 1
         );
 
         let sepal_length_sensor_id = *magds.sensor_ids("sepal.length").unwrap().first().unwrap();

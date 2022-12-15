@@ -8,7 +8,8 @@ use std::{
 use witchnet_common::{
     algorithms::SearchAlgorithm,
     sensor::SensorData,
-    data::{ DataDeductor, DataTypeValue }
+    data::{ DataDeductor, DataTypeValue }, 
+    connection::collective::defining::DefiningWeightingStrategyAsync
 };
 
 use super::element::Element;
@@ -177,7 +178,10 @@ where
         key: &Key, 
         element_id: u32,
         parent_id: u32,
-        range: f32
+        range: f32,
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
     ) -> Arc<RwLock<Element<Key, ORDER>>> {
         let node_size = node.read().unwrap().size;
 
@@ -199,7 +203,14 @@ where
             index += 1;
         }
         
-        let new_element = Element::new(key, element_id, parent_id);
+        let new_element = Element::new_custom(
+            key, 
+            element_id, 
+            parent_id, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        );
         node.write().unwrap().elements[index] = Some(new_element.clone());
         node.write().unwrap().keys[index] = Some(*dyn_clone::clone_box(key));
 
@@ -281,6 +292,8 @@ where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
 mod tests {
     use std::sync::{ Arc, RwLock };
 
+    use witchnet_common::connection::collective::defining::ConstantOneWeightAsync;
+
     use super::super::{
         node::Node,
         element::Element,
@@ -304,8 +317,9 @@ mod tests {
         root.write().unwrap().keys[0] = Some(2);
         root.write().unwrap().size = 1;
 
-        Node::insert_key_leaf(&root, &-1, 2, graph_id, 1f32);
-        Node::insert_key_leaf(&root, &1, 3, graph_id, 1f32);
+        let weighting_strategy = Arc::new(ConstantOneWeightAsync);
+        Node::insert_key_leaf(&root, &-1, 2, graph_id, 1f32, weighting_strategy.clone(), 0.00001, 1);
+        Node::insert_key_leaf(&root, &1, 3, graph_id, 1f32, weighting_strategy.clone(), 0.00001, 1);
         root.read().unwrap().insert_existing_key(&1, true);
         root.read().unwrap().insert_existing_key(&-1, true);
         root.read().unwrap().insert_existing_key(&2, true);
@@ -333,8 +347,9 @@ mod tests {
         root.write().unwrap().keys[0] = Some(1);
         root.write().unwrap().size = 1;
 
-        Node::insert_key_leaf(&root, &6, 2, graph_id, 5f32);
-        Node::insert_key_leaf(&root, &7, 3, graph_id, 6f32);
+        let weighting_strategy = Arc::new(ConstantOneWeightAsync);
+        Node::insert_key_leaf(&root, &6, 2, graph_id, 5f32, weighting_strategy.clone(), 0.00001, 1);
+        Node::insert_key_leaf(&root, &7, 3, graph_id, 6f32, weighting_strategy.clone(), 0.00001, 1);
 
         let root_new = Arc::new(RwLock::new(Node::new(false, None)));
         root_new.write().unwrap().children[0] = Some(root.clone());
@@ -362,8 +377,8 @@ mod tests {
         assert!(root_new.read().unwrap().children[0].as_ref().unwrap().read().unwrap().elements[1].is_none());
         assert!(root_new.read().unwrap().children[1].as_ref().unwrap().read().unwrap().elements[1].is_none());
 
-        Node::insert_key_leaf(&root_new, &2, 4, graph_id, 6f32);
-        Node::insert_key_leaf(&root_new, &4, 5, graph_id, 6f32);
+        Node::insert_key_leaf(&root_new, &2, 4, graph_id, 6f32, weighting_strategy.clone(), 0.00001, 1);
+        Node::insert_key_leaf(&root_new, &4, 5, graph_id, 6f32, weighting_strategy.clone(), 0.00001, 1);
 
         let middle_left_node = Arc::new(
             RwLock::new(Node::new(true, Some(Arc::downgrade(&root_new))))

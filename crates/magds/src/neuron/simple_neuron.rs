@@ -12,11 +12,16 @@ use witchnet_common::{
         ConnectionKind,
         collective::{
             CollectiveConnections,
-            defining::DefiningConnections
+            WeightingStrategy,
+            defining::{
+                DefiningConnections,
+                ConstantOneWeight, 
+                DefiningWeightingStrategy
+            }
         },
         collective::explanatory::ExplanatoryConnections
     },
-    data::{ DataDeductor, DataTypeValue, DataType }
+    data::{ DataTypeValue, DataType }
 };
 
 pub struct SimpleNeuron {
@@ -30,13 +35,35 @@ pub struct SimpleNeuron {
 
 impl SimpleNeuron {
     pub fn new(id: NeuronID) -> Rc<RefCell<SimpleNeuron>> {
+        let weighting_strategy = Rc::new(ConstantOneWeight);
         let neuron_ptr = Rc::new(
             RefCell::new(
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
                     self_ptr: Weak::new(), 
-                    defined_neurons: DefiningConnections::new(),
+                    defined_neurons: DefiningConnections::new(weighting_strategy),
+                    defining_neurons: ExplanatoryConnections::new(),
+                    defining_sensors: ExplanatoryConnections::new()
+                }
+            )
+        );
+
+        neuron_ptr.borrow_mut().self_ptr = Rc::downgrade(&neuron_ptr);
+        neuron_ptr
+    }
+    
+    pub fn new_custom(
+        id: NeuronID,
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>
+    ) -> Rc<RefCell<SimpleNeuron>> {
+        let neuron_ptr = Rc::new(
+            RefCell::new(
+                SimpleNeuron {
+                    id,
+                    activation: 0.0f32,
+                    self_ptr: Weak::new(), 
+                    defined_neurons: DefiningConnections::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnections::new(),
                     defining_sensors: ExplanatoryConnections::new()
                 }

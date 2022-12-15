@@ -1,3 +1,7 @@
+use std::{
+    rc::Rc
+};
+
 use env_logger;
 
 use magds::synchronous::{
@@ -7,7 +11,7 @@ use magds::synchronous::{
 
 use witchnet_common::{
     benchmark,
-    polars as polars_common
+    polars as polars_common, connection::collective::defining::*
 };
 
 fn main() {
@@ -37,8 +41,20 @@ fn main() {
     let test_df = polars_common::csv_to_dataframe(&test_file_path, &skip_list).unwrap();
     println!("test set shape {:?}", test_df.shape());
 
+    // let mut magds_train = benchmark::timeit("magds training", move || {
+    //     parser::magds_from_df("carscom_train", &train_df)
+    // });
     let mut magds_train = benchmark::timeit("magds training", move || {
-        parser::magds_from_df("carscom_train", &train_df)
+        parser::magds_from_df_custom(
+            "carscom_train",
+            &train_df,
+            &vec![],
+            0,
+            false,
+            Rc::new(ConstantOneWeight),
+            0.98,
+            2
+        )
     });
 
     let performance = benchmark::timeit("magds prediction", move || {

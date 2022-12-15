@@ -12,7 +12,8 @@ use enum_as_inner::EnumAsInner;
 use witchnet_common::{
     neuron::Neuron,
     sensor::Sensor,
-    data::{ DataType, DataTypeValue, DataCategory }
+    data::{ DataType, DataTypeValue, DataCategory }, 
+    connection::collective::defining::DefiningWeightingStrategy
 };
 
 #[derive(EnumAsInner)]
@@ -179,6 +180,153 @@ impl Sensor<DataTypeValue> for SensorConatiner {
             },
             SensorConatiner::String(v) => {
                 v.insert(item.as_string().unwrap())
+            }
+        }
+    }
+
+    fn insert_custom(
+        &mut self, 
+        item: &DataTypeValue, 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<dyn Neuron>> {
+        match self {
+            SensorConatiner::Bool(v) => {
+                v.insert_custom(
+                    item.as_bool().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::U8(v) => {
+                v.insert_custom(
+                    item.as_u8().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::U16(v) => {
+                v.insert_custom(
+                    item.as_u16().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::U32(v) => {
+                v.insert_custom(
+                    item.as_u32().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::U64(v) => {
+                v.insert_custom(
+                    item.as_u64().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::U128(v) => {
+                v.insert_custom(
+                    item.as_u128().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::USize(v) => {
+                v.insert_custom(
+                    item.as_u_size().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::I8(v) => {
+                v.insert_custom(
+                    item.as_i8().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::I16(v) => {
+                v.insert_custom(
+                    item.as_i16().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::I32(v) => {
+                v.insert_custom(
+                    item.as_i32().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::I64(v) => {
+                v.insert_custom(
+                    item.as_i64().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::I128(v) => {
+                v.insert_custom(
+                    item.as_i128().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::ISize(v) => {
+                v.insert_custom(
+                    item.as_i_size().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::F32(v) => {
+                v.insert_custom(
+                    item.as_f32().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::F64(v) => {
+                v.insert_custom(
+                    item.as_f64().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::ArcStr(v) => {
+                v.insert_custom(
+                    item.as_arc_str().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
+            },
+            SensorConatiner::String(v) => {
+                v.insert_custom(
+                    item.as_string().unwrap(), 
+                    weighting_strategy,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                )
             }
         }
     }

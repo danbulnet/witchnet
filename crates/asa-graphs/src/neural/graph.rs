@@ -11,7 +11,8 @@ use anyhow::Result;
 use witchnet_common::{ 
     sensor::SensorData,
     neuron::Neuron,
-    data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
+    data::{ DataCategory, DataType, DataDeductor, DataTypeValue }, 
+    connection::collective::defining::{DefiningWeightingStrategy, ConstantOneWeight},
 };
 
 use super::{
@@ -66,13 +67,62 @@ where
         for point in data { graph.insert(point); }
         graph
     }
+    
+    pub fn new_from_vec_custom(
+        id: u32,
+        data: &[Key],
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Self {
+        let mut graph = Self::new(id);
+        for point in data { graph.insert_custom(
+            point, 
+            weighting_strategy.clone(),
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ); }
+        graph
+    }
 
     pub fn new_rc_from_vec(id: u32, data: &[Key]) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self::new_from_vec(id, data)))
     }
+    
+    pub fn new_rc_from_vec_custom(
+        id: u32, 
+        data: &[Key], 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self::new_from_vec_custom(
+            id, 
+            data, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        )))
+    }
 
     pub fn new_box_from_vec(id: u32, data: &[Key]) -> Box<Self> {
         Box::new(Self::new_from_vec(id, data))
+    }
+    
+    pub fn new_box_from_vec_custom(
+        id: u32, 
+        data: &[Key], 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Box<Self> {
+        Box::new(Self::new_from_vec_custom(
+            id, 
+            data, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ))
     }
     
     pub fn id(&self) -> u32 { self.id }
@@ -149,9 +199,25 @@ where
     }
 
     pub fn insert(&mut self, key: &Key) -> Rc<RefCell<Element<Key, ORDER>>> {
+        self.insert_custom(key, Rc::new(ConstantOneWeight), 0.00001, 1)
+    }
+
+    pub fn insert_custom(
+        &mut self, 
+        key: &Key, 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<Element<Key, ORDER>>> {
         let mut node = self.root.clone();
 
-        if node.borrow().size == 0 { return self.insert_first_element(&node, key) }
+        if node.borrow().size == 0 { return self.insert_first_element(
+            &node, 
+            key, 
+            weighting_strategy, 
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ) }
 
         if node.borrow().size == Node::<Key, ORDER>::MAX_KEYS { node = self.split_root(); }
 
@@ -170,7 +236,16 @@ where
     
             if node.borrow().is_leaf {
                 let element_id = self.elements_counter + 1;
-                let element = Node::insert_key_leaf(&node, key, element_id, self.id, self.range());
+                let element = Node::insert_key_leaf(
+                    &node,
+                    key,
+                    element_id,
+                    self.id,
+                    self.range(),
+                    weighting_strategy, 
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                );
                 self.elements_counter += 1;
                 self.set_extrema(&element);
                 return element
@@ -240,9 +315,21 @@ where
     }
 
     fn insert_first_element(
-        &mut self, node: &Rc<RefCell<Node<Key, ORDER>>>,  key: &Key
+        &mut self,
+        node: &Rc<RefCell<Node<Key, ORDER>>>,
+        key: &Key,
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
     ) -> Rc<RefCell<Element<Key, ORDER>>> {
-        let element_pointer = Element::<Key, ORDER>::new(key, 1, self.id);
+        let element_pointer = Element::<Key, ORDER>::new_custom(
+            key, 
+            1, 
+            self.id, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        );
         node.borrow_mut().elements[0] = Some(element_pointer.clone());
         node.borrow_mut().keys[0] = Some(*dyn_clone::clone_box(key));
 

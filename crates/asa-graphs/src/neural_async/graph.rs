@@ -10,7 +10,7 @@ use anyhow::Result;
 use witchnet_common::{ 
     sensor::SensorData,
     neuron::NeuronAsync,
-    data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
+    data::{ DataCategory, DataType, DataDeductor, DataTypeValue }, connection::collective::defining::{ConstantOneWeightAsync, DefiningWeightingStrategyAsync},
 };
 
 use super::{
@@ -65,13 +65,62 @@ where
         for point in data { graph.insert(point); }
         graph
     }
+    
+    pub fn new_from_vec_custom(
+        id: u32,
+        data: &[Key],
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Self {
+        let mut graph = Self::new(id);
+        for point in data { graph.insert_custom(
+            point, 
+            weighting_strategy.clone(),
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ); }
+        graph
+    }
 
     pub fn new_rc_from_vec(id: u32, data: &[Key]) -> Arc<RwLock<Self>> {
         Arc::new(RwLock::new(Self::new_from_vec(id, data)))
     }
+    
+    pub fn new_rc_from_vec_custom(
+        id: u32, 
+        data: &[Key], 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Arc<RwLock<Self>> {
+        Arc::new(RwLock::new(Self::new_from_vec_custom(
+            id, 
+            data, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        )))
+    }
 
     pub fn new_box_from_vec(id: u32, data: &[Key]) -> Box<Self> {
         Box::new(Self::new_from_vec(id, data))
+    }
+    
+    pub fn new_box_from_vec_custom(
+        id: u32, 
+        data: &[Key], 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Box<Self> {
+        Box::new(Self::new_from_vec_custom(
+            id, 
+            data, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ))
     }
     
     pub fn id(&self) -> u32 { self.id }
@@ -155,9 +204,25 @@ where
     }
 
     pub fn insert(&mut self, key: &Key) -> Arc<RwLock<Element<Key, ORDER>>> {
+        self.insert_custom(key, Arc::new(ConstantOneWeightAsync), 0.00001, 1)
+    }
+
+    pub fn insert_custom(
+        &mut self, 
+        key: &Key, 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Arc<RwLock<Element<Key, ORDER>>> {
         let mut node = self.root.clone();
 
-        if node.read().unwrap().size == 0 { return self.insert_first_element(&node, key) }
+        if node.read().unwrap().size == 0 { return self.insert_first_element(
+            &node, 
+            key, 
+            weighting_strategy, 
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        ) }
 
         if node.read().unwrap().size == Node::<Key, ORDER>::MAX_KEYS { node = self.split_root(); }
 
@@ -176,7 +241,16 @@ where
     
             if node.read().unwrap().is_leaf {
                 let element_id = self.elements_counter + 1;
-                let element = Node::insert_key_leaf(&node, key, element_id, self.id, self.range());
+                let element = Node::insert_key_leaf(
+                    &node,
+                    key,
+                    element_id,
+                    self.id,
+                    self.range(),
+                    weighting_strategy, 
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
+                );
                 self.elements_counter += 1;
                 self.set_extrema(&element);
                 return element
@@ -246,9 +320,21 @@ where
     }
 
     fn insert_first_element(
-        &mut self, node: &Arc<RwLock<Node<Key, ORDER>>>,  key: &Key
+        &mut self,
+        node: &Arc<RwLock<Node<Key, ORDER>>>,
+        key: &Key,
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
     ) -> Arc<RwLock<Element<Key, ORDER>>> {
-        let element_pointer = Element::<Key, ORDER>::new(key, 1, self.id);
+        let element_pointer = Element::<Key, ORDER>::new_custom(
+            key, 
+            1, 
+            self.id, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        );
         node.write().unwrap().elements[0] = Some(element_pointer.clone());
         node.write().unwrap().keys[0] = Some(*dyn_clone::clone_box(key));
 

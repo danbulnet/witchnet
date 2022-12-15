@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use bevy_egui::EguiPlugin;

@@ -9,7 +9,7 @@ function percent_barplot(
     df::DataFrame, x::Symbol, y::Symbol, title::String;
     width=15cm, height=8cm,
     barspacing=2.0mm,
-    palette=ColorSchemes.seaborn_colorblind6,
+    palette=ColorSchemes.seaborn_colorblind,
     xlabel::String=string(y), ylabel::String=string(x)
 )
     set_default_plot_size(width, height)
@@ -43,10 +43,11 @@ function value_barplot(
     df::DataFrame, x::Symbol, y::Symbol, title::String;
     width=15cm, height=8cm,
     barspacing=2.0mm,
-    palette=ColorSchemes.seaborn_colorblind6,
+    palette=ColorSchemes.seaborn_colorblind,
     xlabel::String=string(y), ylabel::String=string(x)
 )
     set_default_plot_size(width, height)
+    maxy = maximum(df[!, y])
     plot(
         df, y=x, x=y, 
         color=x, 
@@ -60,7 +61,7 @@ function value_barplot(
             compose(
                 context(),
                 text(
-                    df[!, y] .- 0.03,
+                    df[!, y] .- maxy * 0.03,
                     1:length(df[!, y]),
                     string.(round.(df[!, y], digits=5)),
                     [hright for x in df[!, y]],

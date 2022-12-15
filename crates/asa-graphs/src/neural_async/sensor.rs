@@ -1,20 +1,18 @@
 use std::{
     sync::{ Arc, RwLock },
-    marker::PhantomData, collections::HashMap
+    marker::PhantomData
 };
 
 use anyhow::Result;
 
 use witchnet_common::{
     data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
-    neuron::{ NeuronID, NeuronAsync },
-    sensor::{ SensorAsync, SensorData }
+    neuron::NeuronAsync,
+    sensor::{ SensorAsync, SensorData }, 
+    connection::collective::defining::DefiningWeightingStrategyAsync
 };
 
-use super::{
-    graph::ASAGraph,
-    node::Node
-};
+use super::graph::ASAGraph;
 
 impl<Key, const ORDER: usize> SensorAsync<Key> for ASAGraph<Key, ORDER> 
 where 
@@ -31,6 +29,21 @@ where
 
     fn insert(&mut self, item: &Key) -> Arc<RwLock<dyn NeuronAsync>> {
         self.insert(item)
+    }
+
+    fn insert_custom(
+        &mut self, 
+        item: &Key, 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Arc<RwLock<dyn NeuronAsync>> {
+        self.insert_custom(
+            item, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        )
     }
 
     fn search(&self, item: &Key) -> Option<Arc<RwLock<dyn NeuronAsync>>> { 
@@ -82,7 +95,9 @@ mod tests {
     
     #[test]
     fn sensor() {
-        let threshold = Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD;
+        let threshold = Element::<i32, 3>::new(&1, 0, 0)
+            .read().unwrap()
+            .interelement_activation_threshold;
 
         let mut graph = ASAGraph::<i32, 3>::new(1);
         for i in (1..=9).rev() { graph.insert(&i); }

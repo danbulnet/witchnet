@@ -13,7 +13,12 @@ use witchnet_common::{
         ConnectionKind,
         collective::{
             CollectiveConnections,
-            defining::DefiningConnections
+            WeightingStrategy,
+            defining::{
+                DefiningConnections,
+                ConstantOneWeight, 
+                DefiningWeightingStrategy
+            }
         }
     },
     sensor::SensorData,
@@ -32,7 +37,9 @@ where Key: SensorData, [(); ORDER + 1]: {
     pub next: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub prev: Option<(Weak<RefCell<Element<Key, ORDER>>>, f32)>,
     pub definitions: DefiningConnections,
-    pub(crate) data_type: PhantomData<Key>
+    pub(crate) data_type: PhantomData<Key>,
+    pub interelement_activation_threshold: f32,
+    pub interelement_activation_exponent: i32
 }
 
 impl<Key, const ORDER: usize> Element<Key, ORDER> 
@@ -41,11 +48,9 @@ where
     PhantomData<Key>: DataDeductor, 
     DataTypeValue: From<Key> 
 {
-    pub const INTERELEMENT_ACTIVATION_THRESHOLD: f32 = 0.98;
-    pub const INTERELEMENT_ACTIVATION_EXPONENT: i32 = 2;
-
     pub fn new(key: &Key, id: u32, parent_id: u32)
     -> Rc<RefCell<Element<Key, ORDER>>> {
+        let weighting_strategy = Rc::new(ConstantOneWeight);
         let element_ptr = Rc::new(
             RefCell::new(
                 Element {
@@ -57,8 +62,40 @@ where
                     self_ptr: Weak::new(),
                     next: None,
                     prev: None,
-                    definitions: DefiningConnections::new(),
-                    data_type: PhantomData
+                    definitions: DefiningConnections::new(weighting_strategy),
+                    data_type: PhantomData,
+                    interelement_activation_threshold: 1.0,
+                    interelement_activation_exponent: 1
+                }
+            )
+        );
+        element_ptr.borrow_mut().self_ptr = Rc::downgrade(&element_ptr);
+        element_ptr
+    }
+    
+    pub fn new_custom(
+        key: &Key, 
+        id: u32, 
+        parent_id: u32,
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<Element<Key, ORDER>>> {
+        let element_ptr = Rc::new(
+            RefCell::new(
+                Element {
+                    id,
+                    parent_id,
+                    key: *dyn_clone::clone_box(key),
+                    counter: 1,
+                    activation: 0.0f32,
+                    self_ptr: Weak::new(),
+                    next: None,
+                    prev: None,
+                    definitions: DefiningConnections::new(weighting_strategy),
+                    data_type: PhantomData,
+                    interelement_activation_threshold,
+                    interelement_activation_exponent
                 }
             )
         );
@@ -113,9 +150,9 @@ where
         if let Some(next) = &self.next {
             let mut element = next.0.upgrade().unwrap();
             let mut weight = next.1;
-            while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
+            while element_activation > self.interelement_activation_threshold {
                 element.borrow_mut().activate(
-                    element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                    element_activation * weight.powi(self.interelement_activation_exponent), 
                     false, 
                     false
                 );
@@ -149,9 +186,9 @@ where
         if let Some(prev) = &self.prev {
             let mut element = prev.0.upgrade().unwrap();
             let mut weight = prev.1;
-            while element_activation > Self::INTERELEMENT_ACTIVATION_THRESHOLD {
+            while element_activation > self.interelement_activation_threshold {
                 element.borrow_mut().activate(
-                    element_activation * weight.powi(Self::INTERELEMENT_ACTIVATION_EXPONENT), 
+                    element_activation * weight.powi(self.interelement_activation_exponent), 
                     false, 
                     false
                 );
@@ -500,7 +537,7 @@ mod tests {
 
     #[test]
     fn fuzzy_activate_deactivate() {
-        let threshold = Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD;
+        let threshold = Element::<i32, 3>::new(&1, 0, 0).borrow().interelement_activation_threshold;
 
         let graph = Rc::new(
             RefCell::new(ASAGraph::<i32, 3>::new(1))

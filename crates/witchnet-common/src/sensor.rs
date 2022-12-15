@@ -6,8 +6,7 @@ use std::{
     cmp::Ordering,
     any::Any,
     marker::PhantomData,
-    mem, 
-    collections::HashMap
+    mem
 };
 
 use anyhow::Result;
@@ -18,8 +17,12 @@ use dyn_clone::DynClone;
 
 use crate::{
     data::{ DataCategory, DataType, DataTypeValue, DataDeductor, UnknownDataTypeMarker },
-    neuron::{ Neuron, NeuronAsync, NeuronID },
-    distances::Distance
+    neuron::{ Neuron, NeuronAsync },
+    distances::Distance, 
+    connection::collective::defining::{
+        DefiningWeightingStrategy, 
+        DefiningWeightingStrategyAsync
+    }
 };
 
 pub trait AnyCast {
@@ -143,6 +146,14 @@ pub trait Sensor<D: SensorData>: Any + Display {
     fn data_category(&self) -> DataCategory;
 
     fn insert(&mut self, item: &D) -> Rc<RefCell<dyn Neuron>>;
+
+    fn insert_custom(
+        &mut self, 
+        item: &D, 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<dyn Neuron>>;
     
     fn search(&self, item: &D) -> Option<Rc<RefCell<dyn Neuron>>>;
 
@@ -175,6 +186,14 @@ pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
     fn data_category(&self) -> DataCategory;
 
     fn insert(&mut self, item: &D) -> Arc<RwLock<dyn NeuronAsync>>;
+
+    fn insert_custom(
+        &mut self, 
+        item: &D, 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Arc<RwLock<dyn NeuronAsync>>;
     
     fn search(&self, item: &D) -> Option<Arc<RwLock<dyn NeuronAsync>>>;
 

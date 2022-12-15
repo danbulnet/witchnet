@@ -9,7 +9,8 @@ use anyhow::Result;
 use witchnet_common::{
     data::{ DataCategory, DataType, DataDeductor, DataTypeValue },
     neuron::Neuron,
-    sensor::{ Sensor, SensorData }
+    sensor::{ Sensor, SensorData }, 
+    connection::collective::defining::DefiningWeightingStrategy
 };
 
 use super::graph::ASAGraph;
@@ -29,6 +30,21 @@ where
 
     fn insert(&mut self, item: &Key) -> Rc<RefCell<dyn Neuron>> {
         self.insert(item)
+    }
+
+    fn insert_custom(
+        &mut self, 
+        item: &Key, 
+        weighting_strategy: Rc<dyn DefiningWeightingStrategy>,
+        interelement_activation_threshold: f32,
+        interelement_activation_exponent: i32
+    ) -> Rc<RefCell<dyn Neuron>> {
+        self.insert_custom(
+            item, 
+            weighting_strategy,
+            interelement_activation_threshold,
+            interelement_activation_exponent
+        )
     }
 
     fn search(&self, item: &Key) -> Option<Rc<RefCell<dyn Neuron>>> { 
@@ -80,7 +96,9 @@ mod tests {
     
     #[test]
     fn sensor() {
-        let threshold = Element::<i32, 3>::INTERELEMENT_ACTIVATION_THRESHOLD;
+        let threshold = Element::<i32, 3>::new(&1, 0, 0)
+            .borrow()
+            .interelement_activation_threshold;
 
         let mut graph = ASAGraph::<i32, 3>::new(1);
         for i in (1..=9).rev() { graph.insert(&i); }

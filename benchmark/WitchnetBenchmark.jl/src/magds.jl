@@ -1,6 +1,8 @@
 export magds_accuracy, magds_rmse, magds_mae
 export asyncmagds_accuracy, asyncmagds_rmse, asyncmagds_mae
 
+const libpath::String = "benchmark/WitchnetBenchmark.jl/lib/magds.dll"
+
 """
 example:
     ````
@@ -9,12 +11,9 @@ example:
     magds_accuracy("iris", trainfile, testfile, "variety")
     ```
 """
-function magds_accuracy(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function magds_accuracy(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:magds_classification_accuracy, "target/release/magds.dll"), 
+        (:magds_classification_accuracy, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "magds_accuracy", train_file, test_file, target,
@@ -31,12 +30,9 @@ example:
     magds_rmse("iris", trainfile, testfile, "sepal.length")
     ```
 """
-function magds_rmse(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function magds_rmse(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:magds_regression_rmse, "target/release/magds.dll"), 
+        (:magds_regression_rmse, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "magds_rmse", train_file, test_file, target,
@@ -53,12 +49,9 @@ example:
     magds_mae("iris", trainfile, testfile, "sepal.length")
     ```
 """
-function magds_mae(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function magds_mae(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:magds_regression_mae, "target/release/magds.dll"), 
+        (:magds_regression_mae, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "magds_mae", train_file, test_file, target,
@@ -75,12 +68,9 @@ example:
     asyncmagds_accuracy("iris", trainfile, testfile, "variety")
     ```
 """
-function asyncmagds_accuracy(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function asyncmagds_accuracy(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:async_magds_classification_accuracy, "target/release/magds.dll"), 
+        (:async_magds_classification_accuracy, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "asyncmagds_accuracy", train_file, test_file, target,
@@ -97,12 +87,9 @@ example:
     asyncmagds_rmse("iris", trainfile, testfile, "sepal.length")
     ```
 """
-function asyncmagds_rmse(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function asyncmagds_rmse(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:async_magds_regression_rmse, "target/release/magds.dll"), 
+        (:async_magds_regression_rmse, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "asyncmagds_rmse", train_file, test_file, target,
@@ -119,12 +106,9 @@ example:
     asyncmagds_mae("iris", trainfile, testfile, "sepal.length")
     ```
 """
-function asyncmagds_mae(
-    train_file::String, test_file::String, target::String,
-    ;libpath="target/release/magds.dll"
-)::Float64
+function asyncmagds_mae(train_file::String, test_file::String, target::String)::Float64
     result = ccall(
-        (:async_magds_regression_mae, "target/release/magds.dll"), 
+        (:async_magds_regression_mae, libpath), 
         Float64, 
         (Cstring, Cstring, Cstring, Cstring), 
         "asyncmagds_mae", train_file, test_file, target,

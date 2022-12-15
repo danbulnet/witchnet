@@ -1,5 +1,6 @@
 module WitchnetBenchmark
 
+include("Utils.jl")
 include("magds.jl")
 include("predeval.jl")
 include("plots.jl")

@@ -5,11 +5,13 @@ use std::{
 };
 
 use crate::{
-    connection::collective::CollectiveConnections,
+    connection::collective::{ 
+        CollectiveConnections,
+        CollectiveConnectionsAsync,
+        WeightingStrategy
+    },
     neuron::{ Neuron, NeuronAsync }
 };
-
-use super::CollectiveConnectionsAsync;
 
 #[derive(Debug, Clone)]
 pub struct ExplanatoryConnections {
@@ -20,10 +22,12 @@ impl CollectiveConnections for ExplanatoryConnections {
     fn add(&mut self, other: Rc<RefCell<dyn Neuron>>) {
         self.connections.push(other);
     }
-
-    fn common_weight(&self) -> f32 { 1.0f32 }
     
     fn connected_neurons(&self) -> &[Rc<RefCell<dyn Neuron>>] { &self.connections }
+}
+
+impl WeightingStrategy for ExplanatoryConnections {  
+    fn common_weight(&self) -> f32 { 1.0f32 }
 }
 
 impl ExplanatoryConnections {
@@ -46,10 +50,12 @@ impl CollectiveConnectionsAsync for ExplanatoryConnectionsAsync {
     fn add(&mut self, other: Arc<RwLock<dyn NeuronAsync>>) {
         self.connections.push(other);
     }
-
-    fn common_weight(&self) -> f32 { 1.0f32 }
     
     fn connected_neurons(&self) -> &[Arc<RwLock<dyn NeuronAsync>>] { &self.connections }
+}
+
+impl WeightingStrategy for ExplanatoryConnectionsAsync {  
+    fn common_weight(&self) -> f32 { 1.0f32 }
 }
 
 impl ExplanatoryConnectionsAsync {

@@ -11,7 +11,12 @@ use witchnet_common::{
         ConnectionKind,
         collective::{
             CollectiveConnectionsAsync,
-            defining::DefiningConnectionsAsync,
+            WeightingStrategy,
+            defining::{ 
+                DefiningConnectionsAsync,
+                ConstantOneWeightAsync, 
+                DefiningWeightingStrategyAsync
+            },
             explanatory::ExplanatoryConnectionsAsync
         }
     },
@@ -29,13 +34,35 @@ pub struct SimpleNeuron {
 
 impl SimpleNeuron {
     pub fn new(id: NeuronID) -> Arc<RwLock<SimpleNeuron>> {
+        let weighting_strategy = Arc::new(ConstantOneWeightAsync);
         let neuron_ptr = Arc::new(
             RwLock::new(
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
                     self_ptr: Weak::new(), 
-                    defined_neurons: DefiningConnectionsAsync::new(),
+                    defined_neurons: DefiningConnectionsAsync::new(weighting_strategy),
+                    defining_neurons: ExplanatoryConnectionsAsync::new(),
+                    defining_sensors: ExplanatoryConnectionsAsync::new()
+                }
+            )
+        );
+
+        neuron_ptr.write().unwrap().self_ptr = Arc::downgrade(&neuron_ptr);
+        neuron_ptr
+    }
+
+    pub fn new_custom(
+        id: NeuronID, 
+        weighting_strategy: Arc<dyn DefiningWeightingStrategyAsync>
+    ) -> Arc<RwLock<SimpleNeuron>> {
+        let neuron_ptr = Arc::new(
+            RwLock::new(
+                SimpleNeuron {
+                    id,
+                    activation: 0.0f32,
+                    self_ptr: Weak::new(), 
+                    defined_neurons: DefiningConnectionsAsync::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnectionsAsync::new(),
                     defining_sensors: ExplanatoryConnectionsAsync::new()
                 }

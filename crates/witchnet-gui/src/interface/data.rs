@@ -1,5 +1,6 @@
 use std::{
-    env
+    env,
+    sync::Arc
 };
 
 use bevy::prelude::*;
@@ -8,7 +9,10 @@ use bevy_egui::egui::{ self, Ui, RichText };
 
 use rfd::FileDialog;
 
-use witchnet_common::sensor::SensorAsync;
+use witchnet_common::{
+    sensor::SensorAsync, 
+    connection::collective::defining::ConstantOneWeightAsync
+};
 
 use magds::asynchronous::parser;
 
@@ -175,7 +179,15 @@ pub(crate) fn add_magds_button_row(
                             .collect();
                         let mut magds = magds_res.0.write().unwrap();
                         parser::add_df_to_magds(
-                            &mut magds, df_name, df, &skip_features, data_file.rows_limit, data_file.random_pick
+                            &mut magds, 
+                            df_name, 
+                            df, 
+                            &skip_features, 
+                            data_file.rows_limit, 
+                            data_file.random_pick,
+                            Arc::new(ConstantOneWeightAsync),
+                            0.00001,
+                            1
                         );
                     }
 
