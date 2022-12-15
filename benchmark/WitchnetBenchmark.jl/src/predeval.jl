@@ -67,22 +67,38 @@ function evalmodels(
             CSV.write(testpath, datav2[test, :])
 
             magds_predict = getproperty(@__MODULE__, Symbol("magds_" * string(metric)))
-            push!(modelnames, :sync_magds)
+
+            push!(modelnames, :magds_t00001_e1_w1)
             time = @elapsed begin
-                mem = @allocated result = magds_predict(trainpath, testpath, string(target))
+                mem = @allocated result = magds_predict(
+                    trainpath, testpath, string(target), "ConstantOneWeight", Float32(0.00001), Int32(1)
+                )
             end
-            push!(results, result)
-            push!(memory, mem)
-            push!(times, time)
-            
-            asyncmagds_predict = getproperty(@__MODULE__, Symbol("asyncmagds_" * string(metric)))
-            push!(modelnames, :async_magds)
+            push!(results, result); push!(memory, mem); push!(times, time)
+
+            push!(modelnames, :magds_t98_e2_w1)
             time = @elapsed begin
-                mem = @allocated result = asyncmagds_predict(trainpath, testpath, string(target))
+                mem = @allocated result = magds_predict(
+                    trainpath, testpath, string(target), "ConstantOneWeight", Float32(0.98), Int32(2)
+                )
             end
-            push!(results, result)
-            push!(memory, mem)
-            push!(times, time)
+            push!(results, result); push!(memory, mem); push!(times, time)
+
+            push!(modelnames, :magds_t00001_e1_w05)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, testpath, string(target), "OneOverOutsUpperHalf", Float32(0.00001), Int32(1)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
+
+            push!(modelnames, :magds_t98_e2_w05)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, testpath, string(target), "OneOverOutsUpperHalf", Float32(0.98), Int32(2)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
 
             rm(tmpdir; recursive=true)
         else
