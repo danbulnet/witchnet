@@ -17,3 +17,4 @@ Manifest.toml
 
 # Conda
 .CondaPkg
+CondaPkg.toml
