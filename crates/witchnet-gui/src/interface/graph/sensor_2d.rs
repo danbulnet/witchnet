@@ -17,7 +17,7 @@ use witchnet_common::{
 
 use crate::{
     resources::{
-        magds::{ PositionXY, SENSOR_TEXT_CUTOFF },
+        magds::{ MAGDSPositions, SENSOR_TEXT_CUTOFF },
         appearance::{ SensorAppearance, ConnectionAppearance }
     },
     utils,
@@ -31,7 +31,7 @@ use crate::{
         Nodes,
         NodeShape
     },
-    interface::graph::positions
+    interface::graph::magds_positions
 };
 
 fn weight(first: &DataTypeValue, second: &DataTypeValue, range: f32) -> f32 {
@@ -211,7 +211,7 @@ pub(crate) fn sensory_field(
     ui: &mut PlotUi, 
     name: &str, 
     sensor: Arc<RwLock<SensorConatiner>>,
-    position_xy_res: &mut PositionXY,
+    position_xy_res: &mut MAGDSPositions,
     settings: &SensorAppearance,
     connection_settings: &ConnectionAppearance
 ) {
@@ -321,7 +321,7 @@ fn show_connections(
     ui: &mut PlotUi, 
     settings: &ConnectionAppearance,
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
-    position_xy_res: &mut PositionXY,
+    position_xy_res: &mut MAGDSPositions,
     neuron_size: f64,
     angle: f64,
     sensor: &SensorConatiner
@@ -348,12 +348,12 @@ fn show_connections(
 
             let from_element = {
                 let mut point = (first_neuron_pos.0 + neuron_size, first_neuron_pos.1);
-                point = positions::rotate_point_around_origin(point, first_neuron_pos, angle);
+                point = magds_positions::rotate_point_around_origin(point, first_neuron_pos, angle);
                 [point.0, point.1]
             };
             let to_element = {
                 let mut point = (second_neuron_pos.0 - neuron_size, second_neuron_pos.1);
-                point = positions::rotate_point_around_origin(point, second_neuron_pos, angle);
+                point = magds_positions::rotate_point_around_origin(point, second_neuron_pos, angle);
                 [point.0, point.1]
             };
             let to_neuron = [second_neuron_pos.0, second_neuron_pos.1];
@@ -399,7 +399,7 @@ fn show_connections(
                 if settings.show_text {
                     let from_element = {
                         let mut point = (from_element[0] + conn_size as f64 * 0.5, from_element[1]);
-                        point = positions::rotate_point_around_origin(
+                        point = magds_positions::rotate_point_around_origin(
                             point, (from_element[0], from_element[1]), angle
                         );
                         [point.0, point.1]
@@ -415,7 +415,7 @@ fn show_connections(
 
                     let to_element = {
                         let mut point = (to_element[0] - conn_size as f64 * 0.5, to_element[1]);
-                        point = positions::rotate_point_around_origin(
+                        point = magds_positions::rotate_point_around_origin(
                             point, (to_element[0], to_element[1]), angle
                         );
                         [point.0, point.1]

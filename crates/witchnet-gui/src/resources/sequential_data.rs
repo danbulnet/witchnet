@@ -19,7 +19,7 @@ pub const FILE_NAME_OK_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 pub const FILE_NAME_ERR_COLOR: Color32 = Color32::from_rgb(232, 148, 148);
 
 #[derive(Debug, Clone)]
-pub(crate) struct DataFile {
+pub(crate) struct SequentialDataFile {
     pub(crate) name: String,
     pub(crate) path: PathBuf,
     pub(crate) data_frame: Option<DataFrame>,
@@ -29,25 +29,25 @@ pub(crate) struct DataFile {
 }
 
 #[derive(Debug)]
-pub struct DataFiles{
+pub struct SequentialDataFiles{
     pub(crate) current: Option<usize>,
-    pub(crate) history: Vec<DataFile>
+    pub(crate) history: Vec<SequentialDataFile>
 }
 
-impl DataFiles {
-    pub(crate) fn current_data_file(&mut self) -> Option<&mut DataFile> {
+impl SequentialDataFiles {
+    pub(crate) fn current_data_file(&mut self) -> Option<&mut SequentialDataFile> {
         self.history.get_mut(self.current?)
     }
 }
 
-impl Default for DataFiles {
+impl Default for SequentialDataFiles {
     fn default() -> Self { 
-        DataFiles{ current: None, history: Vec::new() } 
+        SequentialDataFiles{ current: None, history: Vec::new() } 
     }
 }
 
-impl DataFiles {
-    pub fn load_data(file_path: PathBuf, data_files_res: &mut DataFiles) {
+impl SequentialDataFiles {
+    pub fn load_data(file_path: PathBuf, data_files_res: &mut SequentialDataFiles) {
         let file_name = match file_path.file_name() {
             Some(file_name) => file_name.to_os_string().into_string().ok(),
             None => None
@@ -83,7 +83,7 @@ impl DataFiles {
                             .collect::<BTreeMap<String, bool>>()
                     );
                     let nrows = if let Some(df) = &data_frame { df.height() } else { 0 };
-                    let data_file = DataFile { 
+                    let data_file = SequentialDataFile { 
                         name: file_name, 
                         path: file_path, 
                         data_frame, 

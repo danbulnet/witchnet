@@ -9,7 +9,7 @@ use witchnet_common::sensor::SensorAsync;
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        magds::{ MainMAGDS, PositionXY }
+        magds::{ MainMAGDS, MAGDSPositions }
     },
     utils,
     interface::{
@@ -23,12 +23,12 @@ use crate::{
 pub(crate) fn simulation(
     ui: &mut Ui,
     magds_res: &mut ResMut<MainMAGDS>,
-    mut position_xy_res: &mut ResMut<PositionXY>,
+    mut position_xy_res: &mut ResMut<MAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     let simulation_settings = &mut appearance_res.simulation2d;
 
-    let plot = Plot::new("lines_demo")
+    let plot = Plot::new("magds-2d")
         .allow_scroll(false)
         .allow_boxed_zoom(true)
         .label_formatter(|name, _value| format!("{name}"))

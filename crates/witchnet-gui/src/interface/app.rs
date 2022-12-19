@@ -5,8 +5,10 @@ use bevy_egui::EguiPlugin;
 use crate::{
     resources::{
         appearance::Appearance,
-        data::DataFiles,
-        magds::{ MainMAGDS, LoadedDatasets, PositionXY },
+        tabular_data::TabularDataFiles,
+        sequential_data::SequentialDataFiles,
+        magds::{ MainMAGDS, MAGDSLoadedDatasets, MAGDSPositions },
+        sequential_model::{ SequentialMAGDS, SequentialModelLoadedDatasets, SequentialModelPositions },
         layout::Layout, 
         args::ProgramArgs
     },
@@ -19,9 +21,13 @@ pub fn app(args: Vec<String>) {
         .add_plugin(EguiPlugin)
         .insert_resource(Layout::default())
         .insert_resource(MainMAGDS::default())
-        .insert_resource(LoadedDatasets::default())
-        .insert_resource(PositionXY::default())
-        .insert_resource(DataFiles::default())
+        .insert_resource(SequentialMAGDS::default())
+        .insert_resource(MAGDSLoadedDatasets::default())
+        .insert_resource(SequentialModelLoadedDatasets::default())
+        .insert_resource(MAGDSPositions::default())
+        .insert_resource(SequentialModelPositions::default())
+        .insert_resource(TabularDataFiles::default())
+        .insert_resource(SequentialDataFiles::default())
         .insert_resource(Appearance::default())
         .insert_resource(ProgramArgs::from(args))
         .add_startup_system(setup)

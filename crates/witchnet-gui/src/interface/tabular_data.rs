@@ -19,7 +19,7 @@ use magds::asynchronous::parser;
 use crate::{
     interface::{
         widgets,
-        graph::positions
+        graph::magds_positions
     },
     resources::{
         appearance::{ Appearance, Selector },
@@ -31,28 +31,28 @@ use crate::{
             SMALL_TEXT_SIZE,
             STANDARD_MONOSPACE_TEXT_SIZE 
         },
-        data::{
-            DataFiles,
+        tabular_data::{
+            TabularDataFiles,
             FILE_NAME_OK_COLOR,
             FILE_NAME_ERR_COLOR,
             DATA_PANEL_WIDTH
         },
         magds::{ 
             MainMAGDS,
-            LoadedDatasets,
-            LoadedDataset,
-            PositionXY,
+            MAGDSLoadedDatasets,
+            MAGDSLoadedDataset,
+            MAGDSPositions,
             ADDED_TO_MAGDS_COLOR
         }
     }
 };
 
-pub(crate) fn data_window(
+pub(crate) fn tabular_data_window(
     ui: &mut Ui,
-    data_files_res: &mut ResMut<DataFiles>,
-    loaded_datasets_res: &mut ResMut<LoadedDatasets>,
+    data_files_res: &mut ResMut<TabularDataFiles>,
+    loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<PositionXY>,
+    position_xy_res: &mut ResMut<MAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     egui::ScrollArea::vertical()
@@ -83,7 +83,7 @@ pub fn file_button_row(
     ui: &mut Ui, 
     label: &str,
     extensions: &[&str],
-    data_files_res: &mut ResMut<DataFiles>
+    data_files_res: &mut ResMut<TabularDataFiles>
 ) {
     ui.horizontal(|ui| {
         let load_data_button = ui.button(label);
@@ -117,18 +117,18 @@ pub fn file_button_row(
     ui.end_row();
 }
 
-fn load_button_clicked(extensions: &[&str], mut data_files_res: &mut ResMut<DataFiles>) {
+fn load_button_clicked(extensions: &[&str], mut data_files_res: &mut ResMut<TabularDataFiles>) {
     let file_path = FileDialog::new()
         .add_filter("", extensions)
         .set_directory(env::current_dir().unwrap())
         .pick_file();
 
     if let Some(fp) = file_path {
-        DataFiles::load_data(fp, &mut data_files_res)
+        TabularDataFiles::load_data(fp, &mut data_files_res)
     }
 }
 
-pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
+pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<TabularDataFiles>) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
         ui.label(egui::RichText::new("data points").color(NEUTRAL_ACTIVE_COLOR).strong());
@@ -142,7 +142,7 @@ pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
     }
 }
 
-pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>) {
+pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<TabularDataFiles>) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
         ui.label(egui::RichText::new("features").color(NEUTRAL_ACTIVE_COLOR).strong());
@@ -158,10 +158,10 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<DataFiles>)
 
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
-    data_files_res: &mut ResMut<DataFiles>,
-    loaded_datasets_res: &mut ResMut<LoadedDatasets>,
+    data_files_res: &mut ResMut<TabularDataFiles>,
+    loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<PositionXY>,
+    position_xy_res: &mut ResMut<MAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
@@ -217,7 +217,7 @@ pub(crate) fn add_magds_button_row(
                         }
                     }
                     
-                    let loaded_dataset = LoadedDataset { 
+                    let loaded_dataset = MAGDSLoadedDataset { 
                         name: df_name.to_string(), 
                         path: data_file.path.clone(),
                         rows: data_file.rows_limit,
@@ -230,7 +230,7 @@ pub(crate) fn add_magds_button_row(
                     };
                     loaded_datasets_res.0.push(loaded_dataset);
 
-                    positions::set_positions(
+                    magds_positions::set_positions(
                         &magds,
                         (0.0, 0.0),
                         position_xy_res, 
@@ -243,7 +243,7 @@ pub(crate) fn add_magds_button_row(
     ui.end_row();
 }
 
-pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<LoadedDatasets>) {
+pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>) {
     ui.separator(); ui.end_row();
     ui.label(RichText::new("loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
     ui.end_row();

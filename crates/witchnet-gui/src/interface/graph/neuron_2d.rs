@@ -23,7 +23,7 @@ use crate::{
         appearance::{ 
             NeuronAppearance, 
             ConnectionAppearance }, 
-        magds::PositionXY
+        magds::MAGDSPositions
     },
     utils,
     widgets::plot::{
@@ -124,7 +124,7 @@ pub(crate) fn neurons(
     ui: &mut PlotUi, 
     name: &str, 
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
-    position_xy_res: &mut PositionXY,
+    position_xy_res: &mut MAGDSPositions,
     settings: &NeuronAppearance,
     connection_settings: &ConnectionAppearance,
 ) {

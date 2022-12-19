@@ -14,5 +14,5 @@ pub(crate) fn simulation(
     _magds_res: &mut ResMut<MainMAGDS>,
     _appearance_res: &mut ResMut<Appearance>,
 ) {
-    ui.label("simulation 3D");
+    ui.label("magds-3d");
 }

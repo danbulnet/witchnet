@@ -44,8 +44,10 @@ function evalmodels(
     MLJ.default_resource(CPUProcesses())
 
     y, X = MLJ.unpack(data, ==(target), colname -> true)
+
     encodermach = MLJ.machine(MLJ.ContinuousEncoder(), X) |> MLJ.fit!
     Xencoded = MLJ.transform(encodermach, X)
+
     modelnames = []
     results = []
     times = []
@@ -69,37 +71,90 @@ function evalmodels(
             magds_predict = getproperty(@__MODULE__, Symbol("magds_" * string(metric)))
             asyncmagds_predict = getproperty(@__MODULE__, Symbol("asyncmagds_" * string(metric)))
 
-            push!(modelnames, :MAGDS_t00001_e1_w1)
+            push!(modelnames, :MAGDS_sh_f1_w1_t0e5_e2_l1k_r1p1)
             time = @elapsed begin
-                mem = @allocated result = asyncmagds_predict(
-                    trainpath, testpath, string(target), "ConstantOneWeight", Float32(0.00001), Int32(1)
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "OneOverOutsUpperHalf",
+                    true,
+                    true,
+                    Float32(0.00001), 
+                    Int32(2),
+                    UInt(1000),
+                    Float32(1.1)
                 )
             end
             push!(results, result); push!(memory, mem); push!(times, time)
 
-            # push!(modelnames, :MAGDS_t98_e2_w1)
-            # time = @elapsed begin
-            #     mem = @allocated result = asyncmagds_predict(
-            #         trainpath, testpath, string(target), "ConstantOneWeight", Float32(0.98), Int32(2)
-            #     )
-            # end
-            # push!(results, result); push!(memory, mem); push!(times, time)
+            push!(modelnames, :MAGDS_sh_f0_w1_t0e5_e2_l1k_r1p1)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "OneOverOutsUpperHalf",
+                    false,
+                    true,
+                    Float32(0.00001), 
+                    Int32(2),
+                    UInt(1000),
+                    Float32(1.1)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
 
-            # push!(modelnames, :MAGDS_t00001_e1_w05)
-            # time = @elapsed begin
-            #     mem = @allocated result = asyncmagds_predict(
-            #         trainpath, testpath, string(target), "OneOverOutsUpperHalf", Float32(0.00001), Int32(1)
-            #     )
-            # end
-            # push!(results, result); push!(memory, mem); push!(times, time)
+            push!(modelnames, :MAGDS_sh_f1_w0_t0e5_e2_l1k_r1p1)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "OneOverOutsUpperHalf",
+                    true,
+                    false,
+                    Float32(0.00001), 
+                    Int32(2),
+                    UInt(1000),
+                    Float32(1.1)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
 
-            # push!(modelnames, :MAGDS_t98_e2_w05)
-            # time = @elapsed begin
-            #     mem = @allocated result = asyncmagds_predict(
-            #         trainpath, testpath, string(target), "OneOverOutsUpperHalf", Float32(0.98), Int32(2)
-            #     )
-            # end
-            # push!(results, result); push!(memory, mem); push!(times, time)
+            push!(modelnames, :MAGDS_sh_f0_w0_t0e5_e2_l1k_r1p1)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "OneOverOutsUpperHalf",
+                    false,
+                    false,
+                    Float32(0.00001), 
+                    Int32(2),
+                    UInt(1000),
+                    Float32(1.1)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
+
+            push!(modelnames, :MAGDS_sh_f1_w1_t0e5_e1_l1k_r1p1)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "OneOverOutsUpperHalf",
+                    true,
+                    true,
+                    Float32(0.00001), 
+                    Int32(1),
+                    UInt(1000),
+                    Float32(1.1)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
 
             rm(tmpdir; recursive=true)
         else

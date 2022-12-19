@@ -1,10 +1,13 @@
 pub mod appearance;
 pub mod widgets;
-pub mod data;
+pub mod tabular_data;
+pub mod sequential_data;
 pub mod app;
 pub mod layout;
-pub mod simulation_2d;
-pub mod simulation_3d;
+pub mod magds_2d;
+pub mod magds_3d;
+pub mod sequential_model_2d;
+pub mod flex_points;
 pub mod sensors;
 pub mod neurons;
 pub mod connections;

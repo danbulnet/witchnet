@@ -13,19 +13,32 @@ use bevy_egui::{
 use crate::{
     resources::{
         appearance::Appearance,
-        data::{ DataFiles, DATA_PANEL_SCROLL_WIDTH },
-        magds::{ MainMAGDS, LoadedDatasets, PositionXY },
+        tabular_data::{ TabularDataFiles, DATA_PANEL_SCROLL_WIDTH },
+        sequential_data::{ SequentialDataFiles },
+        magds::{ 
+            MainMAGDS, 
+            MAGDSLoadedDatasets, 
+            MAGDSPositions 
+        },
+        sequential_model::{ 
+            SequentialMAGDS, 
+            SequentialModelLoadedDatasets, 
+            SequentialModelPositions 
+        },
         layout::{ 
             Layout, 
             DEFAULT_PANEL_SCROLL_WIDTH, 
             CentralPanel as LayoutCentralPanel 
-        }
+        },
     },
     interface::{ 
-        data, 
+        tabular_data, 
+        sequential_data,
         appearance,
-        simulation_2d,
-        simulation_3d,
+        magds_2d,
+        magds_3d,
+        sequential_model_2d,
+        flex_points,
         sensors,
         neurons,
         connections
@@ -35,20 +48,28 @@ use crate::{
 pub(crate) fn app_layout(
     mut egui_context: ResMut<EguiContext>,
     mut layout_res: ResMut<Layout>,
-    mut data_files_res: ResMut<DataFiles>,
-    mut loaded_datasets_res: ResMut<LoadedDatasets>,
+    mut tabular_data_files_res: ResMut<TabularDataFiles>,
+    mut sequential_data_files_res: ResMut<SequentialDataFiles>,
+    mut magds_loaded_datasets_res: ResMut<MAGDSLoadedDatasets>,
+    mut sequential_model_loaded_datasets_res: ResMut<SequentialModelLoadedDatasets>,
     mut magds_res: ResMut<MainMAGDS>,
-    mut position_xy_res: ResMut<PositionXY>,
+    mut sequential_model_res: ResMut<SequentialMAGDS>,
+    mut magds_positions_res: ResMut<MAGDSPositions>,
+    mut sequential_model_positions_res: ResMut<SequentialModelPositions>,
     mut appearance_res: ResMut<Appearance>,
 ) {
     top_panel(&mut egui_context, &mut layout_res);
     left_panel(
         &mut egui_context,
         &mut layout_res,
-        &mut data_files_res,
-        &mut loaded_datasets_res,
+        &mut tabular_data_files_res,
+        &mut sequential_data_files_res,
+        &mut magds_loaded_datasets_res,
+        &mut sequential_model_loaded_datasets_res,
         &mut magds_res,
-        &mut position_xy_res,
+        &mut sequential_model_res,
+        &mut magds_positions_res,
+        &mut sequential_model_positions_res,
         &mut appearance_res
     );
     right_panel(
@@ -61,7 +82,9 @@ pub(crate) fn app_layout(
         &mut egui_context, 
         &mut layout_res,
         &mut magds_res,
-        &mut position_xy_res,
+        &mut sequential_model_res,
+        &mut magds_positions_res,
+        &mut sequential_model_positions_res,
         &mut appearance_res
     );
 }
@@ -76,16 +99,29 @@ fn top_panel(
             
             ui.separator();
             
-            ui.toggle_value(&mut layout_res.data, "🖹 data");
+            ui.toggle_value(&mut layout_res.tabular_data, "🖹 tabular data");
+            
+            ui.toggle_value(&mut layout_res.sequential_data, "📈 sequential data");
             // ui.toggle_value(&mut state2, "🖵 appearance");
             ui.toggle_value(&mut layout_res.appearance, "🔧 appearance");
             
             ui.separator();
 
-            let toggole_2d = ui.toggle_value(&mut layout_res.simulation_2d, "🔳 2D simulation");
-            if toggole_2d.clicked() { layout_res.simulation_2d_clicked() }
-            let toggole_3d = ui.toggle_value(&mut layout_res.simulation_3d, "📦 3D simulation");
-            if toggole_3d.clicked() { layout_res.simulation_3d_clicked() }
+            let toggole_magds_2d = ui.toggle_value(&mut layout_res.magds_2d, "🔳 magds-2d");
+            if toggole_magds_2d.clicked() { layout_res.magds_2d_clicked() }
+            
+            let toggole_magds_3d = ui.toggle_value(&mut layout_res.magds_3d, "📦 magds-3d");
+            if toggole_magds_3d.clicked() { layout_res.magds_3d_clicked() }
+            
+            let toggole_sequential_model_2d = ui.toggle_value(
+                &mut layout_res.sequential_model_2d, "🔳 sequential-model-2d"
+            );
+            if toggole_sequential_model_2d.clicked() { layout_res.sequential_model_2d_clicked() }
+            
+            let toggole_flex_points = ui.toggle_value(
+                &mut layout_res.flex_points, "📈 flex-points"
+            );
+            if toggole_flex_points.clicked() { layout_res.flex_points_clicked() }
 
             ui.separator();
 
@@ -99,28 +135,53 @@ fn top_panel(
 fn left_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
-    data_files_res: &mut ResMut<DataFiles>,
-    loaded_datasets_res: &mut ResMut<LoadedDatasets>,
+    tabular_data_files_res: &mut ResMut<TabularDataFiles>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
+    magds_loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
+    sequential_model_loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<PositionXY>,
+    sequential_model_res: &mut ResMut<SequentialMAGDS>,
+    magds_positions_res: &mut ResMut<MAGDSPositions>,
+    sequential_model_positions_res: &mut ResMut<SequentialModelPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
-    if layout_res.data {
-        SidePanel::left("data_panel")
+    if layout_res.tabular_data {
+        SidePanel::left("tabular_data_panel")
             .resizable(false)
             .max_width(DATA_PANEL_SCROLL_WIDTH)
             .min_width(DATA_PANEL_SCROLL_WIDTH)
             .show(egui_context.ctx_mut(), |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.heading("🖹 data");
+                    ui.heading("🖹 tabular data");
                 });
                 ui.separator();
-                data::data_window(
+                tabular_data::tabular_data_window(
                     ui,
-                    data_files_res,
-                    loaded_datasets_res,
+                    tabular_data_files_res,
+                    magds_loaded_datasets_res,
                     magds_res,
-                    position_xy_res,
+                    magds_positions_res,
+                    appearance_res
+                );
+            }
+        );
+    }
+    if layout_res.sequential_data {
+        SidePanel::left("sequential_data_panel")
+            .resizable(false)
+            .max_width(DATA_PANEL_SCROLL_WIDTH)
+            .min_width(DATA_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("📈 sequential data");
+                });
+                ui.separator();
+                sequential_data::sequential_data_window(
+                    ui,
+                    sequential_data_files_res,
+                    sequential_model_loaded_datasets_res,
+                    sequential_model_res,
+                    sequential_model_positions_res,
                     appearance_res
                 );
             }
@@ -192,17 +253,27 @@ fn central_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<PositionXY>,
+    sequential_model_res: &mut ResMut<SequentialMAGDS>,
+    magds_positions_res: &mut ResMut<MAGDSPositions>,
+    sequential_model_points_res: &mut ResMut<SequentialModelPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
         match layout_res.central_panel {
-            LayoutCentralPanel::Simulation2D => {
-                simulation_2d::simulation(ui, magds_res, position_xy_res, appearance_res);
+            LayoutCentralPanel::MAGDS2D => {
+                magds_2d::simulation(ui, magds_res, magds_positions_res, appearance_res);
             }
-            LayoutCentralPanel::Simulation3D => {
-                simulation_3d::simulation(ui, magds_res, appearance_res);
-            }
+            LayoutCentralPanel::MAGDS3D => {
+                magds_3d::simulation(ui, magds_res, appearance_res);
+            },
+            LayoutCentralPanel::SequentialModel2D => {
+                sequential_model_2d::simulation(
+                    ui, sequential_model_res, sequential_model_points_res, appearance_res
+                );
+            },
+            LayoutCentralPanel::FlexPoints => {
+                flex_points::simulation(ui, magds_res, appearance_res);
+            },
         }
     });
 }
