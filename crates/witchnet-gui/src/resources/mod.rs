@@ -5,4 +5,5 @@ pub mod sequential_data;
 pub mod common;
 pub mod magds;
 pub mod sequential_model;
+pub mod sequence_1d;
 pub mod args;

@@ -6,7 +6,7 @@ pub(crate) enum CentralPanel {
     MAGDS2D,
     MAGDS3D,
     SequentialModel2D,
-    FlexPoints,
+    Sequence1D,
 }
 
 pub(crate) struct Layout {
@@ -18,10 +18,11 @@ pub(crate) struct Layout {
     pub(crate) magds_2d: bool,
     pub(crate) magds_3d: bool,
     pub(crate) sequential_model_2d: bool,
-    pub(crate) flex_points: bool,
+    pub(crate) sequence_1d: bool,
     pub(crate) sensors: bool,
     pub(crate) neurons: bool,
-    pub(crate) connections: bool
+    pub(crate) connections: bool,
+    pub(crate) flex_points: bool
 }
 
 impl Default for Layout {
@@ -29,16 +30,17 @@ impl Default for Layout {
         Layout { 
             central_panel: CentralPanel::MAGDS2D, 
 
-            tabular_data: false,
-            sequential_data: true,
+            tabular_data: true,
+            sequential_data: false,
             appearance: false,
             magds_2d: true,
             magds_3d: false,
             sequential_model_2d: false,
-            flex_points: false,
-            sensors: true,
+            sequence_1d: false,
+            sensors: false,
             neurons: false,
-            connections: false
+            connections: false,
+            flex_points: false,
         }
     }   
 }
@@ -48,7 +50,7 @@ impl Layout {
         self.magds_2d = true;
         self.magds_3d = false;
         self.sequential_model_2d = false;
-        self.flex_points = false;
+        self.sequence_1d = false;
         self.central_panel = CentralPanel::MAGDS2D;
     }
 
@@ -56,7 +58,7 @@ impl Layout {
         self.magds_2d = false;
         self.magds_3d = true;
         self.sequential_model_2d = false;
-        self.flex_points = false;
+        self.sequence_1d = false;
         self.central_panel = CentralPanel::MAGDS3D;
     }
     
@@ -64,15 +66,15 @@ impl Layout {
         self.magds_3d = false;
         self.magds_2d = false;
         self.sequential_model_2d = true;
-        self.flex_points = false;
+        self.sequence_1d = false;
         self.central_panel = CentralPanel::SequentialModel2D;
     }
 
-    pub(crate) fn flex_points_clicked(&mut self) {
+    pub(crate) fn sequence_1d_clicked(&mut self) {
         self.magds_3d = false;
         self.magds_2d = false;
         self.sequential_model_2d = false;
-        self.flex_points = true;
-        self.central_panel = CentralPanel::FlexPoints;
+        self.sequence_1d = true;
+        self.central_panel = CentralPanel::Sequence1D;
     }
 }

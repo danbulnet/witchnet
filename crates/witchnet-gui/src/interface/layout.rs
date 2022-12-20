@@ -29,7 +29,8 @@ use crate::{
             Layout, 
             DEFAULT_PANEL_SCROLL_WIDTH, 
             CentralPanel as LayoutCentralPanel 
-        },
+        }, 
+        sequence_1d::Sequence1D,
     },
     interface::{ 
         tabular_data, 
@@ -38,12 +39,14 @@ use crate::{
         magds_2d,
         magds_3d,
         sequential_model_2d,
-        flex_points,
+        sequence_1d,
         sensors,
         neurons,
         connections
     }
 };
+
+use super::flex_points;
 
 pub(crate) fn app_layout(
     mut egui_context: ResMut<EguiContext>,
@@ -56,6 +59,7 @@ pub(crate) fn app_layout(
     mut sequential_model_res: ResMut<SequentialMAGDS>,
     mut magds_positions_res: ResMut<MAGDSPositions>,
     mut sequential_model_positions_res: ResMut<SequentialModelPositions>,
+    mut sequence_1d_res: ResMut<Sequence1D>,
     mut appearance_res: ResMut<Appearance>,
 ) {
     top_panel(&mut egui_context, &mut layout_res);
@@ -85,6 +89,7 @@ pub(crate) fn app_layout(
         &mut sequential_model_res,
         &mut magds_positions_res,
         &mut sequential_model_positions_res,
+        &mut sequence_1d_res,
         &mut appearance_res
     );
 }
@@ -101,7 +106,7 @@ fn top_panel(
             
             ui.toggle_value(&mut layout_res.tabular_data, "🖹 tabular data");
             
-            ui.toggle_value(&mut layout_res.sequential_data, "📈 sequential data");
+            ui.toggle_value(&mut layout_res.sequential_data, "〰 sequential data");
             // ui.toggle_value(&mut state2, "🖵 appearance");
             ui.toggle_value(&mut layout_res.appearance, "🔧 appearance");
             
@@ -114,20 +119,21 @@ fn top_panel(
             if toggole_magds_3d.clicked() { layout_res.magds_3d_clicked() }
             
             let toggole_sequential_model_2d = ui.toggle_value(
-                &mut layout_res.sequential_model_2d, "🔳 sequential-model-2d"
+                &mut layout_res.sequential_model_2d, "⛓ sequential-model-2d"
             );
             if toggole_sequential_model_2d.clicked() { layout_res.sequential_model_2d_clicked() }
             
             let toggole_flex_points = ui.toggle_value(
-                &mut layout_res.flex_points, "📈 flex-points"
+                &mut layout_res.sequence_1d, "📈 sequence-1d"
             );
-            if toggole_flex_points.clicked() { layout_res.flex_points_clicked() }
+            if toggole_flex_points.clicked() { layout_res.sequence_1d_clicked() }
 
             ui.separator();
 
             ui.toggle_value(&mut layout_res.sensors, "❄ sensors");
             ui.toggle_value(&mut layout_res.neurons, "Ψ neurons");
             ui.toggle_value(&mut layout_res.connections, "🎟 connections");
+            ui.toggle_value(&mut layout_res.flex_points, "∂ flex-points");
         });
     });
 }
@@ -173,7 +179,7 @@ fn left_panel(
             .min_width(DATA_PANEL_SCROLL_WIDTH)
             .show(egui_context.ctx_mut(), |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.heading("📈 sequential data");
+                    ui.heading("〰 sequential data");
                 });
                 ui.separator();
                 sequential_data::sequential_data_window(
@@ -247,6 +253,19 @@ fn right_panel(
             }
         );
     }
+    if layout_res.flex_points {
+        SidePanel::right("flex_points")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("∂ flex-points");
+                });
+                ui.separator();
+                flex_points::flex_points(ui, appearance_res);
+            }
+        );
+    }
 }
 
 fn central_panel(
@@ -256,6 +275,7 @@ fn central_panel(
     sequential_model_res: &mut ResMut<SequentialMAGDS>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
     sequential_model_points_res: &mut ResMut<SequentialModelPositions>,
+    sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
@@ -271,8 +291,8 @@ fn central_panel(
                     ui, sequential_model_res, sequential_model_points_res, appearance_res
                 );
             },
-            LayoutCentralPanel::FlexPoints => {
-                flex_points::simulation(ui, magds_res, appearance_res);
+            LayoutCentralPanel::Sequence1D => {
+                sequence_1d::simulation(ui, sequence_1d_res, appearance_res);
             },
         }
     });

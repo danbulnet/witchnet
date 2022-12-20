@@ -9,6 +9,7 @@ use crate::{
         sequential_data::SequentialDataFiles,
         magds::{ MainMAGDS, MAGDSLoadedDatasets, MAGDSPositions },
         sequential_model::{ SequentialMAGDS, SequentialModelLoadedDatasets, SequentialModelPositions },
+        sequence_1d::Sequence1D,
         layout::Layout, 
         args::ProgramArgs
     },
@@ -28,6 +29,7 @@ pub fn app(args: Vec<String>) {
         .insert_resource(SequentialModelPositions::default())
         .insert_resource(TabularDataFiles::default())
         .insert_resource(SequentialDataFiles::default())
+        .insert_resource(Sequence1D::default())
         .insert_resource(Appearance::default())
         .insert_resource(ProgramArgs::from(args))
         .add_startup_system(setup)
