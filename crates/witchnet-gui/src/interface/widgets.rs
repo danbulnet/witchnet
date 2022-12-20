@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use bevy_egui::egui::{ 
@@ -30,6 +32,42 @@ pub fn shrink_str(text: &str, limit: usize) -> String {
             &text[..text.char_indices().nth(limit - 3).unwrap().0],
         )
     }
+}
+
+pub fn combobox_str_row(
+    ui: &mut Ui, 
+    id: &str, 
+    selected: &mut Option<Arc::<str>>,
+    values: &[Option<Arc::<str>>],
+    label_color: Color32
+) -> Response {
+    let combobox = ui.horizontal(|ui| {
+        let label_widget = RichText::new(id)
+            .family(FontFamily::Proportional)
+            .size(STANDARD_TEXT_SIZE)
+            .strong()
+            .color(label_color);
+        ui.label(label_widget);
+
+        let selected_text = if let Some(text) = selected {
+            &*text
+        } else {
+            "click to see"
+        };
+
+        ComboBox::from_id_source(id)
+            .selected_text(shrink_str(selected_text, 25))
+            .show_ui(ui, |ui| {
+                for value in values {
+                    if let Some(v) = value {
+                        ui.selectable_value(selected, Some(v.clone()), &**v);
+                    }
+                }
+            }
+        );
+    });
+    ui.end_row();
+    combobox.response
 }
 
 pub fn combobox_row(

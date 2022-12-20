@@ -31,7 +31,7 @@ pub(crate) struct SequentialModelLoadedDataset {
     pub(crate) path: PathBuf,
     pub(crate) rows: usize,
     pub(crate) rows_total: usize,
-    pub(crate) random_pick: bool,
+    pub(crate) exequal_sampling: bool,
     pub(crate) features: Vec<String>
 }
 

@@ -137,7 +137,7 @@ pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<SequentialDataFiles>
             widgets::slider_row_usize(
                 ui, "limit", &mut data_file.rows_limit, (usize::min(1, nrows), nrows)
             );
-            widgets::checkbox_row(ui, "random pick", &mut data_file.random_pick);
+            widgets::checkbox_row(ui, "exequal sampling", &mut data_file.exequal_sampling);
         }
     }
 }
@@ -160,69 +160,69 @@ pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
     loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>,
-    magds_res: &mut ResMut<SequentialMAGDS>,
+    sequential_model_res: &mut ResMut<SequentialMAGDS>,
     position_xy_res: &mut ResMut<SequentialModelPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
         ui.horizontal(|ui| {
-            let add_button = ui.button("add to magds");
+            let add_button = ui.button("add to sequential model");
             if add_button.clicked() {
                 if let Some(df) = &data_file.data_frame {
                     let df_name = &data_file.name;
-                    {
-                        let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
-                        let skip_features: Vec<&str> = (&data_file.features).into_iter()
-                            .filter(|(_key, value)| !**value)
-                            .map(|(key, _value)| &**key)
-                            .collect();
-                        let mut magds = magds_res.0.write().unwrap();
-                        parser::add_df_to_magds(
-                            &mut magds, 
-                            df_name, 
-                            df, 
-                            &skip_features, 
-                            data_file.rows_limit, 
-                            data_file.random_pick,
-                            Arc::new(ConstantOneWeightAsync),
-                            0.00001,
-                            1
-                        );
-                    }
+                    // {
+                        // let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
+                        // let skip_features: Vec<&str> = (&data_file.features).into_iter()
+                        //     .filter(|(_key, value)| !**value)
+                        //     .map(|(key, _value)| &**key)
+                        //     .collect();
+                        // let mut magds = magds_res.0.write().unwrap();
+                        // parser::add_df_to_magds(
+                        //     &mut magds, 
+                        //     df_name, 
+                        //     df, 
+                        //     &skip_features, 
+                        //     data_file.rows_limit, 
+                        //     data_file.random_pick,
+                        //     Arc::new(ConstantOneWeightAsync),
+                        //     0.00001,
+                        //     1
+                        // );
+                    // }
 
-                    let magds = magds_res.0.read().unwrap();
-                    for sensor in magds.sensors() {
-                        let mut sensor = sensor.write().unwrap();
-                        let value = sensor.values().first().unwrap().clone();
-                        let _ = sensor.activate(&value, 1.0f32, true, true);
-                    }
+                    // let sequential_model = sequential_model_res.0.read().unwrap();
+                    // for sensor in sequential_model.sensors() {
+                    //     let mut sensor = sensor.write().unwrap();
+                    //     let value = sensor.values().first().unwrap().clone();
+                    //     let _ = sensor.activate(&value, 1.0f32, true, true);
+                    // }
                     
-                    let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
-                    for sensor_name in magds.sensors_names() {
-                        let sensor_key = &Selector::One(sensor_name.clone());
-                        if !appearance_res.sensors.contains_key(sensor_key) {
-                            appearance_res.sensors.insert(
-                                sensor_key.clone(), sensor_appearance.clone()
-                            );
-                        }
-                    }
-                    let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
-                    for neuron_name in magds.neurons_names() {
-                        let neuron_key = &Selector::One(neuron_name.clone());
-                        if !appearance_res.neurons.contains_key(neuron_key) {
-                            appearance_res.neurons.insert(
-                                neuron_key.clone(), neuron_appearance.clone()
-                            );
-                        }
-                    }
+                    // let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
+                    // for sensor_name in sequential_model.sensors_names() {
+                    //     let sensor_key = &Selector::One(sensor_name.clone());
+                    //     if !appearance_res.sensors.contains_key(sensor_key) {
+                    //         appearance_res.sensors.insert(
+                    //             sensor_key.clone(), sensor_appearance.clone()
+                    //         );
+                    //     }
+                    // }
+                    // let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
+                    // for neuron_name in sequential_model.neurons_names() {
+                    //     let neuron_key = &Selector::One(neuron_name.clone());
+                    //     if !appearance_res.neurons.contains_key(neuron_key) {
+                    //         appearance_res.neurons.insert(
+                    //             neuron_key.clone(), neuron_appearance.clone()
+                    //         );
+                    //     }
+                    // }
                     
                     let loaded_dataset = SequentialModelLoadedDataset { 
                         name: df_name.to_string(), 
                         path: data_file.path.clone(),
                         rows: data_file.rows_limit,
                         rows_total: df.height(),
-                        random_pick: data_file.random_pick,
+                        exequal_sampling: data_file.exequal_sampling,
                         features: (&data_file.features).into_iter()
                             .filter(|(_key, value)| **value)
                             .map(|(key, _value)| key.clone())
@@ -230,12 +230,12 @@ pub(crate) fn add_magds_button_row(
                     };
                     loaded_datasets_res.0.push(loaded_dataset);
 
-                    sequential_model_positions::set_positions(
-                        &magds,
-                        (0.0, 0.0),
-                        position_xy_res, 
-                        appearance_res
-                    );
+                //     sequential_model_positions::set_positions(
+                //         &sequential_model,
+                //         (0.0, 0.0),
+                //         position_xy_res, 
+                //         appearance_res
+                //     );
                 }
             }
         });
@@ -267,7 +267,7 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<Sequent
             "{} of {} {} rows",
             dataset.rows,
             dataset.rows_total,
-            if dataset.random_pick { "random" } else { "consecutive" }
+            if dataset.exequal_sampling { "random" } else { "consecutive" }
         );
         let label_widget = RichText::new(widgets::shrink_str(&rows_text, 48))
             .size(SMALL_TEXT_SIZE)

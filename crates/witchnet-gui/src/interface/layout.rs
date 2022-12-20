@@ -80,6 +80,7 @@ pub(crate) fn app_layout(
         &mut egui_context, 
         &mut layout_res,
         &mut magds_res, 
+        &mut sequence_1d_res,
         &mut appearance_res
     );
     central_panel(
@@ -212,6 +213,7 @@ fn right_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
+    sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     if layout_res.sensors {
@@ -262,7 +264,7 @@ fn right_panel(
                     ui.heading("∂ flex-points");
                 });
                 ui.separator();
-                flex_points::flex_points(ui, appearance_res);
+                flex_points::flex_points(ui, sequence_1d_res, appearance_res);
             }
         );
     }

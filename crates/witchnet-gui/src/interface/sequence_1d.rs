@@ -19,7 +19,6 @@ use bevy_egui::egui::{
 use crate::{
     resources::{
         appearance::Appearance,
-        magds::MainMAGDS,
         sequence_1d::Sequence1D
     }
 };
@@ -40,33 +39,56 @@ pub(crate) fn simulation(
         // .x_axis_formatter(|_, _| "".to_string())
         // .y_axis_formatter(|_, _| "".to_string())
         // .show_axes(simulation_settings.show_grid);
-    if sequence_1d_res.data.is_none() {
-        sequence_1d_res.data = Some(logistic_fn());
+        if let Some(loaded_name) = &sequence_1d_res.loaded_data_name {
+        if let Some(selected_name) = &sequence_1d_res.selected_name {
+            if loaded_name != selected_name {
+                let mut example = sequence_1d_res.examples.first().unwrap().clone();
+                for current_example in &sequence_1d_res.examples {
+                    if current_example.0 == *selected_name {
+                        example = current_example.clone();
+                    }
+                };
+                sequence_1d_res.loaded_data_name = Some(example.0.clone());
+                sequence_1d_res.loaded_data = Some(example.1());
+                sequence_1d_res.loaded_samples = Some(
+                    sequence_1d_res.loaded_sampling_method.unwrap()(
+                        sequence_1d_res.loaded_data.as_ref().unwrap()
+                    )
+                );
+            }
+        }
+    } else {
+        let example = sequence_1d_res.examples.first().unwrap().clone();
+        sequence_1d_res.loaded_data_name = Some(example.0.clone());
+        sequence_1d_res.loaded_data = Some(example.1());
+        sequence_1d_res.loaded_samples = Some(
+            sequence_1d_res.loaded_sampling_method.unwrap()(
+                sequence_1d_res.loaded_data.as_ref().unwrap()
+            )
+        );
     }
-    if sequence_1d_res.samples.is_none() {
-        sequence_1d_res.samples = Some(sample_points());
-    }
+
     sequence_1d(ui, sequence_1d_res);
 }
 
 const MINS_PER_DAY: f64 = 24.0 * 60.0;
 const MINS_PER_H: f64 = 60.0;
 
-fn sample_points() -> Vec<[f64; 2]> {
-    let f = |x: f64| {
-        f64::sin(2.0 * x - 2.0) 
-        + x.powi(2).cos() 
-        + 0.5 * f64::cos(3.0 * f64::powi(x - 0.5, 2))
-        + x.tanh()
-    };
-    let s = curve_sampling::Sampling::fun(f, -10.0, 10.0).build();
-    let mut si = s.iter();
-    let mut v = vec![];
-    while let Some(point) = si.next() {
-        v.push(point.unwrap());
-    }
-    v
-}
+// fn sample_points() -> Vec<[f64; 2]> {
+//     let f = |x: f64| {
+//         f64::sin(2.0 * x - 2.0) 
+//         + x.powi(2).cos() 
+//         + 0.5 * f64::cos(3.0 * f64::powi(x - 0.5, 2))
+//         + x.tanh()
+//     };
+//     let s = curve_sampling::Sampling::fun(f, -10.0, 10.0).build();
+//     let mut si = s.iter();
+//     let mut v = vec![];
+//     while let Some(point) = si.next() {
+//         v.push(point.unwrap());
+//     }
+//     v
+// }
 
 fn logistic_fn() -> Vec<[f64; 2]> {
     fn days(min: f64) -> f64 {
@@ -187,11 +209,11 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         // .x_grid_spacer(x_grid)
         // .label_formatter(label_fmt)
         .show(ui, |plot_ui| {
-            if let Some(data) = &sequence_1d_res.data {
+            if let Some(data) = &sequence_1d_res.loaded_data {
                 plot_ui.line(Line::new(PlotPoints::from(data.clone())));
             }
             
-            if let Some(samples) = &sequence_1d_res.samples {
+            if let Some(samples) = &sequence_1d_res.loaded_samples {
                 let points = Points::new(samples.clone())
                     .name("samples")
                     .filled(true)

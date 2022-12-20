@@ -25,7 +25,7 @@ pub(crate) struct SequentialDataFile {
     pub(crate) data_frame: Option<DataFrame>,
     pub(crate) features: BTreeMap<String, bool>,
     pub(crate) rows_limit: usize,
-    pub(crate) random_pick: bool
+    pub(crate) exequal_sampling: bool
 }
 
 #[derive(Debug)]
@@ -67,7 +67,6 @@ impl SequentialDataFiles {
                 let data_frame = polars_common::csv_to_dataframe(
                     file_path.as_os_str().to_str().unwrap(), &vec![]
                 ).ok();
-                let mut features: BTreeMap<String, bool> = BTreeMap::new();
                 if data_frame.is_none() {
                     MessageDialog::new().set_level(MessageLevel::Error)
                         .set_title("file loading error")
@@ -75,13 +74,11 @@ impl SequentialDataFiles {
                         .show();
                     data_files_res.current = None;
                 } else {
-                    features.extend(
-                        data_frame.as_ref().unwrap()
-                            .get_column_names()
-                            .into_iter()
-                            .map(|x| (x.to_string(), true))
-                            .collect::<BTreeMap<String, bool>>()
-                    );
+                    let mut features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
+                        .get_column_names()
+                        .into_iter()
+                        .map(|x| (x.to_string(), true))
+                        .collect();
                     let nrows = if let Some(df) = &data_frame { df.height() } else { 0 };
                     let data_file = SequentialDataFile { 
                         name: file_name, 
@@ -89,7 +86,7 @@ impl SequentialDataFiles {
                         data_frame, 
                         features,
                         rows_limit: nrows,
-                        random_pick: false
+                        exequal_sampling: false
                     };
                     data_files_res.history.push(data_file);
                     data_files_res.current = Some(data_files_res.history.len() - 1);

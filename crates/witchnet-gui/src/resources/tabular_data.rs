@@ -67,7 +67,6 @@ impl TabularDataFiles {
                 let data_frame = polars_common::csv_to_dataframe(
                     file_path.as_os_str().to_str().unwrap(), &vec![]
                 ).ok();
-                let mut features: BTreeMap<String, bool> = BTreeMap::new();
                 if data_frame.is_none() {
                     MessageDialog::new().set_level(MessageLevel::Error)
                         .set_title("file loading error")
@@ -75,13 +74,11 @@ impl TabularDataFiles {
                         .show();
                     data_files_res.current = None;
                 } else {
-                    features.extend(
-                        data_frame.as_ref().unwrap()
-                            .get_column_names()
-                            .into_iter()
-                            .map(|x| (x.to_string(), true))
-                            .collect::<BTreeMap<String, bool>>()
-                    );
+                    let mut features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
+                        .get_column_names()
+                        .into_iter()
+                        .map(|x| (x.to_string(), true))
+                        .collect();
                     let nrows = if let Some(df) = &data_frame { df.height() } else { 0 };
                     let data_file = TabularDataFile { 
                         name: file_name, 
