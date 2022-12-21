@@ -35,6 +35,7 @@ impl Default for Sequence1D {
             sampling::flex_points as fn(&[[f64; 2]]) -> Vec<[f64; 2]>
         );
         sampling_methods.push(default_sampling_method.clone());
+        sampling_methods.push(("rdp".into(), sampling::rdp));
         sampling_methods.push(("random".into(), sampling::random));
 
         let loaded_name = Some(default_example.0.clone());
@@ -92,6 +93,8 @@ pub mod sampling {
 
     use flex_points::algorithm as fp;
 
+    use mint::Point2;
+
     pub fn random(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
         let mut rng = thread_rng();
         data.iter()
@@ -109,9 +112,20 @@ pub mod sampling {
             &x,
             &y,
             &[0.0, 0.5, 0.2, 0.0],
-            &[1, 1, 2]
+            &[25, 25, 50]
         );
 
         output.into_iter().map(|i| [x[i], y[i]]).collect()
+    }
+
+    pub fn rdp(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        let x: Vec<f64> = data.into_iter().map(|x| x[0]).collect();
+        let y: Vec<f64> = data.into_iter().map(|x| x[1]).collect();
+
+        let data_points: Vec<Point2<f64>> = data.into_iter().map(|x| Point2::from(*x)).collect();
+
+        ramer_douglas_peucker::rdp(&data_points, 0.05).into_iter()
+            .map(|i| [x[i], y[i]])
+            .collect()
     }
 }
