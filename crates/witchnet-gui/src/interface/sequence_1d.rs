@@ -39,11 +39,11 @@ pub(crate) fn simulation(
         // .x_axis_formatter(|_, _| "".to_string())
         // .y_axis_formatter(|_, _| "".to_string())
         // .show_axes(simulation_settings.show_grid);
-        if let Some(loaded_name) = &sequence_1d_res.loaded_data_name {
-        if let Some(selected_name) = &sequence_1d_res.selected_name {
+    if let Some(loaded_name) = &sequence_1d_res.loaded_data_name {
+        if let Some(selected_name) = &sequence_1d_res.selected_data_name {
             if loaded_name != selected_name {
-                let mut example = sequence_1d_res.examples.first().unwrap().clone();
-                for current_example in &sequence_1d_res.examples {
+                let mut example = sequence_1d_res.data_examples.first().unwrap().clone();
+                for current_example in &sequence_1d_res.data_examples {
                     if current_example.0 == *selected_name {
                         example = current_example.clone();
                     }
@@ -58,9 +58,38 @@ pub(crate) fn simulation(
             }
         }
     } else {
-        let example = sequence_1d_res.examples.first().unwrap().clone();
+        let example = sequence_1d_res.data_examples.first().unwrap().clone();
         sequence_1d_res.loaded_data_name = Some(example.0.clone());
         sequence_1d_res.loaded_data = Some(example.1());
+        sequence_1d_res.loaded_samples = Some(
+            sequence_1d_res.loaded_sampling_method.unwrap()(
+                sequence_1d_res.loaded_data.as_ref().unwrap()
+            )
+        );
+    }
+
+    if let Some(loaded_method_name) = &sequence_1d_res.loaded_sampling_method_name {
+        if let Some(selected_method_name) = &sequence_1d_res.selected_sampling_method_name {
+            if loaded_method_name != selected_method_name {
+                let mut method = sequence_1d_res.sampling_methods.first().unwrap().clone();
+                for current_method in &sequence_1d_res.sampling_methods {
+                    if current_method.0 == *selected_method_name {
+                        method = current_method.clone();
+                    }
+                };
+                sequence_1d_res.loaded_sampling_method_name = Some(method.0.clone());
+                sequence_1d_res.loaded_sampling_method = Some(method.1);
+                sequence_1d_res.loaded_samples = Some(
+                    sequence_1d_res.loaded_sampling_method.unwrap()(
+                        sequence_1d_res.loaded_data.as_ref().unwrap()
+                    )
+                );
+            }
+        }
+    } else {
+        let method = sequence_1d_res.sampling_methods.first().unwrap().clone();
+        sequence_1d_res.loaded_sampling_method_name = Some(method.0.clone());
+        sequence_1d_res.loaded_sampling_method = Some(method.1);
         sequence_1d_res.loaded_samples = Some(
             sequence_1d_res.loaded_sampling_method.unwrap()(
                 sequence_1d_res.loaded_data.as_ref().unwrap()

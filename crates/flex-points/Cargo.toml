@@ -1,0 +1,24 @@
+[package]
+name = "flex-points"
+version = "0.1.0"
+edition.workspace = true
+description = "algorithm that searches for characteristic points in signal that carry relevant information"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+categories.workspace = true
+keywords = ["information", "visualization", "signal", "compression", "sampling"]
+default-run = "flex-points"
+
+[lib]
+name = "flex_points"
+path = "src/lib.rs"
+
+[[bin]]
+name = "flex-points"
+path = "src/bin/main.rs"
+
+[dependencies]
+ndarray = "0.15.6"
+rand = "0.8.5"

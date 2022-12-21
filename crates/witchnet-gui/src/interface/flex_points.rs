@@ -31,14 +31,28 @@ pub(crate) fn flex_points(
             
             Grid::new("sensor").show(&mut ui, |ui| {
                 let label_color = common::NEUTRAL_ACTIVE_COLOR;
-                let examples: Vec<Option<Arc<str>>> = (&sequence_1d.examples).into_iter()
+                
+                let data_examples: Vec<Option<Arc<str>>> = (&sequence_1d.data_examples)
+                    .into_iter()
                     .map(|x| Some(x.0.clone()))
                     .collect();
                 w::combobox_str_row(
                     ui, 
-                    "sensor", 
-                    &mut sequence_1d.selected_name, 
-                    &examples,
+                    "examples", 
+                    &mut sequence_1d.selected_data_name, 
+                    &data_examples,
+                    label_color
+                );
+
+                let sampling_methods: Vec<Option<Arc<str>>> = (&sequence_1d.sampling_methods)
+                    .into_iter()
+                    .map(|x| Some(x.0.clone()))
+                    .collect();
+                w::combobox_str_row(
+                    ui, 
+                    "sampling", 
+                    &mut sequence_1d.selected_sampling_method_name, 
+                    &sampling_methods,
                     label_color
                 );
         

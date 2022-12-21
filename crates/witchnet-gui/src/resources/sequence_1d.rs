@@ -7,12 +7,12 @@ type SeriesGenerator = fn() -> Vec<[f64; 2]>;
 type SamplesGenerator = fn(&[[f64; 2]]) -> Vec<[f64; 2]>;
 
 pub struct Sequence1D {
-    pub selected_name: Option<Arc::<str>>,
+    pub selected_data_name: Option<Arc::<str>>,
     pub loaded_data_name: Option<Arc::<str>>,
     pub loaded_data: Option<Vec<[f64; 2]>>,
-    pub examples: Vec<(Arc::<str>, SeriesGenerator)>,
+    pub data_examples: Vec<(Arc::<str>, SeriesGenerator)>,
 
-    pub selected_sampling_method: Option<Arc::<str>>,
+    pub selected_sampling_method_name: Option<Arc::<str>>,
     pub loaded_sampling_method_name: Option<Arc::<str>>,
     pub loaded_sampling_method: Option<SamplesGenerator>,
     pub loaded_samples: Option<Vec<[f64; 2]>>,
@@ -31,10 +31,11 @@ impl Default for Sequence1D {
 
         let mut sampling_methods = Vec::new();
         let default_sampling_method: (Arc<str>, SamplesGenerator) = (
-            "random".into(), 
-            sampling::random as fn(&[[f64; 2]]) -> Vec<[f64; 2]>
+            "flex-points".into(), 
+            sampling::flex_points as fn(&[[f64; 2]]) -> Vec<[f64; 2]>
         );
         sampling_methods.push(default_sampling_method.clone());
+        sampling_methods.push(("random".into(), sampling::random));
 
         let loaded_name = Some(default_example.0.clone());
         let loaded_data = Some(default_example.1());
@@ -43,11 +44,11 @@ impl Default for Sequence1D {
         let loaded_samples = Some(default_sampling_method.1(loaded_data.as_ref().unwrap()));
 
         Sequence1D {
-            selected_name: None,
+            selected_data_name: loaded_name.clone(),
             loaded_data_name: loaded_name,
             loaded_data, 
-            examples,
-            selected_sampling_method: None,
+            data_examples: examples,
+            selected_sampling_method_name: loaded_sampling_method_name.clone(),
             loaded_sampling_method_name,
             loaded_sampling_method,
             loaded_samples,
@@ -89,6 +90,8 @@ pub mod examples {
 pub mod sampling {
     use rand::{ seq::IteratorRandom, thread_rng };
 
+    use flex_points::algorithm as fp;
+
     pub fn random(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
         let mut rng = thread_rng();
         data.iter()
@@ -96,6 +99,19 @@ pub mod sampling {
             .into_iter()
             .map(|x| *x)
             .collect()
-        
+    }
+
+    pub fn flex_points(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        let x: Vec<f64> = data.into_iter().map(|x| x[0]).collect();
+        let y: Vec<f64> = data.into_iter().map(|x| x[1]).collect();
+
+        let output = fp::flex_points(
+            &x,
+            &y,
+            &[0.0, 0.5, 0.2, 0.0],
+            &[1, 1, 2]
+        );
+
+        output.into_iter().map(|i| [x[i], y[i]]).collect()
     }
 }
