@@ -55,6 +55,16 @@ pub(crate) fn flex_points(
                     &sampling_methods,
                     label_color
                 );
+
+                ui.separator(); ui.end_row();
+                let mut vertical = false;
+                ui.vertical(|ui| {
+                    ui.label("Examples:");
+                    ui.radio_value(&mut vertical, false, "Horizontal");
+                    ui.radio_value(&mut vertical, true, "Vertical");
+                    ui.separator(); ui.end_row();
+                });
+                
         
                 // w::checkbox_row(ui, "show", &mut sensor.show);
         

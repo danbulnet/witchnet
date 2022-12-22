@@ -3,8 +3,24 @@ use std::{
     default::Default
 };
 
+use crate::resources::sequential_data::SequentialDataFile;
+
 type SeriesGenerator = fn() -> Vec<[f64; 2]>;
 type SamplesGenerator = fn(&[[f64; 2]]) -> Vec<[f64; 2]>;
+
+#[derive(Debug, Clone)]
+pub(crate) enum SequenceSelector<'a> {
+    ComplexTrigonometric,
+    Tanh,
+    LoadedData(&'a SequentialDataFile)
+}
+
+#[derive(Debug, Clone)]
+pub(crate) enum SamplingMethodSelector {
+    FlexPoints,
+    RamerDouglasPeucker,
+    Random
+}
 
 pub struct Sequence1D {
     pub selected_data_name: Option<Arc::<str>>,
