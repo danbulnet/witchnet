@@ -5,9 +5,13 @@ use std::{
 
 use rand::{ seq::IteratorRandom, thread_rng };
 
-use flex_points::algorithm as fp;
+use bevy_egui::egui::Color32;
+
+use bevy::prelude::Color;
 
 use mint::Point2;
+
+use flex_points::algorithm as fp;
 
 use crate::resources::sequential_data::SequentialDataFile;
 
@@ -22,7 +26,7 @@ pub(crate) enum SequenceSelector<'a> {
     None
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SamplingMethodSelector {
     FlexPoints,
     RamerDouglasPeucker,
@@ -75,7 +79,7 @@ impl SamplingMethodSelector {
     }
 }
 
-pub struct Sequence1D {
+pub(crate) struct Sequence1D {
     pub selected_data_name: Option<Arc::<str>>,
     pub loaded_data_name: Option<Arc::<str>>,
     pub loaded_data: Option<Vec<[f64; 2]>>,
@@ -83,11 +87,12 @@ pub struct Sequence1D {
 
     pub selected_sampling_method: SamplingMethodSelector,
     pub loaded_sampling_method: SamplingMethodSelector,
-    pub loaded_samples: Option<Vec<[f64; 2]>>
-    // pub selected_sampling_method_name: Option<Arc::<str>>,
-    // pub loaded_sampling_method_name: Option<Arc::<str>>,
-    // pub loaded_sampling_method: Option<SamplesGenerator>,
-    // pub sampling_methods: Vec<(Arc::<str>, SamplesGenerator)>,
+    pub loaded_samples: Option<Vec<[f64; 2]>>,
+    
+    pub line_color: Color,
+    pub samples_color: Color,
+    pub samples_radius: f32,
+    pub samples_bounds: (f32, f32),
 }
 
 impl Default for Sequence1D {
@@ -100,44 +105,38 @@ impl Default for Sequence1D {
         examples.push(default_example.clone());
         examples.push(("tanh".into(), examples::tanh));
 
+        let loaded_name = Some(default_example.0.clone());
+        let loaded_data = Some(default_example.1());
+
         Sequence1D {
+            selected_sampling_method: SamplingMethodSelector::FlexPoints,
+            loaded_sampling_method: SamplingMethodSelector::FlexPoints,
+            loaded_samples: Some(
+                SamplingMethodSelector::FlexPoints.samples(
+                    loaded_data.as_ref().unwrap()
+                )
+            ),
+
             selected_data_name: loaded_name.clone(),
             loaded_data_name: loaded_name,
             loaded_data, 
             data_examples: examples,
 
-            selected_sampling_method: SamplingMethodSelector::FlexPoints,
-            loaded_sampling_method: SamplingMethodSelector::FlexPoints,
-            loaded_samples: SamplingMethodSelector::FlexPoints::samples(
-                loaded_data.as_ref().unwrap()
-            )
+            line_color: Color::Rgba { 
+                red: 135 as f32 / 255.0, 
+                green: 62 as f32 / 255.0, 
+                blue: 35 as f32 / 255.0, 
+                alpha: 1.0f32 
+            },
+            samples_color: Color::Rgba { 
+                red: 30 as f32 / 255.0, 
+                green: 129 as f32 / 255.0, 
+                blue: 176 as f32 / 255.0, 
+                alpha: 0.8f32
+            },
+            samples_radius: 5.0f32,
+            samples_bounds: (1.0, 10.0)
         }
-        // let mut sampling_methods = Vec::new();
-        // let default_sampling_method: (Arc<str>, SamplesGenerator) = (
-        //     "flex-points".into(), 
-        //     sampling::flex_points as fn(&[[f64; 2]]) -> Vec<[f64; 2]>
-        // );
-        // sampling_methods.push(default_sampling_method.clone());
-        // sampling_methods.push(("rdp".into(), sampling::rdp));
-        // sampling_methods.push(("random".into(), sampling::random));
-
-        // let loaded_name = Some(default_example.0.clone());
-        // let loaded_data = Some(default_example.1());
-        // let loaded_sampling_method_name = Some(default_sampling_method.0.clone());
-        // let loaded_sampling_method = Some(default_sampling_method.1);
-        // let loaded_samples = Some(default_sampling_method.1(loaded_data.as_ref().unwrap()));
-
-        // Sequence1D {
-        //     selected_data_name: loaded_name.clone(),
-        //     loaded_data_name: loaded_name,
-        //     loaded_data, 
-        //     data_examples: examples,
-        //     selected_sampling_method_name: loaded_sampling_method_name.clone(),
-        //     loaded_sampling_method_name,
-        //     loaded_sampling_method,
-        //     loaded_samples,
-        //     sampling_methods
-        // }
     }
 }
 

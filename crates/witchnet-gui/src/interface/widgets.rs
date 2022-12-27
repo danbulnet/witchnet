@@ -34,6 +34,15 @@ pub fn shrink_str(text: &str, limit: usize) -> String {
     }
 }
 
+pub fn heading_label(ui: &mut Ui, text: &str, label_color: Color32) {
+    let label_widget = RichText::new(text)
+        .family(FontFamily::Proportional)
+        .size(STANDARD_TEXT_SIZE)
+        .strong()
+        .color(label_color);
+    ui.label(label_widget);
+}
+
 pub fn combobox_str_row(
     ui: &mut Ui, 
     id: &str, 
@@ -42,12 +51,7 @@ pub fn combobox_str_row(
     label_color: Color32
 ) -> Response {
     let combobox = ui.horizontal(|ui| {
-        let label_widget = RichText::new(id)
-            .family(FontFamily::Proportional)
-            .size(STANDARD_TEXT_SIZE)
-            .strong()
-            .color(label_color);
-        ui.label(label_widget);
+        heading_label(ui, id, label_color);
 
         let selected_text = if let Some(text) = selected {
             &*text

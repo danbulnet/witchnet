@@ -15,7 +15,8 @@ use crate::{
     resources::{
         appearance::Appearance,
         sequence_1d::Sequence1D
-    }
+    },
+    utils
 };
 
 pub(crate) fn simulation(
@@ -35,7 +36,7 @@ pub(crate) fn simulation(
                 sequence_1d_res.loaded_data_name = Some(example.0.clone());
                 sequence_1d_res.loaded_data = Some(example.1());
                 sequence_1d_res.loaded_samples = Some(
-                    sequence_1d_res.loaded_sampling_method.unwrap()(
+                    sequence_1d_res.loaded_sampling_method.samples(
                         sequence_1d_res.loaded_data.as_ref().unwrap()
                     )
                 );
@@ -46,39 +47,19 @@ pub(crate) fn simulation(
         sequence_1d_res.loaded_data_name = Some(example.0.clone());
         sequence_1d_res.loaded_data = Some(example.1());
         sequence_1d_res.loaded_samples = Some(
-            sequence_1d_res.loaded_sampling_method.unwrap()(
+            sequence_1d_res.loaded_sampling_method.samples(
                 sequence_1d_res.loaded_data.as_ref().unwrap()
             )
         );
     }
 
-    if let Some(loaded_method_name) = &sequence_1d_res.loaded_sampling_method_name {
-        if let Some(selected_method_name) = &sequence_1d_res.selected_sampling_method_name {
-            if loaded_method_name != selected_method_name {
-                let mut method = sequence_1d_res.sampling_methods.first().unwrap().clone();
-                for current_method in &sequence_1d_res.sampling_methods {
-                    if current_method.0 == *selected_method_name {
-                        method = current_method.clone();
-                    }
-                };
-                sequence_1d_res.loaded_sampling_method_name = Some(method.0.clone());
-                sequence_1d_res.loaded_sampling_method = Some(method.1);
-                sequence_1d_res.loaded_samples = Some(
-                    sequence_1d_res.loaded_sampling_method.unwrap()(
-                        sequence_1d_res.loaded_data.as_ref().unwrap()
-                    )
-                );
-            }
-        }
-    } else {
-        let method = sequence_1d_res.sampling_methods.first().unwrap().clone();
-        sequence_1d_res.loaded_sampling_method_name = Some(method.0.clone());
-        sequence_1d_res.loaded_sampling_method = Some(method.1);
+    if sequence_1d_res.loaded_sampling_method != sequence_1d_res.selected_sampling_method {
+        sequence_1d_res.loaded_sampling_method = sequence_1d_res.selected_sampling_method.clone();
         sequence_1d_res.loaded_samples = Some(
-            sequence_1d_res.loaded_sampling_method.unwrap()(
+            sequence_1d_res.loaded_sampling_method.samples(
                 sequence_1d_res.loaded_data.as_ref().unwrap()
             )
-        );
+        )
     }
 
     sequence_1d(ui, sequence_1d_res);
@@ -97,15 +78,20 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         // .label_formatter(label_fmt)
         .show(ui, |plot_ui| {
             if let Some(data) = &sequence_1d_res.loaded_data {
-                plot_ui.line(Line::new(PlotPoints::from(data.clone())));
+                plot_ui.line(
+                    Line::new(PlotPoints::from(data.clone()))
+                        .color(utils::color_bevy_to_egui(&sequence_1d_res.line_color))
+                        .width(1.0)
+                );
             }
             
             if let Some(samples) = &sequence_1d_res.loaded_samples {
                 let points = Points::new(samples.clone())
                     .name("samples")
                     .filled(true)
-                    .radius(5.0)
-                    .shape(MarkerShape::Circle);
+                    .radius(sequence_1d_res.samples_radius)
+                    .shape(MarkerShape::Circle)
+                    .color(utils::color_bevy_to_egui(&sequence_1d_res.samples_color));
                 plot_ui.points(points);
             }
 
