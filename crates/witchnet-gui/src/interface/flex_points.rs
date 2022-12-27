@@ -129,6 +129,14 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         &mut sequence_1d_res.line_width, 
         bounds
     );
+    
+    let bounds = sequence_1d_res.aspect_ratio_bounds.clone();
+    w::slider_row(
+        ui, 
+        "w:h", 
+        &mut sequence_1d_res.aspect_ratio, 
+        bounds
+    );
 
     ui.separator(); ui.end_row();
 

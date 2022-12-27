@@ -151,6 +151,9 @@ pub(crate) struct Sequence1D {
     pub line_color: Color,
     pub line_width: f32,
     pub line_width_bounds: (f32, f32),
+    pub aspect_ratio: f32,
+    pub aspect_ratio_bounds: (f32, f32),
+
     pub samples_color: Color,
     pub samples_radius: f32,
     pub samples_bounds: (f32, f32),
@@ -178,6 +181,9 @@ impl Default for Sequence1D {
             },
             line_width: 1.0,
             line_width_bounds: (0.0, 10.0),
+            aspect_ratio: 1.0,
+            aspect_ratio_bounds: (0.1, 10.0),
+
             samples_color: Color::Rgba { 
                 red: 30 as f32 / 255.0, 
                 green: 129 as f32 / 255.0, 

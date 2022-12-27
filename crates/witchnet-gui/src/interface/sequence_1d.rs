@@ -55,7 +55,7 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     ui.label("Zoom in on the X-axis to see hours and minutes");
 
     Plot::new("custom_axes")
-        .data_aspect(1.0)
+        .data_aspect(sequence_1d_res.aspect_ratio)
         // .data_aspect(2.0 * MINS_PER_DAY as f32)
         // .x_axis_formatter(x_fmt)
         // .y_axis_formatter(y_fmt)
