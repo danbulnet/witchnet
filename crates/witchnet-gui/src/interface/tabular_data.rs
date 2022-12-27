@@ -44,7 +44,8 @@ use crate::{
             MAGDSPositions,
             ADDED_TO_MAGDS_COLOR
         }
-    }
+    },
+    utils
 };
 
 pub(crate) fn tabular_data_window(
@@ -94,12 +95,12 @@ pub fn file_button_row(
             Some(index) => {
                 let data_file = &data_files_res.history[index];
                 let label = if data_file.data_frame.is_some() {
-                    RichText::new(widgets::shrink_str(&data_file.name, 23))
+                    RichText::new(utils::shrink_str(&data_file.name, 23))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_OK_COLOR)
                 } else {
-                    RichText::new(widgets::shrink_str(&data_file.name, 23))
+                    RichText::new(utils::shrink_str(&data_file.name, 23))
                         .monospace()
                         .size(STANDARD_MONOSPACE_TEXT_SIZE)
                         .color(FILE_NAME_ERR_COLOR)
@@ -269,13 +270,13 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<MAGDSLo
             dataset.rows_total,
             if dataset.random_pick { "random" } else { "consecutive" }
         );
-        let label_widget = RichText::new(widgets::shrink_str(&rows_text, 48))
+        let label_widget = RichText::new(utils::shrink_str(&rows_text, 48))
             .size(SMALL_TEXT_SIZE)
             .color(NEUTRAL_COLOR);
         ui.label(label_widget);
 
         for feature in &dataset.features {
-            let label_widget = RichText::new(widgets::shrink_str(feature, 48))
+            let label_widget = RichText::new(utils::shrink_str(feature, 48))
                 .size(SMALL_TEXT_SIZE)
                 .color(NEUTRAL_INACTIVE_COLOR);
             ui.label(label_widget);

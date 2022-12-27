@@ -1,6 +1,6 @@
 use bevy::prelude::Color;
 
-use bevy_egui::egui::Color32;
+use bevy_egui::egui::{ plot::MarkerShape, Color32 };
 
 pub fn color_bevy_to_egui(color: &Color) -> Color32 {
     let [r, g, b, a] = color.as_rgba_f32();
@@ -10,4 +10,30 @@ pub fn color_bevy_to_egui(color: &Color) -> Color32 {
         (b * 255.0) as u8,
         (a * 255.0) as u8,
     )
+}
+
+pub fn shape_to_string(shape: &MarkerShape) -> String {
+    match shape {
+        MarkerShape::Circle => "circle".to_string(),
+        MarkerShape::Diamond => "diamond".to_string(),
+        MarkerShape::Square => "square".to_string(),
+        MarkerShape::Cross => "cross".to_string(),
+        MarkerShape::Plus => "plus".to_string(),
+        MarkerShape::Up => "up".to_string(),
+        MarkerShape::Down => "down".to_string(),
+        MarkerShape::Left => "left".to_string(),
+        MarkerShape::Right => "right".to_string(),
+        MarkerShape::Asterisk => "asterisk".to_string(),
+    }
+}
+
+pub fn shrink_str(text: &str, limit: usize) -> String {
+    if text.chars().count() <= limit {
+        text.to_string()
+    } else {
+        format!(
+            "{}...",
+            &text[..text.char_indices().nth(limit - 3).unwrap().0],
+        )
+    }
 }

@@ -12,6 +12,10 @@ pub fn flex_points(
     m: &[f64; 4],
     s: &[usize; 3]
 ) -> Array1<usize> {
+    if y.is_empty() {
+        return Array1::<usize>::from_vec(vec![])
+    }
+
     let first_derivative = derivative::find_derivative(
         y, s[0], 1
     );

@@ -23,17 +23,6 @@ use crate::{
     utils
 };
 
-pub fn shrink_str(text: &str, limit: usize) -> String {
-    if text.chars().count() <= limit {
-        text.to_string()
-    } else {
-        format!(
-            "{}...",
-            &text[..text.char_indices().nth(limit - 3).unwrap().0],
-        )
-    }
-}
-
 pub fn heading_label(ui: &mut Ui, text: &str, label_color: Color32) {
     let label_widget = RichText::new(text)
         .family(FontFamily::Proportional)
@@ -60,7 +49,7 @@ pub fn combobox_str_row(
         };
 
         ComboBox::from_id_source(id)
-            .selected_text(shrink_str(selected_text, 25))
+            .selected_text(utils::shrink_str(selected_text, 25))
             .show_ui(ui, |ui| {
                 for value in values {
                     if let Some(v) = value {
@@ -90,7 +79,7 @@ pub fn combobox_row(
         ui.label(label_widget);
 
         ComboBox::from_id_source(id)
-            .selected_text(shrink_str(selected.to_str(), 25))
+            .selected_text(utils::shrink_str(selected.to_str(), 25))
             .show_ui(ui, |ui| {
                 ui.selectable_value(selected, Selector::All, &*Selector::All.to_arc_str());
                 for value in values {
