@@ -10,10 +10,10 @@ use bevy_egui::egui::{
 
 use crate::{
     resources::{
-        appearance::Appearance,
         sequence_1d::{ Sequence1D, SamplingMethodSelector, SequenceSelector },
         layout::DEFAULT_PANEL_WIDTH,
-        common
+        common, 
+        sequential_data::SequentialDataFiles
     },
     interface::widgets as w,
     utils
@@ -22,12 +22,12 @@ use crate::{
 pub(crate) fn flex_points(
     ui: &mut Ui,
     sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
         .show(ui, |ui| {
-            data(ui, sequence_1d_res);
+            data(ui, sequence_1d_res, sequential_data_files_res);
             
             sampling(ui, sequence_1d_res);    
             
@@ -35,12 +35,16 @@ pub(crate) fn flex_points(
     });
 }
 
-fn data(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn data(
+    ui: &mut Ui, 
+    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
+) {
     Grid::new("flex-points data").show(ui, |ui| {
         ui.vertical(|ui| {
             ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
 
-            w::heading_label(ui, "data", common::NEUTRAL_ACTIVE_COLOR);
+            w::heading_label(ui, "predefined data", common::NEUTRAL_ACTIVE_COLOR);
             ui.radio_value(
                 &mut sequence_1d_res.selected_data_source, 
                 SequenceSelector::ComplexTrigonometric, 
@@ -53,14 +57,30 @@ fn data(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             );
             ui.radio_value(
                 &mut sequence_1d_res.selected_data_source, 
-                SequenceSelector::LoadedData(0), 
-                "loaded data"
-            );
-            ui.radio_value(
-                &mut sequence_1d_res.selected_data_source, 
                 SequenceSelector::None, 
                 "none"
             );
+
+            if let Some(data_file) = sequential_data_files_res.current_data_file() {
+                if let Some(data_frame) = &data_file.data_frame {
+                    let mut numeric_columns = vec![];
+                    for column in data_frame.get_columns() {
+                        if column.is_numeric_physical() {
+                            numeric_columns.push(column.name())
+                        }
+                    }
+                    if !numeric_columns.is_empty() {
+                        w::heading_label(ui, "loaded data", common::NEUTRAL_ACTIVE_COLOR);
+                        for column in numeric_columns {
+                            ui.radio_value(
+                                &mut sequence_1d_res.selected_data_source, 
+                                SequenceSelector::LoadedData(column.to_string()), 
+                                column
+                            );
+                        }
+                    }
+                }
+            }
             ui.separator(); ui.end_row();
         });
     });

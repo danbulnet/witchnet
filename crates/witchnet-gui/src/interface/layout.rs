@@ -14,7 +14,7 @@ use crate::{
     resources::{
         appearance::Appearance,
         tabular_data::{ TabularDataFiles, DATA_PANEL_SCROLL_WIDTH },
-        sequential_data::{ SequentialDataFiles },
+        sequential_data::SequentialDataFiles,
         magds::{ 
             MainMAGDS, 
             MAGDSLoadedDatasets, 
@@ -81,7 +81,8 @@ pub(crate) fn app_layout(
         &mut layout_res,
         &mut magds_res, 
         &mut sequence_1d_res,
-        &mut appearance_res
+        &mut appearance_res,
+        &mut sequential_data_files_res
     );
     central_panel(
         &mut egui_context, 
@@ -91,7 +92,8 @@ pub(crate) fn app_layout(
         &mut magds_positions_res,
         &mut sequential_model_positions_res,
         &mut sequence_1d_res,
-        &mut appearance_res
+        &mut appearance_res,
+        &mut sequential_data_files_res
     );
 }
 
@@ -214,7 +216,8 @@ fn right_panel(
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>
+    appearance_res: &mut ResMut<Appearance>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     if layout_res.sensors {
         SidePanel::right("sensors_panel")
@@ -264,7 +267,9 @@ fn right_panel(
                     ui.heading("∂ flex-points");
                 });
                 ui.separator();
-                flex_points::flex_points(ui, sequence_1d_res, appearance_res);
+                flex_points::flex_points(
+                    ui, sequence_1d_res, sequential_data_files_res
+                );
             }
         );
     }
@@ -278,7 +283,8 @@ fn central_panel(
     magds_positions_res: &mut ResMut<MAGDSPositions>,
     sequential_model_points_res: &mut ResMut<SequentialModelPositions>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>
+    appearance_res: &mut ResMut<Appearance>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
         match layout_res.central_panel {
@@ -294,7 +300,9 @@ fn central_panel(
                 );
             },
             LayoutCentralPanel::Sequence1D => {
-                sequence_1d::simulation(ui, sequence_1d_res, appearance_res);
+                sequence_1d::simulation(
+                    ui, sequence_1d_res, sequential_data_files_res
+                );
             },
         }
     });

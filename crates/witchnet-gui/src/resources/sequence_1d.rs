@@ -7,34 +7,56 @@ use rand::{ seq::IteratorRandom, thread_rng };
 
 use bevy_egui::egui::plot::{ MarkerShape, PlotPoints };
 
-use bevy::prelude::Color;
+use bevy::prelude::*;
 
 use mint::Point2;
 
 use flex_points::algorithm as fp;
 
-use crate::resources::sequential_data::SequentialDataFile;
+use crate::resources::sequential_data::SequentialDataFiles;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SequenceSelector {
     ComplexTrigonometric,
     Tanh,
-    LoadedData(usize),
+    LoadedData(String),
     None
 }
 
 impl SequenceSelector {
-    pub(crate) fn data(&self) -> Vec<[f64; 2]> {
+    pub(crate) fn data(
+        &self, loaded_data: Option<&mut ResMut<SequentialDataFiles>>    
+    ) -> Vec<[f64; 2]> {
         match self {
             SequenceSelector::ComplexTrigonometric => Self::complex_trigonometric(),
             SequenceSelector::Tanh => Self::tanh(),
-            SequenceSelector::LoadedData(_) => Self::loaded_data_to_sequence(),
+            SequenceSelector::LoadedData(name) => Self::loaded_data_to_sequence(loaded_data, name),
             SequenceSelector::None => vec![],
         }
     }
 
-    pub(crate) fn loaded_data_to_sequence() -> Vec<[f64; 2]> {
-        vec![]
+    pub(crate) fn loaded_data_to_sequence(
+        loaded_data: Option<&mut ResMut<SequentialDataFiles>>, name: &str
+    ) -> Vec<[f64; 2]> {
+        if let Some(data_files) = loaded_data {
+            if let Some(data_file) = data_files.current_data_file() {
+                if let Some(data_frame) = &data_file.data_frame {
+                    if let Ok(column) = data_frame.column(name) {
+                        if column.is_numeric_physical() {
+                            if let Ok(float_vec) = column.f64() {
+                                return float_vec.into_iter()
+                                    .enumerate()
+                                    .filter(|(i, x)| x.is_some())
+                                    .map(|(i, x)| [i as f64, x.unwrap()])
+                                    .collect()
+                            }
+                        }
+                    }
+                }
+                
+                vec![]
+            } else { vec![] }
+        } else { vec![] }
     }
 
     pub fn tanh() -> Vec<[f64; 2]> {
@@ -137,7 +159,7 @@ pub(crate) struct Sequence1D {
 
 impl Default for Sequence1D {
     fn default() -> Sequence1D {
-        let loaded_data = SequenceSelector::ComplexTrigonometric.data();
+        let loaded_data = SequenceSelector::ComplexTrigonometric.data(None);
 
         Sequence1D {
             selected_sampling_method: SamplingMethodSelector::FlexPoints,

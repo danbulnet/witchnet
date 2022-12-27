@@ -13,8 +13,8 @@ use bevy_egui::egui::{
 
 use crate::{
     resources::{
-        appearance::Appearance,
-        sequence_1d::Sequence1D
+        sequence_1d::Sequence1D, 
+        sequential_data::SequentialDataFiles
     },
     utils
 };
@@ -22,18 +22,21 @@ use crate::{
 pub(crate) fn simulation(
     ui: &mut Ui,
     sequence_1d_res: &mut ResMut<Sequence1D>,
-    _appearance_res: &mut ResMut<Appearance>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
 ) {
-    sequence_1d_control(sequence_1d_res);
+    sequence_1d_control(sequence_1d_res, sequential_data_files_res);
 
     sequence_1d(ui, sequence_1d_res);
 }
 
-fn sequence_1d_control(sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn sequence_1d_control(
+    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
+) {
     if sequence_1d_res.loaded_data_source != sequence_1d_res.selected_data_source {
         sequence_1d_res.loaded_data_source = sequence_1d_res.selected_data_source.clone();
         
-        sequence_1d_res.loaded_data = sequence_1d_res.loaded_data_source.data();
+        sequence_1d_res.loaded_data = sequence_1d_res.loaded_data_source.data(Some(sequential_data_files_res));
 
         sequence_1d_res.loaded_samples = sequence_1d_res.loaded_sampling_method.samples(
             &sequence_1d_res.loaded_data
