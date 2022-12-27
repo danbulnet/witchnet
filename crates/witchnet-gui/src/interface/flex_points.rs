@@ -133,7 +133,7 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     let bounds = sequence_1d_res.aspect_ratio_bounds.clone();
     w::slider_row(
         ui, 
-        "w:h", 
+        "h:w", 
         &mut sequence_1d_res.aspect_ratio, 
         bounds
     );
