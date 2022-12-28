@@ -3,6 +3,8 @@ use std::{
     default::Default
 };
 
+use ndarray::Array1;
+
 use rand::{ seq::IteratorRandom, thread_rng };
 
 use bevy_egui::egui::plot::{ MarkerShape, PlotPoints };
@@ -97,7 +99,7 @@ pub(crate) enum SamplingMethodSelector {
 impl SamplingMethodSelector {
     pub(crate) fn samples_default(&self, data: &[[f64; 2]]) -> Vec<[f64; 2]> {
         match self {
-            SamplingMethodSelector::FlexPoints => Self::flex_points(data),
+            SamplingMethodSelector::FlexPoints => Self::flex_points_default(data),
             SamplingMethodSelector::RamerDouglasPeucker => Self::rdp_default(data),
             SamplingMethodSelector::Random => Self::random(data),
             SamplingMethodSelector::None => vec![],
@@ -110,7 +112,9 @@ impl SamplingMethodSelector {
         sequence_1d: &Sequence1D 
     ) -> Vec<[f64; 2]> {
         match self {
-            SamplingMethodSelector::FlexPoints => Self::flex_points(data),
+            SamplingMethodSelector::FlexPoints => Self::flex_points(
+                data, &sequence_1d.flex_points
+            ),
             SamplingMethodSelector::RamerDouglasPeucker => Self::rdp(data, &sequence_1d.rdp),
             SamplingMethodSelector::Random => Self::random(data),
             SamplingMethodSelector::None => vec![],
@@ -126,25 +130,33 @@ impl SamplingMethodSelector {
             .collect()
     }
 
-    pub fn flex_points(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    pub fn flex_points_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        Self::flex_points(data, &FlexPointsParams::default())
+    }
+    
+    pub fn flex_points(data: &[[f64; 2]], config: &FlexPointsParams) -> Vec<[f64; 2]> {
         let x: Vec<f64> = data.into_iter().map(|x| x[0]).collect();
         let y: Vec<f64> = data.into_iter().map(|x| x[1]).collect();
 
         let output = fp::flex_points(
             &x,
             &y,
-            &[0.0, 0.5, 0.2, 0.0],
-            &[25, 25, 50]
-        );
+            &[
+                config.first_derivative, 
+                config.second_derivative, 
+                config.third_derivative, 
+                config.fourth_derivative
+            ]
+        ).unwrap_or(Array1::<usize>::from_vec(vec![]));
 
         output.into_iter().map(|i| [x[i], y[i]]).collect()
     }
 
     pub fn rdp_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
-        Self::rdp(data, &RamerDouglasPeucker::default())
+        Self::rdp(data, &RamerDouglasPeuckerParams::default())
     }
 
-    pub fn rdp(data: &[[f64; 2]], config: &RamerDouglasPeucker) -> Vec<[f64; 2]> {
+    pub fn rdp(data: &[[f64; 2]], config: &RamerDouglasPeuckerParams) -> Vec<[f64; 2]> {
         let x: Vec<f64> = data.into_iter().map(|x| x[0]).collect();
         let y: Vec<f64> = data.into_iter().map(|x| x[1]).collect();
 
@@ -176,7 +188,8 @@ pub(crate) struct Sequence1D {
     pub samples_bounds: (f32, f32),
     pub samples_shape: MarkerShape,
 
-    pub rdp: RamerDouglasPeucker
+    pub rdp: RamerDouglasPeuckerParams,
+    pub flex_points: FlexPointsParams
 }
 
 impl Default for Sequence1D {
@@ -209,11 +222,12 @@ impl Default for Sequence1D {
                 blue: 176 as f32 / 255.0, 
                 alpha: 0.8f32
             },
-            samples_radius: 5.0f32,
+            samples_radius: 3.5f32,
             samples_bounds: (0.0, 10.0),
             samples_shape: MarkerShape::Circle,
 
-            rdp: RamerDouglasPeucker::default()
+            rdp: RamerDouglasPeuckerParams::default(),
+            flex_points: FlexPointsParams::default()
         }
     }
 }
@@ -226,16 +240,34 @@ impl Sequence1D {
     }
 }
 
-pub struct RamerDouglasPeucker {
+pub struct RamerDouglasPeuckerParams {
     pub epsilon: f32,
     pub epsilon_bounds: (f32, f32)
 }
 
-impl Default for RamerDouglasPeucker {
+impl Default for RamerDouglasPeuckerParams {
     fn default() -> Self {
         Self { 
             epsilon: 0.05,
             epsilon_bounds: (0.001, 0.2)
+        }
+    }
+}
+
+pub struct FlexPointsParams {
+    pub first_derivative: bool,
+    pub second_derivative: bool,
+    pub third_derivative: bool,
+    pub fourth_derivative: bool,
+}
+
+impl Default for FlexPointsParams {
+    fn default() -> Self {
+        Self { 
+            first_derivative: true,
+            second_derivative: false,
+            third_derivative: true,
+            fourth_derivative: false,
         }
     }
 }

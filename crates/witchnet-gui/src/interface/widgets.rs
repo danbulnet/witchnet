@@ -98,7 +98,10 @@ pub fn combobox_row(
     combobox.response
 }
 
-pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
+pub fn checkbox_row(
+    ui: &mut Ui, label: &str, state: &mut bool
+) -> Option<Response> {
+    let mut checkbox = None;
     ui.horizontal(|ui| {
         let color = if *state { NEUTRAL_COLOR } else { NEUTRAL_INACTIVE_COLOR };
         let label_widget = RichText::new(label)
@@ -106,9 +109,10 @@ pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
             .size(STANDARD_TEXT_SIZE)
             .color(color);
         ui.label(label_widget);
-        ui.checkbox(state, "");
+        checkbox = Some(ui.checkbox(state, ""));
     });
     ui.end_row();
+    checkbox
 }
 
 pub fn slider_row(

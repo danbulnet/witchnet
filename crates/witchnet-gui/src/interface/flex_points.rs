@@ -91,6 +91,8 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         ui.vertical(|ui| {
             ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
 
+            let loaded = sequence_1d_res.loaded_sampling_method.clone();
+
             w::heading_label(ui, "sampling", common::NEUTRAL_ACTIVE_COLOR);
             
             ui.radio_value(
@@ -99,14 +101,40 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 "flex-points"
             );
 
+            if loaded == SamplingMethodSelector::FlexPoints {
+                let first_derivative_box = w::checkbox_row(
+                    ui, "first derivative", &mut sequence_1d_res.flex_points.first_derivative
+                );
+                if first_derivative_box.as_ref().unwrap().changed() {
+                    sequence_1d_res.update_samples()
+                }
+                let second_derivative_box = w::checkbox_row(
+                    ui, "second derivative", &mut sequence_1d_res.flex_points.second_derivative
+                );
+                if second_derivative_box.as_ref().unwrap().changed() {
+                    sequence_1d_res.update_samples()
+                }
+                let third_derivative_box = w::checkbox_row(
+                    ui, "third derivative", &mut sequence_1d_res.flex_points.third_derivative
+                );
+                if third_derivative_box.as_ref().unwrap().changed() {
+                    sequence_1d_res.update_samples()
+                }
+                let fourth_derivative_box = w::checkbox_row(
+                    ui, "fourth derivative", &mut sequence_1d_res.flex_points.fourth_derivative
+                );
+                if fourth_derivative_box.as_ref().unwrap().changed() {
+                    sequence_1d_res.update_samples()
+                }
+            }
+
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::RamerDouglasPeucker, 
                 "ramer-douglas-peucker"
             );
             
-            let loaded = &sequence_1d_res.loaded_sampling_method;
-            if loaded == &SamplingMethodSelector::RamerDouglasPeucker {
+            if loaded == SamplingMethodSelector::RamerDouglasPeucker {
                 let bounds = sequence_1d_res.rdp.epsilon_bounds.clone();
                 let slider = w::slider_row(
                     ui, 
