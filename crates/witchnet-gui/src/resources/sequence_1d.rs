@@ -158,6 +158,8 @@ pub(crate) struct Sequence1D {
     pub samples_radius: f32,
     pub samples_bounds: (f32, f32),
     pub samples_shape: MarkerShape,
+
+    pub rdp: RamerDouglasPeucker
 }
 
 impl Default for Sequence1D {
@@ -192,7 +194,19 @@ impl Default for Sequence1D {
             },
             samples_radius: 5.0f32,
             samples_bounds: (0.0, 10.0),
-            samples_shape: MarkerShape::Circle
+            samples_shape: MarkerShape::Circle,
+
+            rdp: RamerDouglasPeucker::default()
         }
+    }
+}
+
+pub struct RamerDouglasPeucker {
+    epsilon: f32
+}
+
+impl Default for RamerDouglasPeucker {
+    fn default() -> Self {
+        Self { epsilon: 0.05 }
     }
 }
