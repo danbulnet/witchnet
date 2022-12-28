@@ -95,10 +95,23 @@ pub(crate) enum SamplingMethodSelector {
 }
 
 impl SamplingMethodSelector {
-    pub(crate) fn samples(&self, data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    pub(crate) fn samples_default(&self, data: &[[f64; 2]]) -> Vec<[f64; 2]> {
         match self {
             SamplingMethodSelector::FlexPoints => Self::flex_points(data),
-            SamplingMethodSelector::RamerDouglasPeucker => Self::rdp(data),
+            SamplingMethodSelector::RamerDouglasPeucker => Self::rdp_default(data),
+            SamplingMethodSelector::Random => Self::random(data),
+            SamplingMethodSelector::None => vec![],
+        }
+    }
+
+    pub(crate) fn samples(
+        &self, 
+        data: &[[f64; 2]],
+        sequence_1d: &Sequence1D 
+    ) -> Vec<[f64; 2]> {
+        match self {
+            SamplingMethodSelector::FlexPoints => Self::flex_points(data),
+            SamplingMethodSelector::RamerDouglasPeucker => Self::rdp(data, &sequence_1d.rdp),
             SamplingMethodSelector::Random => Self::random(data),
             SamplingMethodSelector::None => vec![],
         }
@@ -127,13 +140,17 @@ impl SamplingMethodSelector {
         output.into_iter().map(|i| [x[i], y[i]]).collect()
     }
 
-    pub fn rdp(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    pub fn rdp_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        Self::rdp(data, &RamerDouglasPeucker::default())
+    }
+
+    pub fn rdp(data: &[[f64; 2]], config: &RamerDouglasPeucker) -> Vec<[f64; 2]> {
         let x: Vec<f64> = data.into_iter().map(|x| x[0]).collect();
         let y: Vec<f64> = data.into_iter().map(|x| x[1]).collect();
 
         let data_points: Vec<Point2<f64>> = data.into_iter().map(|x| Point2::from(*x)).collect();
 
-        ramer_douglas_peucker::rdp(&data_points, 0.05).into_iter()
+        ramer_douglas_peucker::rdp(&data_points, config.epsilon as f64).into_iter()
             .map(|i| [x[i], y[i]])
             .collect()
     }
@@ -169,7 +186,7 @@ impl Default for Sequence1D {
         Sequence1D {
             selected_sampling_method: SamplingMethodSelector::FlexPoints,
             loaded_sampling_method: SamplingMethodSelector::FlexPoints,
-            loaded_samples: SamplingMethodSelector::FlexPoints.samples(&loaded_data),
+            loaded_samples: SamplingMethodSelector::FlexPoints.samples_default(&loaded_data),
 
             selected_data_source: SequenceSelector::ComplexTrigonometric,
             loaded_data_source: SequenceSelector::ComplexTrigonometric,
@@ -201,12 +218,24 @@ impl Default for Sequence1D {
     }
 }
 
+impl Sequence1D {
+    pub(crate) fn update_samples(&mut self) {
+        self.loaded_samples = self.loaded_sampling_method.samples(
+            &self.loaded_data, &self
+        );
+    }
+}
+
 pub struct RamerDouglasPeucker {
-    epsilon: f32
+    pub epsilon: f32,
+    pub epsilon_bounds: (f32, f32)
 }
 
 impl Default for RamerDouglasPeucker {
     fn default() -> Self {
-        Self { epsilon: 0.05 }
+        Self { 
+            epsilon: 0.05,
+            epsilon_bounds: (0.001, 0.2)
+        }
     }
 }

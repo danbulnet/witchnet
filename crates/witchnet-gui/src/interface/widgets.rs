@@ -112,16 +112,19 @@ pub fn checkbox_row(ui: &mut Ui, label: &str, state: &mut bool) {
 }
 
 pub fn slider_row(
-    ui: &mut Ui, label: &str, value: &mut f32, bounds: (f32, f32)) {
+    ui: &mut Ui, label: &str, value: &mut f32, bounds: (f32, f32)
+) -> Option<Response> {
+    let mut slider = None;
     ui.horizontal(|ui| {
         let label_widget = RichText::new(label)
             .family(FontFamily::Proportional)
             .size(STANDARD_TEXT_SIZE)
             .color(NEUTRAL_COLOR);
         ui.label(label_widget);
-        Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui);
+        slider = Some(Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui));
     });
     ui.end_row();
+    slider
 }
 
 pub fn slider_row_usize(

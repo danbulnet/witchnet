@@ -92,26 +92,45 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
 
             w::heading_label(ui, "sampling", common::NEUTRAL_ACTIVE_COLOR);
+            
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::FlexPoints, 
                 "flex-points"
             );
+
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::RamerDouglasPeucker, 
                 "ramer-douglas-peucker"
             );
+            
+            let loaded = &sequence_1d_res.loaded_sampling_method;
+            if loaded == &SamplingMethodSelector::RamerDouglasPeucker {
+                let bounds = sequence_1d_res.rdp.epsilon_bounds.clone();
+                let slider = w::slider_row(
+                    ui, 
+                    "ε", 
+                    &mut sequence_1d_res.rdp.epsilon, 
+                    bounds
+                );
+                if slider.as_ref().unwrap().changed() {
+                    sequence_1d_res.update_samples()
+                }
+            }
+            
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::Random, 
                 "random"
             );
+            
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::None, 
                 "none"
             );
+            
             ui.separator(); ui.end_row();
         });
     });

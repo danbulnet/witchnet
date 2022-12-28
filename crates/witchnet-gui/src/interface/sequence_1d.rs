@@ -39,15 +39,13 @@ fn sequence_1d_control(
         sequence_1d_res.loaded_data = sequence_1d_res.loaded_data_source.data(Some(sequential_data_files_res));
 
         sequence_1d_res.loaded_samples = sequence_1d_res.loaded_sampling_method.samples(
-            &sequence_1d_res.loaded_data
+            &sequence_1d_res.loaded_data, &sequence_1d_res
         );
     }
 
     if sequence_1d_res.loaded_sampling_method != sequence_1d_res.selected_sampling_method {
         sequence_1d_res.loaded_sampling_method = sequence_1d_res.selected_sampling_method.clone();
-        sequence_1d_res.loaded_samples = sequence_1d_res.loaded_sampling_method.samples(
-            &sequence_1d_res.loaded_data
-        );
+        sequence_1d_res.update_samples()
     }
 }
 
