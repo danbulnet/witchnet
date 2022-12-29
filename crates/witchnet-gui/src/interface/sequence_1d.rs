@@ -38,9 +38,7 @@ fn sequence_1d_control(
         
         sequence_1d_res.loaded_data = sequence_1d_res.loaded_data_source.data(Some(sequential_data_files_res));
 
-        sequence_1d_res.loaded_samples = sequence_1d_res.loaded_sampling_method.samples(
-            &sequence_1d_res.loaded_data, &sequence_1d_res
-        );
+        sequence_1d_res.update_samples();
     }
 
     if sequence_1d_res.loaded_sampling_method != sequence_1d_res.selected_sampling_method {
@@ -75,5 +73,11 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 .shape(sequence_1d_res.samples_shape)
                 .color(utils::color_bevy_to_egui(&sequence_1d_res.samples_color));
             plot_ui.points(points);
+            let approximation = &sequence_1d_res.approximated_samples;
+            plot_ui.line(
+                Line::new(PlotPoints::from(approximation.clone()))
+                    .color(utils::color_bevy_to_egui(&sequence_1d_res.approximation_line_color))
+                    .width(sequence_1d_res.approximation_line_width)
+            );
         });
 }

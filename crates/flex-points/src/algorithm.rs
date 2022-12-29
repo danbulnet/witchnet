@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use ndarray::{ Array1, Axis, ArrayView };
 
@@ -30,26 +30,31 @@ pub fn flex_points(
         x, third_derivative.as_slice().unwrap(), 4
     );
 
-    let mut output = Array1::<usize>::from_vec(vec![]);
+    // let mut output = Array1::<usize>::from_vec(vec![]);
+    let mut output_set = BTreeSet::<usize>::new();
 
     if derivatives_used[0] {
         let output1 = find_negative_derivatives(&first_derivative);
-        output.append(Axis(0), output1.view()).unwrap();
+        output_set.extend(&mut output1.into_iter());
+        // output.append(Axis(0), output1.view()).unwrap();
     }
     if derivatives_used[1] {
         let output2 = find_negative_derivatives(&second_derivative);
-        output.append(Axis(0), output2.view()).unwrap();
+        output_set.extend(&mut output2.into_iter());
+        // output.append(Axis(0), output2.view()).unwrap();
     }
     if derivatives_used[2] {
         let output3 = find_negative_derivatives(&third_derivative);
-        output.append(Axis(0), output3.view()).unwrap();
+        output_set.extend(&mut output3.into_iter());
+        // output.append(Axis(0), output3.view()).unwrap();
     }
     if derivatives_used[3] {
         let output4 = find_negative_derivatives(&fourth_derivative);
-        output.append(Axis(0), output4.view()).unwrap();
+        output_set.extend(&mut output4.into_iter());
+        // output.append(Axis(0), output4.view()).unwrap();
     }
 
-    Ok(output)
+    Ok(Array1::<usize>::from_iter(output_set.into_iter()))
 }
 
 fn find_negative_derivatives(derivatives: &Array1<f64>) -> Array1<usize> {

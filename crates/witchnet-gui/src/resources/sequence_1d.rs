@@ -13,7 +13,10 @@ use bevy::prelude::*;
 
 use mint::Point2;
 
-use flex_points::algorithm as fp;
+use flex_points::{
+    algorithm as fp,
+    approximation
+};
 
 use crate::resources::sequential_data::SequentialDataFiles;
 
@@ -176,6 +179,7 @@ pub(crate) struct Sequence1D {
     pub selected_sampling_method: SamplingMethodSelector,
     pub loaded_sampling_method: SamplingMethodSelector,
     pub loaded_samples: Vec<[f64; 2]>,
+    pub approximated_samples: Vec<[f64; 2]>,
     
     pub line_color: Color,
     pub line_width: f32,
@@ -187,6 +191,9 @@ pub(crate) struct Sequence1D {
     pub samples_radius: f32,
     pub samples_bounds: (f32, f32),
     pub samples_shape: MarkerShape,
+    pub approximation_line_color: Color,
+    pub approximation_line_width: f32,
+    pub approximation_line_width_bounds: (f32, f32),
 
     pub rdp: RamerDouglasPeuckerParams,
     pub flex_points: FlexPointsParams
@@ -195,11 +202,17 @@ pub(crate) struct Sequence1D {
 impl Default for Sequence1D {
     fn default() -> Sequence1D {
         let loaded_data = SequenceSelector::ComplexTrigonometric.data(None);
+        let loaded_samples = SamplingMethodSelector::FlexPoints.samples_default(&loaded_data);
+        let approximated_samples = (&loaded_data).into_iter()
+            .map(|point| point[0])
+            .map(|x| [x, approximation::approximate_linearly(&loaded_samples, x).unwrap()])
+            .collect();
 
         Sequence1D {
             selected_sampling_method: SamplingMethodSelector::FlexPoints,
             loaded_sampling_method: SamplingMethodSelector::FlexPoints,
-            loaded_samples: SamplingMethodSelector::FlexPoints.samples_default(&loaded_data),
+            loaded_samples,
+            approximated_samples,
 
             selected_data_source: SequenceSelector::ComplexTrigonometric,
             loaded_data_source: SequenceSelector::ComplexTrigonometric,
@@ -225,6 +238,14 @@ impl Default for Sequence1D {
             samples_radius: 3.5f32,
             samples_bounds: (0.0, 10.0),
             samples_shape: MarkerShape::Circle,
+            approximation_line_color: Color::Rgba { 
+                red: 30 as f32 / 255.0, 
+                green: 129 as f32 / 255.0, 
+                blue: 176 as f32 / 255.0, 
+                alpha: 0.5f32
+            },
+            approximation_line_width: 0.5,
+            approximation_line_width_bounds: (0.0, 10.0),
 
             rdp: RamerDouglasPeuckerParams::default(),
             flex_points: FlexPointsParams::default()
@@ -237,6 +258,15 @@ impl Sequence1D {
         self.loaded_samples = self.loaded_sampling_method.samples(
             &self.loaded_data, &self
         );
+
+        self.approximated_samples = (&self.loaded_data).into_iter()
+            .map(|point| point[0])
+            .map(|x| [
+                x, 
+                approximation::approximate_linearly(&self.loaded_samples, x).unwrap_or(f64::NAN)
+            ])
+            .filter(|point| !point[1].is_nan())
+            .collect();
     }
 }
 

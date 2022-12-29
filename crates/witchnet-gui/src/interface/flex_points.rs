@@ -167,7 +167,7 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "line settings", common::NEUTRAL_ACTIVE_COLOR);
 
-    w::color_picker_row(ui, "line color", &mut sequence_1d_res.line_color);
+    w::color_picker_row(ui, "color", &mut sequence_1d_res.line_color);
 
     let bounds = sequence_1d_res.line_width_bounds.clone();
     w::slider_row(
@@ -189,7 +189,7 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 
     w::heading_label(ui, "samples settings", common::NEUTRAL_ACTIVE_COLOR);
 
-    w::color_picker_row(ui, "samples color", &mut sequence_1d_res.samples_color);
+    w::color_picker_row(ui, "color", &mut sequence_1d_res.samples_color);
 
     let bounds = sequence_1d_res.samples_bounds.clone();
     w::slider_row(
@@ -227,6 +227,20 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             }
         );
     });
+
+    ui.separator(); ui.end_row();
+
+    w::heading_label(ui, "approximation line settings", common::NEUTRAL_ACTIVE_COLOR);
+
+    w::color_picker_row(ui, "color", &mut sequence_1d_res.approximation_line_color);
+
+    let bounds = sequence_1d_res.approximation_line_width_bounds.clone();
+    w::slider_row(
+        ui, 
+        "size", 
+        &mut sequence_1d_res.approximation_line_width, 
+        bounds
+    );
 
     ui.separator(); ui.end_row();
 }
