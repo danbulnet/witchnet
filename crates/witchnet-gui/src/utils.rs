@@ -1,6 +1,6 @@
 use bevy::prelude::Color;
 
-use bevy_egui::egui::{ plot::MarkerShape, Color32 };
+use bevy_egui::egui::{ plot::{ MarkerShape, LineStyle }, Color32 };
 
 pub fn color_bevy_to_egui(color: &Color) -> Color32 {
     let [r, g, b, a] = color.as_rgba_f32();
@@ -24,6 +24,15 @@ pub fn shape_to_string(shape: &MarkerShape) -> String {
         MarkerShape::Left => "left".to_string(),
         MarkerShape::Right => "right".to_string(),
         MarkerShape::Asterisk => "asterisk".to_string(),
+    }
+}
+
+#[allow(unused)]
+pub fn line_style_to_string(shape: &LineStyle) -> String {
+    match shape {
+        LineStyle::Solid => "solid".to_string(),
+        LineStyle::Dashed { length } => "dashed".to_string(),
+        LineStyle::Dotted { spacing } => "dotted".to_string()
     }
 }
 

@@ -7,7 +7,7 @@ use bevy_egui::egui::{
         Plot,
         PlotPoints,
         Points,
-        MarkerShape
+        LineStyle
     }
 };
 
@@ -63,6 +63,7 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 Line::new(PlotPoints::from(data.clone()))
                     .color(utils::color_bevy_to_egui(&sequence_1d_res.line_color))
                     .width(sequence_1d_res.line_width)
+                    .style(sequence_1d_res.line_style)
             );
             
             let samples = &sequence_1d_res.loaded_samples;
@@ -78,6 +79,7 @@ fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 Line::new(PlotPoints::from(approximation.clone()))
                     .color(utils::color_bevy_to_egui(&sequence_1d_res.approximation_line_color))
                     .width(sequence_1d_res.approximation_line_width)
+                    .style(sequence_1d_res.approximation_line_style)
             );
         });
 }

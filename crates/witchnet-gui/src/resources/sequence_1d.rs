@@ -7,7 +7,7 @@ use ndarray::Array1;
 
 use rand::{ seq::IteratorRandom, thread_rng };
 
-use bevy_egui::egui::plot::{ MarkerShape, PlotPoints };
+use bevy_egui::egui::plot::{ MarkerShape, PlotPoints, LineStyle };
 
 use bevy::prelude::*;
 
@@ -35,7 +35,8 @@ impl SequenceSelector {
         match self {
             SequenceSelector::ComplexTrigonometric => Self::complex_trigonometric(),
             SequenceSelector::Tanh => Self::tanh(),
-            SequenceSelector::LoadedData(name) => Self::loaded_data_to_sequence(loaded_data, name),
+            SequenceSelector::LoadedData(name) 
+                => Self::loaded_data_to_sequence(loaded_data, name),
             SequenceSelector::None => vec![],
         }
     }
@@ -186,6 +187,9 @@ pub(crate) struct Sequence1D {
     pub line_width_bounds: (f32, f32),
     pub aspect_ratio: f32,
     pub aspect_ratio_bounds: (f32, f32),
+    pub line_style: LineStyle,
+    pub line_style_spacing: f32,
+    pub line_style_spacing_bounds: (f32, f32),
 
     pub samples_color: Color,
     pub samples_radius: f32,
@@ -194,6 +198,9 @@ pub(crate) struct Sequence1D {
     pub approximation_line_color: Color,
     pub approximation_line_width: f32,
     pub approximation_line_width_bounds: (f32, f32),
+    pub approximation_line_style: LineStyle,
+    pub approximation_line_style_spacing: f32,
+    pub approximation_line_style_spacing_bounds: (f32, f32),
 
     pub rdp: RamerDouglasPeuckerParams,
     pub flex_points: FlexPointsParams
@@ -228,14 +235,17 @@ impl Default for Sequence1D {
             line_width_bounds: (0.0, 10.0),
             aspect_ratio: 1.0,
             aspect_ratio_bounds: (0.1, 10.0),
+            line_style: LineStyle::Solid,
+            line_style_spacing: 2.0,
+            line_style_spacing_bounds: (1.0, 10.0),
 
             samples_color: Color::Rgba { 
                 red: 30 as f32 / 255.0, 
                 green: 129 as f32 / 255.0, 
                 blue: 176 as f32 / 255.0, 
-                alpha: 0.8f32
+                alpha: 0.58f32
             },
-            samples_radius: 3.5f32,
+            samples_radius: 2.5f32,
             samples_bounds: (0.0, 10.0),
             samples_shape: MarkerShape::Circle,
             approximation_line_color: Color::Rgba { 
@@ -246,6 +256,9 @@ impl Default for Sequence1D {
             },
             approximation_line_width: 0.5,
             approximation_line_width_bounds: (0.0, 10.0),
+            approximation_line_style: LineStyle::Dotted { spacing: 2.0 },
+            approximation_line_style_spacing: 2.0,
+            approximation_line_style_spacing_bounds: (1.0, 10.0),
 
             rdp: RamerDouglasPeuckerParams::default(),
             flex_points: FlexPointsParams::default()

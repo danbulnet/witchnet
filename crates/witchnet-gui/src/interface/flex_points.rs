@@ -5,7 +5,7 @@ use bevy_egui::egui::{
     Ui,
     Grid,
     ComboBox,
-    plot::MarkerShape
+    plot::{ MarkerShape, LineStyle }
 };
 
 use crate::{
@@ -185,6 +185,60 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         bounds
     );
 
+    ui.horizontal(|ui| {
+        w::heading_label(ui, "style", common::NEUTRAL_COLOR);
+        let current_style_str = utils::line_style_to_string(
+            &sequence_1d_res.line_style
+        );
+        ComboBox::from_id_source("line_style")
+            .selected_text(utils::shrink_str(&current_style_str, 25))
+            .show_ui(ui, |ui| {
+                let values = [
+                    LineStyle::Solid,
+                    LineStyle::Dashed { 
+                        length: sequence_1d_res.line_style_spacing 
+                    },
+                    LineStyle::Dotted { 
+                        spacing: sequence_1d_res.line_style_spacing 
+                    },
+                ];
+                for value in values {
+                    ui.selectable_value(
+                        &mut sequence_1d_res.line_style, 
+                        value, 
+                        utils::line_style_to_string(&value)
+                    );
+                }
+            }
+        );
+    });
+
+    #[allow(unused)]
+    if &sequence_1d_res.line_style != &LineStyle::Solid {
+        let bounds = sequence_1d_res.line_style_spacing_bounds.clone();
+        let slider = w::slider_row(
+            ui, 
+            "spacing", 
+            &mut sequence_1d_res.line_style_spacing, 
+            bounds
+        );
+        if slider.as_ref().unwrap().changed() {
+            match &sequence_1d_res.line_style {
+                LineStyle::Dashed { length } => {
+                    sequence_1d_res.line_style = LineStyle::Dashed { 
+                        length: sequence_1d_res.line_style_spacing 
+                    }
+                },
+                LineStyle::Dotted { spacing } => {
+                    sequence_1d_res.line_style = LineStyle::Dotted { 
+                        spacing: sequence_1d_res.line_style_spacing 
+                    }
+                },
+                _ => (),
+            }
+        }
+    }
+
     ui.separator(); ui.end_row();
 
     w::heading_label(ui, "samples settings", common::NEUTRAL_ACTIVE_COLOR);
@@ -241,6 +295,60 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
         &mut sequence_1d_res.approximation_line_width, 
         bounds
     );
+
+    ui.horizontal(|ui| {
+        w::heading_label(ui, "style", common::NEUTRAL_COLOR);
+        let current_style_str = utils::line_style_to_string(
+            &sequence_1d_res.approximation_line_style
+        );
+        ComboBox::from_id_source("approximation_line_style")
+            .selected_text(utils::shrink_str(&current_style_str, 25))
+            .show_ui(ui, |ui| {
+                let values = [
+                    LineStyle::Solid,
+                    LineStyle::Dashed { 
+                        length: sequence_1d_res.approximation_line_style_spacing 
+                    },
+                    LineStyle::Dotted { 
+                        spacing: sequence_1d_res.approximation_line_style_spacing 
+                    },
+                ];
+                for value in values {
+                    ui.selectable_value(
+                        &mut sequence_1d_res.approximation_line_style, 
+                        value, 
+                        utils::line_style_to_string(&value)
+                    );
+                }
+            }
+        );
+    });
+
+    #[allow(unused)]
+    if &sequence_1d_res.approximation_line_style != &LineStyle::Solid {
+        let bounds = sequence_1d_res.approximation_line_style_spacing_bounds.clone();
+        let slider = w::slider_row(
+            ui, 
+            "spacing", 
+            &mut sequence_1d_res.approximation_line_style_spacing, 
+            bounds
+        );
+        if slider.as_ref().unwrap().changed() {
+            match &sequence_1d_res.approximation_line_style {
+                LineStyle::Dashed { length } => {
+                    sequence_1d_res.approximation_line_style = LineStyle::Dashed { 
+                        length: sequence_1d_res.approximation_line_style_spacing 
+                    }
+                },
+                LineStyle::Dotted { spacing } => {
+                    sequence_1d_res.approximation_line_style = LineStyle::Dotted { 
+                        spacing: sequence_1d_res.approximation_line_style_spacing 
+                    }
+                },
+                _ => (),
+            }
+        }
+    }
 
     ui.separator(); ui.end_row();
 }
