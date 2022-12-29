@@ -165,6 +165,20 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 }
 
 fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+    line_settings(ui, sequence_1d_res);
+
+    ui.separator(); ui.end_row();
+
+    samples_settings(ui, sequence_1d_res);
+
+    ui.separator(); ui.end_row();
+
+    approximation_line_settings(ui, sequence_1d_res);
+
+    ui.separator(); ui.end_row();
+}
+
+fn line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "line settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.line_color);
@@ -238,9 +252,9 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             }
         }
     }
+}
 
-    ui.separator(); ui.end_row();
-
+fn samples_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "samples settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.samples_color);
@@ -281,9 +295,9 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             }
         );
     });
+}
 
-    ui.separator(); ui.end_row();
-
+fn approximation_line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "approximation line settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.approximation_line_color);
@@ -349,6 +363,4 @@ fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             }
         }
     }
-
-    ui.separator(); ui.end_row();
 }
