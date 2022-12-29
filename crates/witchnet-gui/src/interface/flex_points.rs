@@ -10,7 +10,7 @@ use bevy_egui::egui::{
 
 use crate::{
     resources::{
-        sequence_1d::{ Sequence1D, SamplingMethodSelector, SequenceSelector },
+        sequence_1d::{ Sequence1D, SamplingMethodSelector, SequenceSelector, SamplingMeasures },
         layout::DEFAULT_PANEL_WIDTH,
         common, 
         sequential_data::SequentialDataFiles
@@ -96,38 +96,45 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             let loaded = sequence_1d_res.loaded_sampling_method.clone();
 
             w::heading_label(ui, "sampling", common::NEUTRAL_ACTIVE_COLOR);
-            
+
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::FlexPoints, 
                 "flex-points"
             );
 
-            if loaded == SamplingMethodSelector::FlexPoints {
-                let first_derivative_box = w::checkbox_row(
-                    ui, "first derivative", &mut sequence_1d_res.flex_points.first_derivative
-                );
-                if first_derivative_box.as_ref().unwrap().changed() {
-                    sequence_1d_res.update_samples()
-                }
-                let second_derivative_box = w::checkbox_row(
-                    ui, "second derivative", &mut sequence_1d_res.flex_points.second_derivative
-                );
-                if second_derivative_box.as_ref().unwrap().changed() {
-                    sequence_1d_res.update_samples()
-                }
-                let third_derivative_box = w::checkbox_row(
-                    ui, "third derivative", &mut sequence_1d_res.flex_points.third_derivative
-                );
-                if third_derivative_box.as_ref().unwrap().changed() {
-                    sequence_1d_res.update_samples()
-                }
-                let fourth_derivative_box = w::checkbox_row(
-                    ui, "fourth derivative", &mut sequence_1d_res.flex_points.fourth_derivative
-                );
-                if fourth_derivative_box.as_ref().unwrap().changed() {
-                    sequence_1d_res.update_samples()
-                }
+            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::FlexPoints {
+                let id = ui.make_persistent_id("flex_points_settings");
+                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
+                    .show_header(ui, |ui| {
+                        ui.label("settings");
+                    })
+                    .body(|ui| {
+                        let first_derivative_box = w::checkbox_row(
+                            ui, "first derivative", &mut sequence_1d_res.flex_points.first_derivative
+                        );
+                        if first_derivative_box.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                        let second_derivative_box = w::checkbox_row(
+                            ui, "second derivative", &mut sequence_1d_res.flex_points.second_derivative
+                        );
+                        if second_derivative_box.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                        let third_derivative_box = w::checkbox_row(
+                            ui, "third derivative", &mut sequence_1d_res.flex_points.third_derivative
+                        );
+                        if third_derivative_box.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                        let fourth_derivative_box = w::checkbox_row(
+                            ui, "fourth derivative", &mut sequence_1d_res.flex_points.fourth_derivative
+                        );
+                        if fourth_derivative_box.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                    });
             }
 
             ui.radio_value(
@@ -135,18 +142,25 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 SamplingMethodSelector::RamerDouglasPeucker, 
                 "ramer-douglas-peucker"
             );
-            
-            if loaded == SamplingMethodSelector::RamerDouglasPeucker {
-                let bounds = sequence_1d_res.rdp.epsilon_bounds.clone();
-                let slider = w::slider_row(
-                    ui, 
-                    "ε", 
-                    &mut sequence_1d_res.rdp.epsilon, 
-                    bounds
-                );
-                if slider.as_ref().unwrap().changed() {
-                    sequence_1d_res.update_samples()
-                }
+
+            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::RamerDouglasPeucker {
+                let id = ui.make_persistent_id("rdp_settings");
+                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
+                    .show_header(ui, |ui| {
+                        ui.label("settings");
+                    })
+                    .body(|ui| {
+                        let bounds = sequence_1d_res.rdp.epsilon_bounds.clone();
+                        let slider = w::slider_row(
+                            ui, 
+                            "ε", 
+                            &mut sequence_1d_res.rdp.epsilon, 
+                            bounds
+                        );
+                        if slider.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                    });
             }
             
             ui.radio_value(
@@ -168,11 +182,32 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 
 fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "measures", common::NEUTRAL_ACTIVE_COLOR);
-    
+
+    let measures = &sequence_1d_res.sampling_measures;
     ui.columns(2, |cols| {
-        for (i, col) in cols.iter_mut().enumerate() {
-            col.label(format!("column {}", i + 1));
-        }
+        cols[0].label("cf");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.compression_factor));
+
+        cols[0].label("rmse");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.rmse));
+
+        cols[0].label("nrmse");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.nrmse));
+
+        cols[0].label("minrmse");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.minrmse));
+
+        cols[0].label("prd");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.prd));
+
+        cols[0].label("nprd");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.nprd));
+
+        cols[0].label("qs");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.quality_score));
+
+        cols[0].label("nqs");
+        cols[1].label(SamplingMeasures::value_to_string(&measures.normalized_quality_score));
     });
 
     ui.separator(); ui.end_row();

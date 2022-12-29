@@ -15,7 +15,8 @@ use mint::Point2;
 
 use flex_points::{
     algorithm as fp,
-    approximation
+    approximation,
+    measures
 };
 
 use crate::resources::sequential_data::SequentialDataFiles;
@@ -202,6 +203,8 @@ pub(crate) struct Sequence1D {
     pub approximation_line_style_spacing: f32,
     pub approximation_line_style_spacing_bounds: (f32, f32),
 
+    pub sampling_measures: SamplingMeasures,
+
     pub rdp: RamerDouglasPeuckerParams,
     pub flex_points: FlexPointsParams
 }
@@ -214,6 +217,8 @@ impl Default for Sequence1D {
             .map(|point| point[0])
             .map(|x| [x, approximation::approximate_linearly(&loaded_samples, x).unwrap()])
             .collect();
+        
+        let sampling_measures = Self::sampling_measures_data(&loaded_data, &loaded_samples);
 
         Sequence1D {
             selected_sampling_method: SamplingMethodSelector::FlexPoints,
@@ -248,6 +253,7 @@ impl Default for Sequence1D {
             samples_radius: 2.5f32,
             samples_bounds: (0.0, 10.0),
             samples_shape: MarkerShape::Circle,
+
             approximation_line_color: Color::Rgba { 
                 red: 30 as f32 / 255.0, 
                 green: 129 as f32 / 255.0, 
@@ -259,6 +265,8 @@ impl Default for Sequence1D {
             approximation_line_style: LineStyle::Dotted { spacing: 2.0 },
             approximation_line_style_spacing: 2.0,
             approximation_line_style_spacing_bounds: (1.0, 10.0),
+
+            sampling_measures,
 
             rdp: RamerDouglasPeuckerParams::default(),
             flex_points: FlexPointsParams::default()
@@ -280,6 +288,39 @@ impl Sequence1D {
             ])
             .filter(|point| !point[1].is_nan())
             .collect();
+
+        self.sampling_measures();
+    }
+
+    pub(crate) fn sampling_measures(&mut self) {
+        let data = &self.loaded_data;
+        let samples = &self.loaded_samples;
+
+        self.sampling_measures = Self::sampling_measures_data(data, samples);
+    }
+
+    pub(crate) fn sampling_measures_data(
+        data: &[[f64; 2]], samples: &[[f64; 2]]
+    ) -> SamplingMeasures {   
+        let compression_factor = measures::compression_factor_data(data, samples).ok();
+        let rmse = measures::rmse(data, samples).ok();
+        let nrmse = measures::nrmse(data, samples).ok();
+        let minrmse = measures::minrmse(data, samples).ok();
+        let prd = measures::prd(data, samples).ok();
+        let nprd = measures::nprd(data, samples).ok();
+        let quality_score = measures::quality_score(data, samples).ok();
+        let normalized_quality_score = measures::normalized_quality_score(data, samples).ok();
+
+        SamplingMeasures {
+            compression_factor,
+            rmse,
+            nrmse,
+            minrmse,
+            prd,
+            nprd,
+            quality_score,
+            normalized_quality_score
+        }
     }
 }
 
@@ -312,5 +353,38 @@ impl Default for FlexPointsParams {
             third_derivative: true,
             fourth_derivative: false,
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SamplingMeasures {
+    pub compression_factor: Option<f64>,
+    pub rmse: Option<f64>,
+    pub nrmse: Option<f64>,
+    pub minrmse: Option<f64>,
+    pub prd: Option<f64>,
+    pub nprd: Option<f64>,
+    pub quality_score: Option<f64>,
+    pub normalized_quality_score: Option<f64>
+}
+
+impl Default for SamplingMeasures {
+    fn default() -> Self {
+        SamplingMeasures {
+            compression_factor: None,
+            rmse: None,
+            nrmse: None,
+            minrmse: None,
+            prd: None,
+            nprd: None,
+            quality_score: None,
+            normalized_quality_score: None
+        }
+    }
+}
+
+impl SamplingMeasures {
+    pub fn value_to_string(value: &Option<f64>) -> String {
+        if let Some(v) = value { format!("{:.3}", v) } else { "".to_string() }
     }
 }
