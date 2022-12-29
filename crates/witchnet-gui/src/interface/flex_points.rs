@@ -29,7 +29,9 @@ pub(crate) fn flex_points(
         .show(ui, |ui| {
             data(ui, sequence_1d_res, sequential_data_files_res);
             
-            sampling(ui, sequence_1d_res);    
+            sampling(ui, sequence_1d_res);
+            
+            measures(ui, sequence_1d_res);
             
             appearance(ui, sequence_1d_res);
     });
@@ -162,6 +164,18 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
             ui.separator(); ui.end_row();
         });
     });
+}
+
+fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+    w::heading_label(ui, "measures", common::NEUTRAL_ACTIVE_COLOR);
+    
+    ui.columns(2, |cols| {
+        for (i, col) in cols.iter_mut().enumerate() {
+            col.label(format!("column {}", i + 1));
+        }
+    });
+
+    ui.separator(); ui.end_row();
 }
 
 fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
