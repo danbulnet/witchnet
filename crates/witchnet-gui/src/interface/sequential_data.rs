@@ -19,7 +19,7 @@ use magds::asynchronous::parser;
 use crate::{
     interface::{
         widgets,
-        graph::sequential_model_positions
+        graph::smagds::smagds_positions
     },
     resources::{
         appearance::{ Appearance, Selector },
@@ -37,11 +37,11 @@ use crate::{
             FILE_NAME_ERR_COLOR,
             DATA_PANEL_WIDTH
         },
-        sequential_model::{ 
-            SequentialMAGDS,
-            SequentialModelLoadedDatasets,
-            SequentialModelLoadedDataset,
-            SequentialModelPositions,
+        smagds::{ 
+            MainSMAGDS,
+            SMAGDSLoadedDatasets,
+            SMAGDSLoadedDataset,
+            SMAGDSPositions,
             ADDED_TO_SEQUENTIAL_MODEL_COLOR
         }
     },
@@ -51,9 +51,9 @@ use crate::{
 pub(crate) fn sequential_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
-    loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>,
-    magds_res: &mut ResMut<SequentialMAGDS>,
-    position_xy_res: &mut ResMut<SequentialModelPositions>,
+    loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
+    magds_res: &mut ResMut<MainSMAGDS>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     egui::ScrollArea::vertical()
@@ -138,7 +138,7 @@ pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<SequentialDataFiles>
             widgets::slider_row_usize(
                 ui, "limit", &mut data_file.rows_limit, (usize::min(1, nrows), nrows)
             );
-            widgets::checkbox_row(ui, "exequal sampling", &mut data_file.exequal_sampling);
+            widgets::checkbox_row(ui, "exequal sampling", &mut data_file.equal_sampling);
         }
     }
 }
@@ -160,70 +160,70 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<SequentialD
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
-    loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>,
-    sequential_model_res: &mut ResMut<SequentialMAGDS>,
-    position_xy_res: &mut ResMut<SequentialModelPositions>,
+    loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
+    smagds_res: &mut ResMut<MainSMAGDS>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
         ui.horizontal(|ui| {
-            let add_button = ui.button("add to sequential model");
+            let add_button = ui.button("add to smagds");
             if add_button.clicked() {
                 if let Some(df) = &data_file.data_frame {
                     let df_name = &data_file.name;
-                    // {
-                        // let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
-                        // let skip_features: Vec<&str> = (&data_file.features).into_iter()
-                        //     .filter(|(_key, value)| !**value)
-                        //     .map(|(key, _value)| &**key)
-                        //     .collect();
-                        // let mut magds = magds_res.0.write().unwrap();
-                        // parser::add_df_to_magds(
-                        //     &mut magds, 
-                        //     df_name, 
-                        //     df, 
-                        //     &skip_features, 
-                        //     data_file.rows_limit, 
-                        //     data_file.random_pick,
-                        //     Arc::new(ConstantOneWeightAsync),
-                        //     0.00001,
-                        //     1
-                        // );
-                    // }
+                    {
+                        let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
+                        let skip_features: Vec<&str> = (&data_file.features).into_iter()
+                            .filter(|(_key, value)| !**value)
+                            .map(|(key, _value)| &**key)
+                            .collect();
+                        let mut magds = smagds_res.0.write().unwrap();
+                        parser::add_df_to_magds(
+                            &mut magds, 
+                            df_name, 
+                            df, 
+                            &skip_features, 
+                            data_file.rows_limit, 
+                            data_file.equal_sampling,
+                            Arc::new(ConstantOneWeightAsync),
+                            0.00001,
+                            1
+                        );
+                    }
 
-                    // let sequential_model = sequential_model_res.0.read().unwrap();
-                    // for sensor in sequential_model.sensors() {
-                    //     let mut sensor = sensor.write().unwrap();
-                    //     let value = sensor.values().first().unwrap().clone();
-                    //     let _ = sensor.activate(&value, 1.0f32, true, true);
-                    // }
+                    let smagds = smagds_res.0.read().unwrap();
+                    for sensor in smagds.sensors() {
+                        let mut sensor = sensor.write().unwrap();
+                        let value = sensor.values().first().unwrap().clone();
+                        let _ = sensor.activate(&value, 1.0f32, true, true);
+                    }
                     
-                    // let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
-                    // for sensor_name in sequential_model.sensors_names() {
-                    //     let sensor_key = &Selector::One(sensor_name.clone());
-                    //     if !appearance_res.sensors.contains_key(sensor_key) {
-                    //         appearance_res.sensors.insert(
-                    //             sensor_key.clone(), sensor_appearance.clone()
-                    //         );
-                    //     }
-                    // }
-                    // let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
-                    // for neuron_name in sequential_model.neurons_names() {
-                    //     let neuron_key = &Selector::One(neuron_name.clone());
-                    //     if !appearance_res.neurons.contains_key(neuron_key) {
-                    //         appearance_res.neurons.insert(
-                    //             neuron_key.clone(), neuron_appearance.clone()
-                    //         );
-                    //     }
-                    // }
+                    let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
+                    for sensor_name in smagds.sensors_names() {
+                        let sensor_key = &Selector::One(sensor_name.clone());
+                        if !appearance_res.sensors.contains_key(sensor_key) {
+                            appearance_res.sensors.insert(
+                                sensor_key.clone(), sensor_appearance.clone()
+                            );
+                        }
+                    }
+                    let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
+                    for neuron_name in smagds.neurons_names() {
+                        let neuron_key = &Selector::One(neuron_name.clone());
+                        if !appearance_res.neurons.contains_key(neuron_key) {
+                            appearance_res.neurons.insert(
+                                neuron_key.clone(), neuron_appearance.clone()
+                            );
+                        }
+                    }
                     
-                    let loaded_dataset = SequentialModelLoadedDataset { 
+                    let loaded_dataset = SMAGDSLoadedDataset { 
                         name: df_name.to_string(), 
                         path: data_file.path.clone(),
                         rows: data_file.rows_limit,
                         rows_total: df.height(),
-                        exequal_sampling: data_file.exequal_sampling,
+                        exequal_sampling: data_file.equal_sampling,
                         features: (&data_file.features).into_iter()
                             .filter(|(_key, value)| **value)
                             .map(|(key, _value)| key.clone())
@@ -231,12 +231,12 @@ pub(crate) fn add_magds_button_row(
                     };
                     loaded_datasets_res.0.push(loaded_dataset);
 
-                //     sequential_model_positions::set_positions(
-                //         &sequential_model,
-                //         (0.0, 0.0),
-                //         position_xy_res, 
-                //         appearance_res
-                //     );
+                    smagds_positions::set_positions(
+                        &smagds,
+                        (0.0, 0.0),
+                        position_xy_res, 
+                        appearance_res
+                    );
                 }
             }
         });
@@ -244,7 +244,7 @@ pub(crate) fn add_magds_button_row(
     ui.end_row();
 }
 
-pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>) {
+pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>) {
     ui.separator(); ui.end_row();
     ui.label(RichText::new("loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
     ui.end_row();

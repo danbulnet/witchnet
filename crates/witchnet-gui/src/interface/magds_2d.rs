@@ -13,7 +13,7 @@ use crate::{
     },
     utils,
     interface::{
-        graph::magds_2d
+        graph::magds::magds_2d
     },
     widgets::plot::{
         Plot

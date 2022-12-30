@@ -19,7 +19,7 @@ use magds::asynchronous::parser;
 use crate::{
     interface::{
         widgets,
-        graph::magds_positions
+        graph::magds::magds_positions
     },
     resources::{
         appearance::{ Appearance, Selector },

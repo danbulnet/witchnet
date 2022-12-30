@@ -20,10 +20,10 @@ use crate::{
             MAGDSLoadedDatasets, 
             MAGDSPositions 
         },
-        sequential_model::{ 
-            SequentialMAGDS, 
-            SequentialModelLoadedDatasets, 
-            SequentialModelPositions 
+        smagds::{ 
+            MainSMAGDS, 
+            SMAGDSLoadedDatasets, 
+            SMAGDSPositions 
         },
         layout::{ 
             Layout, 
@@ -38,7 +38,7 @@ use crate::{
         appearance,
         magds_2d,
         magds_3d,
-        sequential_model_2d,
+        smagds_2d,
         sequence_1d,
         sensors,
         neurons,
@@ -54,11 +54,11 @@ pub(crate) fn app_layout(
     mut tabular_data_files_res: ResMut<TabularDataFiles>,
     mut sequential_data_files_res: ResMut<SequentialDataFiles>,
     mut magds_loaded_datasets_res: ResMut<MAGDSLoadedDatasets>,
-    mut sequential_model_loaded_datasets_res: ResMut<SequentialModelLoadedDatasets>,
+    mut sequential_model_loaded_datasets_res: ResMut<SMAGDSLoadedDatasets>,
     mut magds_res: ResMut<MainMAGDS>,
-    mut sequential_model_res: ResMut<SequentialMAGDS>,
+    mut smagds_res: ResMut<MainSMAGDS>,
     mut magds_positions_res: ResMut<MAGDSPositions>,
-    mut sequential_model_positions_res: ResMut<SequentialModelPositions>,
+    mut sequential_model_positions_res: ResMut<SMAGDSPositions>,
     mut sequence_1d_res: ResMut<Sequence1D>,
     mut appearance_res: ResMut<Appearance>,
 ) {
@@ -71,7 +71,7 @@ pub(crate) fn app_layout(
         &mut magds_loaded_datasets_res,
         &mut sequential_model_loaded_datasets_res,
         &mut magds_res,
-        &mut sequential_model_res,
+        &mut smagds_res,
         &mut magds_positions_res,
         &mut sequential_model_positions_res,
         &mut appearance_res
@@ -88,7 +88,7 @@ pub(crate) fn app_layout(
         &mut egui_context, 
         &mut layout_res,
         &mut magds_res,
-        &mut sequential_model_res,
+        &mut smagds_res,
         &mut magds_positions_res,
         &mut sequential_model_positions_res,
         &mut sequence_1d_res,
@@ -122,7 +122,7 @@ fn top_panel(
             if toggole_magds_3d.clicked() { layout_res.magds_3d_clicked() }
             
             let toggole_sequential_model_2d = ui.toggle_value(
-                &mut layout_res.sequential_model_2d, "⛓ sequential-model-2d"
+                &mut layout_res.sequential_model_2d, "⛓ smagds-2d"
             );
             if toggole_sequential_model_2d.clicked() { layout_res.sequential_model_2d_clicked() }
             
@@ -147,11 +147,11 @@ fn left_panel(
     tabular_data_files_res: &mut ResMut<TabularDataFiles>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
     magds_loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
-    sequential_model_loaded_datasets_res: &mut ResMut<SequentialModelLoadedDatasets>,
+    sequential_model_loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    sequential_model_res: &mut ResMut<SequentialMAGDS>,
+    smagds_res: &mut ResMut<MainSMAGDS>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
-    sequential_model_positions_res: &mut ResMut<SequentialModelPositions>,
+    sequential_model_positions_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     if layout_res.tabular_data {
@@ -189,7 +189,7 @@ fn left_panel(
                     ui,
                     sequential_data_files_res,
                     sequential_model_loaded_datasets_res,
-                    sequential_model_res,
+                    smagds_res,
                     sequential_model_positions_res,
                     appearance_res
                 );
@@ -279,9 +279,9 @@ fn central_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
-    sequential_model_res: &mut ResMut<SequentialMAGDS>,
+    smagds_res: &mut ResMut<MainSMAGDS>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
-    sequential_model_points_res: &mut ResMut<SequentialModelPositions>,
+    sequential_model_points_res: &mut ResMut<SMAGDSPositions>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
@@ -295,8 +295,8 @@ fn central_panel(
                 magds_3d::simulation(ui, magds_res, appearance_res);
             },
             LayoutCentralPanel::SequentialModel2D => {
-                sequential_model_2d::simulation(
-                    ui, sequential_model_res, sequential_model_points_res, appearance_res
+                smagds_2d::simulation(
+                    ui, smagds_res, sequential_model_points_res, appearance_res
                 );
             },
             LayoutCentralPanel::Sequence1D => {

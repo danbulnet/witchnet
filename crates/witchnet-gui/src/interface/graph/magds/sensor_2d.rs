@@ -31,7 +31,7 @@ use crate::{
         Nodes,
         NodeShape
     },
-    interface::graph::magds_positions
+    interface::graph::magds::magds_positions
 };
 
 fn weight(first: &DataTypeValue, second: &DataTypeValue, range: f32) -> f32 {

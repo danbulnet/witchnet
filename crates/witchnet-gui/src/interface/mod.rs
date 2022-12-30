@@ -6,7 +6,7 @@ pub mod app;
 pub mod layout;
 pub mod magds_2d;
 pub mod magds_3d;
-pub mod sequential_model_2d;
+pub mod smagds_2d;
 pub mod sequence_1d;
 pub mod sensors;
 pub mod neurons;

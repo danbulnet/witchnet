@@ -10,8 +10,6 @@ use bevy_egui::egui::{
 
 use bevy::prelude::*;
 
-use magds::asynchronous::sensor::SensorConatiner;
-
 use witchnet_common::{
     sensor::{SensorAsync, SensorData},
     data::{DataCategory, DataTypeValue}, 
@@ -23,7 +21,7 @@ use crate::{
         appearance::{ 
             NeuronAppearance, 
             ConnectionAppearance }, 
-        magds::MAGDSPositions
+        smagds::SMAGDSPositions
     },
     utils,
     widgets::plot::{
@@ -124,7 +122,7 @@ pub(crate) fn neurons(
     ui: &mut PlotUi, 
     name: &str, 
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
-    position_xy_res: &mut MAGDSPositions,
+    position_xy_res: &mut SMAGDSPositions,
     settings: &NeuronAppearance,
     connection_settings: &ConnectionAppearance,
 ) {

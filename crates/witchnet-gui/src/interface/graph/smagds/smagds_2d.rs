@@ -10,16 +10,16 @@ use witchnet_common::{
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        magds::{ MainMAGDS, MAGDSPositions, BIG_GAP_FACTOR }
+        smagds::{ MainSMAGDS, SMAGDSPositions, BIG_GAP_FACTOR }
     },
-    interface::graph::{ sensor_2d, neuron_2d },
+    interface::graph::smagds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
 };
 
-pub(crate) fn magds(
+pub(crate) fn smagds(
     ui: &mut PlotUi,
-    magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<MAGDSPositions>,
+    magds_res: &mut ResMut<MainSMAGDS>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     let neuron_settings = &appearance_res.neurons[&Selector::All];

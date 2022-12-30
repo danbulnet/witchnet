@@ -19,14 +19,14 @@ pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
 
 pub const SENSOR_TEXT_CUTOFF: usize = 6;
 
-pub struct SequentialMAGDS(pub Arc<RwLock<MAGDS>>);
+pub struct MainSMAGDS(pub Arc<RwLock<MAGDS>>);
 
-impl Default for SequentialMAGDS {
-    fn default() -> Self { SequentialMAGDS(MAGDS::new_arc()) }
+impl Default for MainSMAGDS {
+    fn default() -> Self { MainSMAGDS(MAGDS::new_arc()) }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct SequentialModelLoadedDataset {
+pub(crate) struct SMAGDSLoadedDataset {
     pub(crate) name: String,
     pub(crate) path: PathBuf,
     pub(crate) rows: usize,
@@ -36,22 +36,22 @@ pub(crate) struct SequentialModelLoadedDataset {
 }
 
 #[derive(Debug)]
-pub struct SequentialModelLoadedDatasets(pub(crate) Vec<SequentialModelLoadedDataset>);
+pub struct SMAGDSLoadedDatasets(pub(crate) Vec<SMAGDSLoadedDataset>);
 
-impl Default for SequentialModelLoadedDatasets {
-    fn default() -> Self { SequentialModelLoadedDatasets(Vec::new()) }
+impl Default for SMAGDSLoadedDatasets {
+    fn default() -> Self { SMAGDSLoadedDatasets(Vec::new()) }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct SequentialModelPositions {
+pub(crate) struct SMAGDSPositions {
     pub(crate) neurons: HashMap<NeuronID, (f64, f64)>,
     pub(crate) sensors: HashMap<u32, ((f64, f64), f64)>,
     pub(crate) sensor_neurons: HashMap<NeuronID, (f64, f64)>
 }
 
-impl Default for SequentialModelPositions {
+impl Default for SMAGDSPositions {
     fn default() -> Self {
-        SequentialModelPositions { 
+        SMAGDSPositions { 
             neurons: HashMap::new(), 
             sensors: HashMap::new(),
             sensor_neurons: HashMap::new()

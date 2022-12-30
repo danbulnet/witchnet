@@ -12,7 +12,7 @@ use crate::{
         appearance::{ Appearance, Selector },
         magds::{ MainMAGDS, MAGDSPositions, BIG_GAP_FACTOR }
     },
-    interface::graph::{ sensor_2d, neuron_2d },
+    interface::graph::magds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
 };
 

@@ -4,6 +4,6 @@ pub mod tabular_data;
 pub mod sequential_data;
 pub mod common;
 pub mod magds;
-pub mod sequential_model;
+pub mod smagds;
 pub mod sequence_1d;
 pub mod args;

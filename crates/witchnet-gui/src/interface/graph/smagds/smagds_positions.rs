@@ -25,8 +25,8 @@ use magds::asynchronous::{ magds::MAGDS, sensor::SensorConatiner };
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        sequential_model::{ 
-            SequentialModelPositions,
+        smagds::{ 
+            SMAGDSPositions,
             BIG_GAP_FACTOR,
             SMALL_GAP_FACTOR,
             SENSOR_NEURON_GAP_R_FRACTION
@@ -37,7 +37,7 @@ use crate::{
 pub(crate) fn set_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut ResMut<SequentialModelPositions>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     let radius = neuron_positions(magds, origin, position_xy_res, appearance_res);
@@ -55,7 +55,7 @@ fn sensor_positions(
     magds: &MAGDS,
     origin: (f64, f64),
     radius: f64,
-    mut position_xy_res: &mut ResMut<SequentialModelPositions>,
+    mut position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     let sensors = magds.sensors();
@@ -91,7 +91,7 @@ fn sensor_neurons_positions(
     angle: f64,
     level_gap: f64,
     sensor: &SensorConatiner,
-    position_xy_res: &mut SequentialModelPositions
+    position_xy_res: &mut SMAGDSPositions
 ) -> (f64, f64) {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
     let gap = SMALL_GAP_FACTOR as f64;
@@ -150,7 +150,7 @@ fn rotate_by_angle(
     points: &HashMap<NeuronID, (f64, f64)>,
     angle_in_radians: f64,
     origin: (f64, f64),
-    position_xy_res: &mut SequentialModelPositions
+    position_xy_res: &mut SMAGDSPositions
 ) {
     for (id, point) in &mut points.into_iter() {
         let point = rotate_point_around_origin(*point, origin, angle_in_radians);
@@ -299,7 +299,7 @@ fn sensor_to_asa_3_levels(
 fn neuron_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut ResMut<SequentialModelPositions>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>
 ) -> f64 {
     let neurons = magds.neurons();

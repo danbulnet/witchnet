@@ -25,7 +25,7 @@ pub(crate) struct SequentialDataFile {
     pub(crate) data_frame: Option<DataFrame>,
     pub(crate) features: BTreeMap<String, bool>,
     pub(crate) rows_limit: usize,
-    pub(crate) exequal_sampling: bool
+    pub(crate) equal_sampling: bool
 }
 
 #[derive(Debug)]
@@ -74,7 +74,7 @@ impl SequentialDataFiles {
                         .show();
                     data_files_res.current = None;
                 } else {
-                    let mut features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
+                    let features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
                         .get_column_names()
                         .into_iter()
                         .map(|x| (x.to_string(), true))
@@ -86,7 +86,7 @@ impl SequentialDataFiles {
                         data_frame, 
                         features,
                         rows_limit: nrows,
-                        exequal_sampling: false
+                        equal_sampling: false
                     };
                     data_files_res.history.push(data_file);
                     data_files_res.current = Some(data_files_res.history.len() - 1);

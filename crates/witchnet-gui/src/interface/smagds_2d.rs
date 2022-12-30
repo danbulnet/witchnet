@@ -7,9 +7,9 @@ use bevy_egui::egui::{
 use crate::{
     resources::{
         appearance::Appearance,
-        sequential_model::{ SequentialMAGDS, SequentialModelPositions }
+        smagds::{ MainSMAGDS, SMAGDSPositions }
     },
-    interface::graph::sequential_model_2d,
+    interface::graph::smagds::smagds_2d,
     widgets::plot::{
         Plot
     }
@@ -17,13 +17,13 @@ use crate::{
 
 pub(crate) fn simulation(
     ui: &mut Ui,
-    sequential_model_res: &mut ResMut<SequentialMAGDS>,
-    mut sequential_model_positions_res: &mut ResMut<SequentialModelPositions>,
+    smagds_res: &mut ResMut<MainSMAGDS>,
+    smagds_positions_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     let simulation_settings = &mut appearance_res.simulation2d;
 
-    let plot = Plot::new("sequential-model-2d")
+    let plot = Plot::new("smagds-2d")
         .allow_scroll(false)
         .allow_boxed_zoom(true)
         .label_formatter(|name, _value| format!("{name}"))
@@ -34,13 +34,7 @@ pub(crate) fn simulation(
         .x_axis_formatter(|_, _| "".to_string())
         .y_axis_formatter(|_, _| "".to_string())
         .show_axes(simulation_settings.show_grid);
-    ui.label("sequential-model-2d");
-        // plot.show(ui, |plot_ui| {
-    //     sequential_model_2d::magds(
-    //         plot_ui, 
-    //         sequential_model_res, 
-    //         sequential_model_positions_res, 
-    //         appearance_res
-    //     );
-    // });
+    plot.show(ui, |plot_ui| {
+        smagds_2d::smagds(plot_ui, smagds_res, smagds_positions_res, appearance_res);
+    });
 }
