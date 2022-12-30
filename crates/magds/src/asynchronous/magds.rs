@@ -17,6 +17,7 @@ use crate::neuron::simple_neuron_async::SimpleNeuron;
 
 use super::sensor::SensorConatiner;
 
+#[derive(Debug, Clone)]
 pub struct MAGDS {
     pub(crate) sensors: HashMap<u32, Arc<RwLock<SensorConatiner>>>,
     pub(crate) sensor_names: HashMap<u32, Arc<str>>,

@@ -1,0 +1,28 @@
+[package]
+name = "smagds"
+version = "0.1.0"
+edition.workspace = true
+description = "self-organizing graphs that facilitates and significantly accelerates various operations on sequential data"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+categories.workspace = true
+keywords = ["sequence", "signal modelling", "machine-learning", "associative", "graph"]
+default-run = "smagds"
+
+[lib]
+name = "smagds"
+path = "src/lib.rs"
+
+[[bin]]
+name = "smagds"
+path = "src/bin/main.rs"
+
+[dependencies]
+witchnet-common = { path = "../witchnet-common", version = "0.1.0" }
+magds = { path = "../magds", version = "0.1.0" }
+asa-graphs = { path = "../asa-graphs", version = "0.1.0" }
+flex-points = { path = "../flex-points", version = "0.1.0" }
+dyn-clone = "1.0.9"
+anyhow = "1.0.65"

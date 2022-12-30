@@ -16,7 +16,7 @@ use witchnet_common::{
     connection::collective::defining::DefiningWeightingStrategy
 };
 
-#[derive(EnumAsInner)]
+#[derive(EnumAsInner, Debug)]
 pub enum SensorConatiner {
     Bool(Box<dyn Sensor<bool>>),
     U8(Box<dyn Sensor<u8>>),

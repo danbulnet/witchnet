@@ -101,6 +101,19 @@ pub enum DataTypeValue {
     Unknown
 }
 
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub struct DataPoint2D {
+    pub x: DataTypeValue,
+    pub y: DataTypeValue
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub struct DataPoint3D {
+    pub x: DataTypeValue,
+    pub y: DataTypeValue,
+    pub z: DataTypeValue
+}
+
 impl DataTypeValue {
     pub fn is_type_same_as(&self, other: &DataTypeValue) -> bool {
         DataType::from(self) ==  DataType::from(other)

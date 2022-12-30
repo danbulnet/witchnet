@@ -2,7 +2,7 @@ use std::{
     sync::{ Arc, RwLock },
     rc::Rc,
     cell::RefCell,
-    fmt::Display,
+    fmt::{ Debug, Display, Formatter, Result as FmtResult },
     cmp::Ordering,
     any::Any,
     marker::PhantomData,
@@ -178,6 +178,12 @@ pub trait Sensor<D: SensorData>: Any + Display {
     // fn iterator(&self) -> Vec<D>;
 }
 
+impl<D: SensorData> Debug for dyn Sensor<D> {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{}", self)
+    }
+}
+
 pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
     fn id(&self) -> u32;
 
@@ -216,6 +222,12 @@ pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
     fn values(&self) -> Vec<D>;
 
     // fn iterator(&self) -> Vec<D>;
+}
+
+impl<D: SensorData> Debug for dyn SensorAsync<D> {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        write!(f, "{}", self)
+    }
 }
 
 pub trait SensorDynamicDowncast<D: SensorData> {

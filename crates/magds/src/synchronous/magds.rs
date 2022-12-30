@@ -9,6 +9,7 @@ use std::{
 use anyhow::Result;
 
 use asa_graphs::neural::graph::ASAGraph;
+
 use witchnet_common::{
     neuron::{ Neuron, NeuronID },
     data::{ DataType, DataTypeValue, DataCategory },
@@ -19,6 +20,7 @@ use crate::neuron::simple_neuron::SimpleNeuron;
 
 use super::sensor::SensorConatiner;
 
+#[derive(Debug, Clone)]
 pub struct MAGDS {
     pub(crate) sensors: HashMap<u32, Rc<RefCell<SensorConatiner>>>,
     pub(crate) sensor_names: HashMap<u32, Rc<str>>,

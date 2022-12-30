@@ -5,6 +5,7 @@ members = [
     "crates/witchnet-common",
     "crates/asa-graphs",
     "crates/magds",
+    "crates/smagds",
     "crates/witchnet-gui",
     "crates/flex-points",
 ]
