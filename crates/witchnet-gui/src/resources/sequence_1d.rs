@@ -98,6 +98,7 @@ pub(crate) enum SamplingMethodSelector {
     FlexPoints,
     RamerDouglasPeucker,
     Random,
+    Equal,
     None
 }
 
@@ -106,7 +107,8 @@ impl SamplingMethodSelector {
         match self {
             SamplingMethodSelector::FlexPoints => Self::flex_points_default(data),
             SamplingMethodSelector::RamerDouglasPeucker => Self::rdp_default(data),
-            SamplingMethodSelector::Random => Self::random(data),
+            SamplingMethodSelector::Random => Self::random_default(data),
+            SamplingMethodSelector::Equal => Self::equal_default(data),
             SamplingMethodSelector::None => vec![],
         }
     }
@@ -121,18 +123,65 @@ impl SamplingMethodSelector {
                 data, &sequence_1d.flex_points
             ),
             SamplingMethodSelector::RamerDouglasPeucker => Self::rdp(data, &sequence_1d.rdp),
-            SamplingMethodSelector::Random => Self::random(data),
+            SamplingMethodSelector::Random => Self::random(data, sequence_1d.random_sampling_n),
+            SamplingMethodSelector::Equal => Self::equal(data, sequence_1d.equal_sampling_n),
             SamplingMethodSelector::None => vec![],
         }
     }
 
-    pub fn random(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    pub fn random_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        Self::random(data, data.len() / 10)
+    }
+
+    pub fn random(data: &[[f64; 2]], mut n: usize) -> Vec<[f64; 2]> {
+        let data_len = data.len();
+        if data_len == 0 { return vec![] }
+        if n > data_len { n = data_len }
         let mut rng = thread_rng();
-        data.iter()
-            .choose_multiple(&mut rng, data.len() / 100)
+        let mut result: Vec<[f64; 2]> = data.iter()
+            .choose_multiple(&mut rng, n)
             .into_iter()
             .map(|x| *x)
-            .collect()
+            .collect();
+
+        result.sort_by(|a, b| a[0].partial_cmp(&b[0]).unwrap());
+
+        let data_first = *data.first().unwrap();
+        if let Some(f) = result.first() {
+            if f != &data_first { result.push(data_first) }
+        } else { result.push(data_first) }
+
+        let data_last = *data.last().unwrap();
+        if let Some(f) = result.last() {
+            if f != &data_last { result.push(data_last) }
+        } else { result.push(data_last) }
+
+        result.sort_by(|a, b| a[0].partial_cmp(&b[0]).unwrap());
+
+        result
+    }
+
+    pub fn equal_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
+        Self::equal(data, data.len() / 10)
+    }
+
+    pub fn equal(data: &[[f64; 2]], mut n: usize) -> Vec<[f64; 2]> {
+        let data_len = data.len();
+        if data_len == 0 { return vec![] }
+        if n > data_len { n = data_len }
+
+        let step = data_len / n;
+        let mut result: Vec<[f64; 2]> = Vec::new();
+        for i in 0..n {
+            result.push(data[i * step]);
+        }
+        if n == 0 { result.push(data[0]); }
+        let data_last = data.last().unwrap();
+        if result.last().unwrap() != data_last {
+            result.push(*data_last);
+        }
+
+        result
     }
 
     pub fn flex_points_default(data: &[[f64; 2]]) -> Vec<[f64; 2]> {
@@ -206,13 +255,16 @@ pub(crate) struct Sequence1D {
     pub sampling_measures: SamplingMeasures,
 
     pub rdp: RamerDouglasPeuckerParams,
-    pub flex_points: FlexPointsParams
+    pub flex_points: FlexPointsParams,
+    pub random_sampling_n: usize,
+    pub equal_sampling_n: usize,
 }
 
 impl Default for Sequence1D {
     fn default() -> Sequence1D {
         let loaded_data = SequenceSelector::ComplexTrigonometric.data(None);
         let loaded_samples = SamplingMethodSelector::FlexPoints.samples_default(&loaded_data);
+        let loaded_samples_len = loaded_samples.len();
         let approximated_samples = (&loaded_data).into_iter()
             .map(|point| point[0])
             .map(|x| [x, approximation::approximate_linearly(&loaded_samples, x).unwrap()])
@@ -230,13 +282,13 @@ impl Default for Sequence1D {
             loaded_data_source: SequenceSelector::ComplexTrigonometric,
             loaded_data,
 
-            line_color: Color::Rgba { 
-                red: 135 as f32 / 255.0, 
-                green: 62 as f32 / 255.0, 
-                blue: 35 as f32 / 255.0, 
+            line_color: Color::Rgba {
+                red: 164 as f32 / 255.0, 
+                green: 83 as f32 / 255.0, 
+                blue: 40 as f32 / 255.0, 
                 alpha: 1.0f32 
             },
-            line_width: 1.0,
+            line_width: 1.5,
             line_width_bounds: (0.0, 10.0),
             aspect_ratio: 1.0,
             aspect_ratio_bounds: (0.1, 10.0),
@@ -260,7 +312,7 @@ impl Default for Sequence1D {
                 blue: 176 as f32 / 255.0, 
                 alpha: 0.5f32
             },
-            approximation_line_width: 0.5,
+            approximation_line_width: 0.58,
             approximation_line_width_bounds: (0.0, 10.0),
             approximation_line_style: LineStyle::Dotted { spacing: 2.0 },
             approximation_line_style_spacing: 2.0,
@@ -269,7 +321,9 @@ impl Default for Sequence1D {
             sampling_measures,
 
             rdp: RamerDouglasPeuckerParams::default(),
-            flex_points: FlexPointsParams::default()
+            flex_points: FlexPointsParams::default(),
+            random_sampling_n: loaded_samples_len / 10,
+            equal_sampling_n: loaded_samples_len / 10
         }
     }
 }

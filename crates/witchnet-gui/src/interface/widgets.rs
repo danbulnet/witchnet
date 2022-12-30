@@ -132,16 +132,19 @@ pub fn slider_row(
 }
 
 pub fn slider_row_usize(
-    ui: &mut Ui, label: &str, value: &mut usize, bounds: (usize, usize)) {
+    ui: &mut Ui, label: &str, value: &mut usize, bounds: (usize, usize)
+) -> Option<Response> {
+    let mut slider = None;
     ui.horizontal(|ui| {
         let label_widget = RichText::new(label)
             .family(FontFamily::Proportional)
             .size(STANDARD_TEXT_SIZE)
             .color(NEUTRAL_COLOR);
         ui.label(label_widget);
-        Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui);
+        slider = Some(Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui));
     });
     ui.end_row();
+    slider
 }
 
 pub fn color_picker(ui: &mut egui::Ui, color: &mut Color) -> egui::Response {

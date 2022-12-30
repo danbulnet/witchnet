@@ -168,7 +168,53 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
                 SamplingMethodSelector::Random, 
                 "random"
             );
+
+            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::Random {
+                let id = ui.make_persistent_id("random_sampling_settings");
+                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
+                    .show_header(ui, |ui| {
+                        ui.label("settings");
+                    })
+                    .body(|ui| {
+                        let bounds = (2, sequence_1d_res.loaded_data.len());
+                        let slider = w::slider_row_usize(
+                            ui, 
+                            "n", 
+                            &mut sequence_1d_res.random_sampling_n, 
+                            bounds
+                        );
+                        if slider.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                    });
+            }
             
+            ui.radio_value(
+                &mut sequence_1d_res.selected_sampling_method, 
+                SamplingMethodSelector::Equal, 
+                "equal"
+            );
+
+            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::Equal {
+                let id = ui.make_persistent_id("equal_sampling_settings");
+                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
+                    .show_header(ui, |ui| {
+                        ui.label("settings");
+                    })
+                    .body(|ui| {
+                        let bounds = (2, sequence_1d_res.loaded_data.len());
+                        let slider = w::slider_row_usize(
+                            ui, 
+                            "n", 
+                            &mut sequence_1d_res.equal_sampling_n, 
+                            bounds
+                        );
+                        if slider.as_ref().unwrap().changed() {
+                            sequence_1d_res.update_samples()
+                        }
+                    });
+            }
+
             ui.radio_value(
                 &mut sequence_1d_res.selected_sampling_method, 
                 SamplingMethodSelector::None, 
