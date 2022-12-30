@@ -3,7 +3,7 @@ use std::sync::{ Arc, RwLock };
 use magds::asynchronous::magds::MAGDS;
 
 use witchnet_common::{
-    data::{ DataTypeValue, DataPoint2D, DataType },
+    data::{ DataTypeValue, DataPoint2D, DataType, DataDeductor },
     sensor::SensorData
 };
 
@@ -14,16 +14,11 @@ pub struct SMAGDS {
 }
 
 impl SMAGDS {
-    pub fn new() -> Self {
-        Self {
-            magds: MAGDS::new_arc(),
-            data: vec![]
-        }
-    }
-    
-    pub fn new_from_data<X: SensorData, Y: SensorData>(
+    pub fn new<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
         data: &[(X, Y)]
-    ) -> Self where DataTypeValue: From<X> + From<Y> {
+    ) -> anyhow::Result<Self> where DataTypeValue: From<X> + From<Y> {
+        if data.len() < 2 { anyhow::bail!("data length must be >= 2") }
+
         let mut converted_data: Vec<DataPoint2D> = data.into_iter()
             .map(|(x, y)| {
                 DataPoint2D {
@@ -33,13 +28,15 @@ impl SMAGDS {
             }).collect();
         converted_data.sort_unstable_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
 
-        Self {
-            magds: MAGDS::new_arc(),
-            data: converted_data
-        }
+        Ok(
+            Self {
+                magds: Arc::new(RwLock::new(MAGDS::new())),
+                data: converted_data
+            }
+        )
     }
 
-    pub fn add<X: SensorData, Y: SensorData>(
+    pub fn add<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
         &mut self, data: &[(X, Y)]
     ) -> anyhow::Result<()> where DataTypeValue: From<X> + From<Y> {
         if data.is_empty() { return Ok(()) }
@@ -75,6 +72,24 @@ impl SMAGDS {
 
         Ok(())
     }
+
+    fn prepare_sensory_fields<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
+        &mut self, data: &[(X, Y)]
+    ) where DataTypeValue: From<X> + From<Y> {
+        let mut magds = self.magds.write().unwrap();
+        let x_data_type = data[0].0.data_type();
+        let y_data_type = data[0].1.data_type();
+        
+        magds.create_sensor("x", x_data_type);
+        magds.create_sensor("y", y_data_type);
+        magds.create_sensor("x_interval", y_data_type);
+        magds.create_sensor("y_interval", y_data_type);
+        magds.create_sensor("y_entry", y_data_type);
+        magds.create_sensor("same_absolute_patterns_interval", y_data_type);
+        magds.create_sensor("same_relative_patterns_interval", y_data_type);
+        magds.create_sensor("different_absolute_patterns_interval", y_data_type);
+        magds.create_sensor("different_relative_patterns_interval", y_data_type);
+    }
 }
 
 mod tests {
@@ -82,30 +97,45 @@ mod tests {
 
     #[test]
     fn new() {
-        let smagds = SMAGDS::new();
-        assert_eq!(smagds.data.len(), 0);
-        println!("{:?}", smagds);
-
-        let smagds = SMAGDS::new_from_data(&[(1, 1), (2, 3), (3, 5)]);
+        let smagds = SMAGDS::new(&[(1, 1), (2, 3), (3, 5)]).unwrap();
         assert_eq!(smagds.data.len(), 3);
         println!("{:?}", smagds);
 
-        let smagds = SMAGDS::new_from_data(&[(1, 1.0), (2, 3.0), (3, 5.0)]);
+        let smagds = SMAGDS::new(&[(1, 1.0), (2, 3.0), (3, 5.0)]).unwrap();
         assert_eq!(smagds.data.len(), 3);
         println!("{:?}", smagds);
 
-        let smagds = SMAGDS::new_from_data(
+        let smagds = SMAGDS::new(
             &[(1, "1.0".to_owned()), (2, "3.0".to_owned()), (3, "5.0".to_owned())]
-        );
+        ).unwrap();
         assert_eq!(smagds.data.len(), 3);
         println!("{:?}", smagds);
     }
 
     #[test]
     fn add() {
-        let mut smagds = SMAGDS::new();
-        smagds.add(&[(1, 1.0), (2, 3.0), (3, 5.0)]);
-        assert_eq!(smagds.data.len(), 3);
+        let smagds = SMAGDS::new(&Vec::<(usize, f64)>::new());
+        assert!(smagds.is_err());
+
+        let smagds = SMAGDS::new(&vec![(1usize, 1.0)]);
+        assert!(smagds.is_err());
+
+        let mut smagds = SMAGDS::new(&vec![(1, 1.0), (2, 2.0)]).unwrap();
+        
+        smagds.add(&[(3, 3.0), (4, 4.0), (5, 5.0)]).unwrap();
+        assert_eq!(smagds.data.len(), 5);
         println!("{:?}", smagds);
+
+        assert!(
+            smagds.add(
+                &[(1, "1.0".to_owned()), (2, "3.0".to_owned()), (3, "5.0".to_owned())]
+            ).is_err()
+        );
+
+        assert!(
+            smagds.add(
+                &[(1.0, 1.0), (2.0, 3.0), (3.0, 5.0)]
+            ).is_err()
+        );
     }
 }
