@@ -1,6 +1,6 @@
 use std::sync::{ Arc, RwLock };
 
-use magds::asynchronous::magds::MAGDS;
+use magds::asynchronous::{magds::MAGDS, sensor::SensorConatiner};
 
 use witchnet_common::{
     data::{ DataTypeValue, DataPoint2D, DataType, DataDeductor },
@@ -8,9 +8,47 @@ use witchnet_common::{
 };
 
 #[derive(Debug, Clone)]
+pub struct SMAGDSParams {
+    pub max_pattern_length: (usize, Option<DataTypeValue>),
+}
+
+impl Default for SMAGDSParams {
+    fn default() -> Self {
+        Self {
+            max_pattern_length: (10, None)
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct SMAGDSSensors {
+    x: Arc<RwLock<SensorConatiner>>,
+    x_interval: Arc<RwLock<SensorConatiner>>,
+    y: Arc<RwLock<SensorConatiner>>,
+    y_interval: Arc<RwLock<SensorConatiner>>,
+    y_entry: Arc<RwLock<SensorConatiner>>,
+    same_absolute_patterns_interval: Arc<RwLock<SensorConatiner>>,
+    same_relative_patterns_interval: Arc<RwLock<SensorConatiner>>,
+    different_absolute_patterns_interval: Arc<RwLock<SensorConatiner>>,
+    different_relative_patterns_interval: Arc<RwLock<SensorConatiner>>
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct SMAGDSNeuronGropuIds {
+    pattern: u32,
+    same_absolute_patterns_interval: u32,
+    same_relative_patterns_interval: u32,
+    different_absolute_patterns_interval: u32,
+    different_relative_patterns_interval: u32
+}
+
+#[derive(Debug, Clone)]
 pub struct SMAGDS {
-    pub(crate) magds: Arc<RwLock<MAGDS>>,
-    pub(crate) data: Vec<DataPoint2D>
+    pub(crate) magds: MAGDS,
+    pub(crate) data: Vec<DataPoint2D>,
+    pub(crate) sensors: SMAGDSSensors,
+    pub(crate) neuron_group_ids: SMAGDSNeuronGropuIds,
+    pub params: SMAGDSParams
 }
 
 impl SMAGDS {
@@ -26,14 +64,20 @@ impl SMAGDS {
                     y: (*dyn_clone::clone_box(y)).into()
                 }
             }).collect();
-        converted_data.sort_unstable_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
+        converted_data.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
 
-        Ok(
-            Self {
-                magds: Arc::new(RwLock::new(MAGDS::new())),
-                data: converted_data
-            }
-        )
+        let mut magds = MAGDS::new();
+        let mut smagds = Self {
+            sensors: Self::prepare_sensory_fields(&mut magds, &converted_data),
+            neuron_group_ids: Self::prepare_neuron_gropus(&mut magds),
+            params: SMAGDSParams::default(),
+            magds: MAGDS::new(),
+            data: converted_data,
+        };
+
+        smagds.create_neurons();
+
+        Ok(smagds)
     }
 
     pub fn add<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
@@ -54,7 +98,7 @@ impl SMAGDS {
         if is_loaded_data_empty || first_converted.x.is_type_same_as(&self.data[0].x) {
             if is_loaded_data_empty || first_converted.y.is_type_same_as(&self.data[0].y) {
                 self.data.append(&mut converted_data);
-                self.data.sort_unstable_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
+                self.data.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
             } else {
                 anyhow::bail!(
                     "y: input data type {} and loaded data type {} are different", 
@@ -73,22 +117,72 @@ impl SMAGDS {
         Ok(())
     }
 
-    fn prepare_sensory_fields<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
-        &mut self, data: &[(X, Y)]
-    ) where DataTypeValue: From<X> + From<Y> {
-        let mut magds = self.magds.write().unwrap();
-        let x_data_type = data[0].0.data_type();
-        let y_data_type = data[0].1.data_type();
+    fn prepare_sensory_fields(magds: &mut MAGDS, data: &[DataPoint2D]) -> SMAGDSSensors {
+        let x_data_type: DataType = (&data[0].x).into();
+        let y_data_type: DataType = (&data[0].y).into();
+
+        let (x, _) = magds.create_sensor("x", x_data_type);
+        let (x_interval, _) = magds.create_sensor("x_interval", y_data_type);
+        let (y, _) = magds.create_sensor("y", y_data_type);
+        let (y_interval, _) = magds.create_sensor("y_interval", y_data_type);
+        let (y_entry, _) = magds.create_sensor("y_entry", y_data_type);
+        let (same_absolute_patterns_interval, _) = 
+            magds.create_sensor("same_absolute_patterns_interval", y_data_type);
+        let (same_relative_patterns_interval, _) = 
+            magds.create_sensor("same_relative_patterns_interval", y_data_type);
+        let (different_absolute_patterns_interval, _) = 
+            magds.create_sensor("different_absolute_patterns_interval", y_data_type);
+        let (different_relative_patterns_interval, _) = 
+            magds.create_sensor("different_relative_patterns_interval", y_data_type);
+
+        SMAGDSSensors {
+            x,
+            x_interval,
+            y,
+            y_interval,
+            y_entry,
+            same_absolute_patterns_interval,
+            same_relative_patterns_interval,
+            different_absolute_patterns_interval,
+            different_relative_patterns_interval
+        }
+    }
+
+    fn prepare_neuron_gropus(magds: &mut MAGDS) -> SMAGDSNeuronGropuIds {
+        let ids = SMAGDSNeuronGropuIds {
+            pattern: 0,
+            same_absolute_patterns_interval: 1,
+            same_relative_patterns_interval: 2,
+            different_absolute_patterns_interval: 3,
+            different_relative_patterns_interval: 4
+        };
+
+        magds.add_neuron_group(
+            "pattern", ids.pattern
+        );
+        magds.add_neuron_group(
+            "same_absolute_patterns_interval", ids.same_absolute_patterns_interval
+        );
+        magds.add_neuron_group(
+            "same_relative_patterns_interval", ids.same_relative_patterns_interval
+        );
+        magds.add_neuron_group(
+            "different_absolute_patterns_interval", ids.different_absolute_patterns_interval
+        );
+        magds.add_neuron_group(
+            "different_relative_patterns_interval", ids.different_relative_patterns_interval
+        );
+
+        ids
+    }
+
+    fn create_neurons(&mut self) {
+        let magds = &mut self.magds;
+        let data = &self.data;
         
-        magds.create_sensor("x", x_data_type);
-        magds.create_sensor("y", y_data_type);
-        magds.create_sensor("x_interval", y_data_type);
-        magds.create_sensor("y_interval", y_data_type);
-        magds.create_sensor("y_entry", y_data_type);
-        magds.create_sensor("same_absolute_patterns_interval", y_data_type);
-        magds.create_sensor("same_relative_patterns_interval", y_data_type);
-        magds.create_sensor("different_absolute_patterns_interval", y_data_type);
-        magds.create_sensor("different_relative_patterns_interval", y_data_type);
+        for point in data {
+
+        }
     }
 }
 
