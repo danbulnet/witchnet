@@ -13,7 +13,10 @@ use asa_graphs::neural_async::graph::ASAGraph;
 use witchnet_common::{
     polars::{ self as polars_common, DataVec, DataVecOption },
     neuron::{ NeuronAsync, NeuronID },
-    connection::{ConnectionKind, collective::defining::{ConstantOneWeightAsync, DefiningWeightingStrategyAsync}},
+    connection::{
+        ConnectionKind, 
+        collective::defining::{ ConstantOneWeightAsync, DefiningWeightingStrategyAsync }
+    },
     sensor::{ SensorAsync, SensorData },
     data::{ DataDeductor, DataTypeValue, DataType }
 };
