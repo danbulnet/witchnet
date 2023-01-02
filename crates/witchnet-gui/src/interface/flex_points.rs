@@ -19,21 +19,7 @@ use crate::{
     utils
 };
 
-pub(crate) fn flex_points(
-    ui: &mut Ui,
-    sequence_1d_res: &mut ResMut<Sequence1D>,
-    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
-) {
-    egui::ScrollArea::vertical()
-        .stick_to_bottom(true)
-        .show(ui, |ui| {           
-            measures(ui, sequence_1d_res);
-            
-            appearance(ui, sequence_1d_res);
-    });
-}
-
-fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+pub(crate) fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     w::heading_label(ui, "measures", common::NEUTRAL_ACTIVE_COLOR);
 
     let measures = &sequence_1d_res.sampling_measures;
@@ -75,7 +61,7 @@ fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     ui.separator(); ui.end_row();
 }
 
-fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+pub(crate) fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     line_settings(ui, sequence_1d_res);
 
     ui.separator(); ui.end_row();

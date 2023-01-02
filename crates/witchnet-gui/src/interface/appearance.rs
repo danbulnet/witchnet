@@ -14,7 +14,7 @@ use crate::{
 
 pub(crate) fn appearance_window(
     ui: &mut Ui,
-    appearance: &mut ResMut<Appearance>
+    appearance: &mut Appearance
 ) {
     ui.set_min_width(DEFAULT_PANEL_WIDTH);
 
@@ -30,7 +30,7 @@ pub(crate) fn appearance_window(
     connection_settings(ui, appearance);
 }
 
-fn simulation2d_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
+fn simulation2d_settings(mut ui: &mut Ui, appearance: &mut Appearance) {
     Grid::new("simulation_2d").show(&mut ui, |ui| {
         ui.label(RichText::new("simulation 2d").color(NEUTRAL_ACTIVE_COLOR).strong());
         ui.end_row();
@@ -42,7 +42,7 @@ fn simulation2d_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
     });
 }
 
-fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
+fn sensor_settings(mut ui: &mut Ui, appearance: &mut Appearance) {
     Grid::new("sensor").show(&mut ui, |ui| {
         let selector = appearance.selected_sensor.clone();
         let sensor = appearance.sensors.get(&selector).unwrap();
@@ -84,7 +84,7 @@ fn sensor_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
     });
 }
 
-fn neuron_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
+fn neuron_settings(mut ui: &mut Ui, appearance: &mut Appearance) {
     Grid::new("neuron").show(&mut ui, |ui| {
         let selector = appearance.selected_neuron.clone();
         let neuron = appearance.neurons.get(&selector).unwrap();
@@ -124,7 +124,7 @@ fn neuron_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
     });
 }
 
-fn connection_settings(mut ui: &mut Ui, appearance: &mut ResMut<Appearance>) {
+fn connection_settings(mut ui: &mut Ui, appearance: &mut Appearance) {
     Grid::new("connection").show(&mut ui, |ui| {
         let selector = appearance.selected_connection.clone();
         let connection = appearance.connections.get(&selector).unwrap();

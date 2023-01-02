@@ -12,21 +12,21 @@ use crate::{
         appearance::{ Appearance, Selector },
         smagds::{ SMAGDSMain, SMAGDSPositions, BIG_GAP_FACTOR }
     },
-    interface::graph::smagds::{ sensor_2d, neuron_2d },
+    interface::{graph::smagds::{ sensor_2d, neuron_2d }, appearance},
     widgets::plot::PlotUi
 };
 
 pub(crate) fn smagds(
     ui: &mut PlotUi,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    position_xy_res: &mut ResMut<SMAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>,
+    position_xy_res: &mut ResMut<SMAGDSPositions>
 ) {
-    let neuron_settings = &appearance_res.neurons[&Selector::All];
-    let sensor_settings = &appearance_res.sensors[&Selector::All];
-    let connection_settings = &appearance_res.connections[&Selector::All];
-
     if let Some(smagds) = &smagds_res.smagds {
+        let appearance = &smagds_res.appearance;
+        let neuron_settings = &appearance.neurons[&Selector::All];
+        let sensor_settings = &appearance.sensors[&Selector::All];
+        let connection_settings = &appearance.connections[&Selector::All];
+
         let smagds = smagds.read().unwrap();
 
         let magds = &smagds.magds;

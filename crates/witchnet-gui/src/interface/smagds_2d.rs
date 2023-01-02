@@ -18,11 +18,8 @@ use crate::{
 pub(crate) fn simulation(
     ui: &mut Ui,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    smagds_positions_res: &mut ResMut<SMAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>,
+    smagds_positions_res: &mut ResMut<SMAGDSPositions>
 ) {
-    let simulation_settings = &mut appearance_res.simulation2d;
-
     if smagds_res.smagds.is_some() {
         let plot = Plot::new("smagds-2d")
             .allow_scroll(false)
@@ -34,9 +31,9 @@ pub(crate) fn simulation(
             .data_aspect(1.0)
             .x_axis_formatter(|_, _| "".to_string())
             .y_axis_formatter(|_, _| "".to_string())
-            .show_axes(simulation_settings.show_grid);
+            .show_axes(smagds_res.appearance.simulation2d.show_grid);
         plot.show(ui, |plot_ui| {
-            smagds_2d::smagds(plot_ui, smagds_res, smagds_positions_res, appearance_res);
+            smagds_2d::smagds(plot_ui, smagds_res, smagds_positions_res);
         });
     } else {
         ui.label("click generate smagds button on sequential data pane");

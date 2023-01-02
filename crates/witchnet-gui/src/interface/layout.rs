@@ -42,11 +42,10 @@ use crate::{
         sequence_1d,
         sensors,
         neurons,
-        connections
+        connections,
+        flex_points
     }
 };
-
-use super::flex_points;
 
 pub(crate) fn app_layout(
     mut egui_context: ResMut<EguiContext>,
@@ -83,8 +82,7 @@ pub(crate) fn app_layout(
         &mut magds_res, 
         &mut smagds_res, 
         &mut sequence_1d_res,
-        &mut appearance_res,
-        &mut sequential_data_files_res
+        &mut appearance_res
     );
     central_panel(
         &mut egui_context, 
@@ -109,13 +107,13 @@ fn top_panel(
             
             ui.separator();
             
-            ui.toggle_value(&mut layout_res.tabular_data, "🖹 tabular data");
-            
-            ui.toggle_value(&mut layout_res.sequential_data, "〰 sequential data");
-            // ui.toggle_value(&mut state2, "🖵 appearance");
-            ui.toggle_value(&mut layout_res.appearance, "🔧 appearance");
+            ui.label("data:");
+            ui.toggle_value(&mut layout_res.tabular_data, "🖹 tabular");
+            ui.toggle_value(&mut layout_res.sequential_data, "〰 sequential");
             
             ui.separator();
+
+            ui.label("view:");
 
             let toggole_magds_2d = ui.toggle_value(&mut layout_res.magds_2d, "🔳 magds-2d");
             if toggole_magds_2d.clicked() { layout_res.magds_2d_clicked() }
@@ -124,21 +122,29 @@ fn top_panel(
             if toggole_magds_3d.clicked() { layout_res.magds_3d_clicked() }
             
             let toggole_flex_points = ui.toggle_value(
-                &mut layout_res.sequence_1d, "📈 sequence-2d"
+                &mut layout_res.sequence_2d, "📈 sequence-2d"
             );
             if toggole_flex_points.clicked() { layout_res.sequence_1d_clicked() }
 
             let toggole_sequential_model_2d = ui.toggle_value(
-                &mut layout_res.sequential_model_2d, "⛓ smagds-2d"
+                &mut layout_res.smagds_2d, "⛓ smagds-2d"
             );
             if toggole_sequential_model_2d.clicked() { layout_res.sequential_model_2d_clicked() }
-
+            
             ui.separator();
 
+            ui.label("stats:");
+            ui.toggle_value(&mut layout_res.flex_points, "∂ flex-points");
             ui.toggle_value(&mut layout_res.sensors, "Ψ sensors");
             ui.toggle_value(&mut layout_res.neurons, "❄ neurons");
             ui.toggle_value(&mut layout_res.connections, "🎟 connections");
-            ui.toggle_value(&mut layout_res.flex_points, "∂ flex-points");
+
+            ui.separator();
+            
+            ui.label("settings:");
+            ui.toggle_value(&mut layout_res.magds_appearance, "🔧 magds");
+            ui.toggle_value(&mut layout_res.smagds_appearance, "🔧 smagds");
+            ui.toggle_value(&mut layout_res.flex_points_appearance, "🔧 flex-points");
         });
     });
 }
@@ -200,19 +206,6 @@ fn left_panel(
             }
         );
     }
-    if layout_res.appearance {
-        SidePanel::left("appearance_panel")
-            .resizable(false)
-            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
-            .show(egui_context.ctx_mut(), |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("🔧 appearance");
-                });
-                ui.separator();
-                appearance::appearance_window(ui, appearance_res);
-            }
-        );
-    }
 }
 
 fn right_panel(
@@ -221,9 +214,60 @@ fn right_panel(
     magds_res: &mut ResMut<MainMAGDS>,
     smagds_res: &mut ResMut<SMAGDSMain>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>,
-    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
+    appearance_res: &mut ResMut<Appearance>
 ) {
+    if layout_res.flex_points_appearance {
+        SidePanel::right("flex_points_settings_panel")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("🔧 flex-points settings");
+                });
+                ui.separator();
+                flex_points::appearance(ui, sequence_1d_res);
+            }
+        );
+    }
+    if layout_res.smagds_appearance {
+        SidePanel::right("smagds_settings_panel")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("🔧 smagds settings");
+                });
+                ui.separator();
+                appearance::appearance_window(ui, &mut smagds_res.appearance);
+            }
+        );
+    }
+    if layout_res.magds_appearance {
+        SidePanel::right("magds_settings_panel")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("🔧 magds settings");
+                });
+                ui.separator();
+                appearance::appearance_window(ui, appearance_res);
+            }
+        );
+    }
+    if layout_res.flex_points {
+        SidePanel::right("flex_points")
+            .resizable(false)
+            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
+            .show(egui_context.ctx_mut(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("∂ flex-points stats");
+                });
+                ui.separator();
+                flex_points::measures(ui, sequence_1d_res);
+            }
+        );
+    }
     if layout_res.sensors {
         SidePanel::right("sensors_panel")
             .resizable(false)
@@ -246,7 +290,7 @@ fn right_panel(
                     ui.heading("Ψ neurons");
                 });
                 ui.separator();
-                neurons::neurons(ui, smagds_res);
+                neurons::neurons(ui, magds_res, appearance_res);
             }
         );
     }
@@ -260,21 +304,6 @@ fn right_panel(
                 });
                 ui.separator();
                 connections::connections(ui, magds_res, appearance_res);
-            }
-        );
-    }
-    if layout_res.flex_points {
-        SidePanel::right("flex_points")
-            .resizable(false)
-            .max_width(DEFAULT_PANEL_SCROLL_WIDTH)
-            .show(egui_context.ctx_mut(), |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("∂ flex-points");
-                });
-                ui.separator();
-                flex_points::flex_points(
-                    ui, sequence_1d_res, sequential_data_files_res
-                );
             }
         );
     }
@@ -300,9 +329,7 @@ fn central_panel(
                 magds_3d::simulation(ui, magds_res, appearance_res);
             },
             LayoutCentralPanel::SequentialModel2D => {
-                smagds_2d::simulation(
-                    ui, smagds_res, sequential_model_points_res, appearance_res
-                );
+                smagds_2d::simulation(ui, smagds_res, sequential_model_points_res);
             },
             LayoutCentralPanel::Sequence1D => {
                 sequence_1d::simulation(
