@@ -121,15 +121,15 @@ fn top_panel(
             let toggole_magds_3d = ui.toggle_value(&mut layout_res.magds_3d, "📦 magds-3d");
             if toggole_magds_3d.clicked() { layout_res.magds_3d_clicked() }
             
+            let toggole_flex_points = ui.toggle_value(
+                &mut layout_res.sequence_1d, "📈 sequence-2d"
+            );
+            if toggole_flex_points.clicked() { layout_res.sequence_1d_clicked() }
+
             let toggole_sequential_model_2d = ui.toggle_value(
                 &mut layout_res.sequential_model_2d, "⛓ smagds-2d"
             );
             if toggole_sequential_model_2d.clicked() { layout_res.sequential_model_2d_clicked() }
-            
-            let toggole_flex_points = ui.toggle_value(
-                &mut layout_res.sequence_1d, "📈 sequence-1d"
-            );
-            if toggole_flex_points.clicked() { layout_res.sequence_1d_clicked() }
 
             ui.separator();
 

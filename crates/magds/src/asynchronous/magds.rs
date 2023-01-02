@@ -232,13 +232,17 @@ impl MAGDS {
         for neuron in &mut self.neurons { neuron.write().unwrap().deactivate(false, false); }
     }
 
-    pub fn add_neuron_group(&mut self, group_name: &str, group_id: u32) {
+    pub fn add_neuron_group(&mut self, group_name: &str, group_id: Option<u32>) -> u32 {
+        let new_id: u32 = if let Some(id) = group_id { id } else {
+            *self.neuron_group_names.keys().max().unwrap_or(&0) + 1
+        };
         let group_name_rc: Arc<str> = group_name.into();
-        self.neuron_group_names.insert(group_id, group_name_rc.clone());
+        self.neuron_group_names.insert(new_id, group_name_rc.clone());
         match self.neuron_group_ids.get_mut(&group_name_rc) {
-            Some(v) => v.push(group_id),
-            None => { self.neuron_group_ids.insert(group_name_rc, vec![group_id]); }
+            Some(v) => v.push(new_id),
+            None => { self.neuron_group_ids.insert(group_name_rc, vec![new_id]); }
         }
+        new_id
     }
 
     pub fn neuron_group_ids(&self, name: &str) -> Option<&[u32]> { 
@@ -320,7 +324,7 @@ mod tests {
             NeuronID { id: 2, parent_id }
         );
 
-        magds.add_neuron_group("1", parent_id);
+        magds.add_neuron_group("1", Some(parent_id));
         println!("{:?}", magds.neuron_group_ids);
         assert_eq!(magds.neuron_group_ids("1").unwrap().first().unwrap(), &1);
         assert_eq!(magds.neuron_group_name(1).unwrap(), "1");

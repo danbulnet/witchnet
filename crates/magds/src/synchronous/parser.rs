@@ -527,7 +527,7 @@ pub fn add_df_to_magds(
         neurons.push(neuron.clone());
         magds.add_neuron(neuron as Rc<RefCell<dyn Neuron>>);
     }
-    magds.add_neuron_group(df_name, neuron_group_id);
+    magds.add_neuron_group(df_name, Some(neuron_group_id));
 
     for column in df.get_columns() {
         if !skip_columns.contains(&column.name()) {
