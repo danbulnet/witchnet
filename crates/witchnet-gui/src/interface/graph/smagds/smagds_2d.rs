@@ -10,7 +10,7 @@ use witchnet_common::{
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        smagds::{ MainSMAGDS, SMAGDSPositions, BIG_GAP_FACTOR }
+        smagds::{ SMAGDSMain, SMAGDSPositions, BIG_GAP_FACTOR }
     },
     interface::graph::smagds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
@@ -18,7 +18,7 @@ use crate::{
 
 pub(crate) fn smagds(
     ui: &mut PlotUi,
-    magds_res: &mut ResMut<MainSMAGDS>,
+    smagds_res: &mut ResMut<SMAGDSMain>,
     position_xy_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
@@ -26,70 +26,32 @@ pub(crate) fn smagds(
     let sensor_settings = &appearance_res.sensors[&Selector::All];
     let connection_settings = &appearance_res.connections[&Selector::All];
 
-    let magds = magds_res.0.read().unwrap();
-    let sensors = magds.sensors();
-    let neurons = magds.neurons();
+    if let Some(smagds) = &smagds_res.smagds {
+        let smagds = smagds.read().unwrap();
 
-    let mut current_top_x = 0.0f64;
-    let mut current_bottom_x = 0.0f64;
-    let mut sensor_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::new();
+        let magds = &smagds.magds;
+        let sensors = magds.sensors();
+        let neurons = magds.neurons();
 
-    neuron_2d::neurons(
-        ui, 
-        "neurons", 
-        neurons, 
-        position_xy_res,
-        neuron_settings, 
-        connection_settings,
-    );
-
-    for sensor in sensors {
-        let sensor_id = sensor.read().unwrap().id();
-        sensor_2d::sensory_field(
+        neuron_2d::neurons(
             ui, 
-            &magds.sensor_name(sensor_id).unwrap(),
-            sensor.clone(),
+            "neurons", 
+            neurons, 
             position_xy_res,
-            sensor_settings,
-            connection_settings
+            neuron_settings, 
+            connection_settings,
         );
-        // current_top_x += x + 2.0 * sensor_settings.size as f64;
 
-        // if current_top_x < current_bottom_x {
-        //     let (current_map, x) = sensor_2d::sensor(
-        //         ui, 
-        //         &sensor_name,
-        //         position, 
-        //         sensor.clone(), 
-        //         sensor_settings,
-        //         connection_settings,
-        //         false
-        //     );
-        //     current_top_x += x + 2.0 * sensor_settings.size as f64;
-        //     sensor_point_map.extend(current_map);
-        // } else {
-        //     let (current_map, x) = sensor_2d::sensor(
-        //         ui, 
-        //         &sensor_name,
-        //         (current_bottom_x, 0.0), 
-        //         sensor.clone(), 
-        //         sensor_settings,
-        //         connection_settings,
-        //         true
-        //     );
-        //     current_bottom_x += x + 2.0 * sensor_settings.size as f64;
-        //     sensor_point_map.extend(current_map);
-        // }
+        for sensor in sensors {
+            let sensor_id = sensor.read().unwrap().id();
+            sensor_2d::sensory_field(
+                ui, 
+                &magds.sensor_name(sensor_id).unwrap(),
+                sensor.clone(),
+                position_xy_res,
+                sensor_settings,
+                connection_settings
+            );
+        }
     }
-
-    // neuron_2d::neurons(
-    //     ui, 
-    //     "neurons", 
-    //     (0.0, 10.0), 
-    //     neurons, 
-    //     neuron_settings, 
-    //     connection_settings,
-    //     f64::max(current_top_x, current_bottom_x) - 2.0 * sensor_settings.size as f64,
-    //     sensor_point_map
-    // );
 }

@@ -41,7 +41,7 @@ pub(crate) fn set_positions(
     appearance_res: &mut ResMut<Appearance>
 ) {
     let radius = neuron_positions(magds, origin, position_xy_res, appearance_res);
-    
+
     sensor_positions(
         magds, 
         origin, 

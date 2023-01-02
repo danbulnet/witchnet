@@ -21,7 +21,7 @@ use crate::{
             MAGDSPositions 
         },
         smagds::{ 
-            MainSMAGDS, 
+            SMAGDSMain, 
             SMAGDSLoadedDatasets, 
             SMAGDSPositions 
         },
@@ -56,7 +56,7 @@ pub(crate) fn app_layout(
     mut magds_loaded_datasets_res: ResMut<MAGDSLoadedDatasets>,
     mut sequential_model_loaded_datasets_res: ResMut<SMAGDSLoadedDatasets>,
     mut magds_res: ResMut<MainMAGDS>,
-    mut smagds_res: ResMut<MainSMAGDS>,
+    mut smagds_res: ResMut<SMAGDSMain>,
     mut magds_positions_res: ResMut<MAGDSPositions>,
     mut sequential_model_positions_res: ResMut<SMAGDSPositions>,
     mut sequence_1d_res: ResMut<Sequence1D>,
@@ -74,12 +74,14 @@ pub(crate) fn app_layout(
         &mut smagds_res,
         &mut magds_positions_res,
         &mut sequential_model_positions_res,
-        &mut appearance_res
+        &mut appearance_res,
+        &mut sequence_1d_res
     );
     right_panel(
         &mut egui_context, 
         &mut layout_res,
         &mut magds_res, 
+        &mut smagds_res, 
         &mut sequence_1d_res,
         &mut appearance_res,
         &mut sequential_data_files_res
@@ -133,8 +135,8 @@ fn top_panel(
 
             ui.separator();
 
-            ui.toggle_value(&mut layout_res.sensors, "❄ sensors");
-            ui.toggle_value(&mut layout_res.neurons, "Ψ neurons");
+            ui.toggle_value(&mut layout_res.sensors, "Ψ sensors");
+            ui.toggle_value(&mut layout_res.neurons, "❄ neurons");
             ui.toggle_value(&mut layout_res.connections, "🎟 connections");
             ui.toggle_value(&mut layout_res.flex_points, "∂ flex-points");
         });
@@ -149,10 +151,11 @@ fn left_panel(
     magds_loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
     sequential_model_loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
-    smagds_res: &mut ResMut<MainSMAGDS>,
+    smagds_res: &mut ResMut<SMAGDSMain>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
     sequential_model_positions_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
+    sequence_1d_res: &mut ResMut<Sequence1D>
 ) {
     if layout_res.tabular_data {
         SidePanel::left("tabular_data_panel")
@@ -191,7 +194,8 @@ fn left_panel(
                     sequential_model_loaded_datasets_res,
                     smagds_res,
                     sequential_model_positions_res,
-                    appearance_res
+                    appearance_res,
+                    sequence_1d_res
                 );
             }
         );
@@ -215,6 +219,7 @@ fn right_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
+    smagds_res: &mut ResMut<SMAGDSMain>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
@@ -241,7 +246,7 @@ fn right_panel(
                     ui.heading("Ψ neurons");
                 });
                 ui.separator();
-                neurons::neurons(ui, magds_res, appearance_res);
+                neurons::neurons(ui, smagds_res);
             }
         );
     }
@@ -279,7 +284,7 @@ fn central_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MainMAGDS>,
-    smagds_res: &mut ResMut<MainSMAGDS>,
+    smagds_res: &mut ResMut<SMAGDSMain>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
     sequential_model_points_res: &mut ResMut<SMAGDSPositions>,
     sequence_1d_res: &mut ResMut<Sequence1D>,

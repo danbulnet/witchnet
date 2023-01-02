@@ -8,7 +8,7 @@ use crate::{
         tabular_data::TabularDataFiles,
         sequential_data::SequentialDataFiles,
         magds::{ MainMAGDS, MAGDSLoadedDatasets, MAGDSPositions },
-        smagds::{ MainSMAGDS, SMAGDSLoadedDatasets, SMAGDSPositions },
+        smagds::{ SMAGDSMain, SMAGDSLoadedDatasets, SMAGDSPositions },
         sequence_1d::Sequence1D,
         layout::Layout, 
         args::ProgramArgs
@@ -22,7 +22,7 @@ pub fn app(args: Vec<String>) {
         .add_plugin(EguiPlugin)
         .insert_resource(Layout::default())
         .insert_resource(MainMAGDS::default())
-        .insert_resource(MainSMAGDS::default())
+        .insert_resource(SMAGDSMain::default())
         .insert_resource(MAGDSLoadedDatasets::default())
         .insert_resource(SMAGDSLoadedDatasets::default())
         .insert_resource(MAGDSPositions::default())

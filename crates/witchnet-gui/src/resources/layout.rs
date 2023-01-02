@@ -30,17 +30,17 @@ impl Default for Layout {
         Layout { 
             central_panel: CentralPanel::MAGDS2D, 
 
-            tabular_data: true,
-            sequential_data: false,
+            tabular_data: false,
+            sequential_data: true,
             appearance: false,
-            magds_2d: true,
+            magds_2d: false,
             magds_3d: false,
-            sequential_model_2d: false,
             sequence_1d: false,
+            sequential_model_2d: true,
             sensors: false,
             neurons: false,
             connections: false,
-            flex_points: false,
+            flex_points: true,
         }
     }   
 }

@@ -26,203 +26,10 @@ pub(crate) fn flex_points(
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
-        .show(ui, |ui| {
-            data(ui, sequence_1d_res, sequential_data_files_res);
-            
-            sampling(ui, sequence_1d_res);
-            
+        .show(ui, |ui| {           
             measures(ui, sequence_1d_res);
             
             appearance(ui, sequence_1d_res);
-    });
-}
-
-fn data(
-    ui: &mut Ui, 
-    sequence_1d_res: &mut ResMut<Sequence1D>,
-    sequential_data_files_res: &mut ResMut<SequentialDataFiles>
-) {
-    Grid::new("flex-points data").show(ui, |ui| {
-        ui.vertical(|ui| {
-            ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
-
-            w::heading_label(ui, "predefined data", common::NEUTRAL_ACTIVE_COLOR);
-            ui.radio_value(
-                &mut sequence_1d_res.selected_data_source, 
-                SequenceSelector::ComplexTrigonometric, 
-                "complex trigonometric"
-            );
-            ui.radio_value(
-                &mut sequence_1d_res.selected_data_source, 
-                SequenceSelector::Tanh, 
-                "tanh"
-            );
-            ui.radio_value(
-                &mut sequence_1d_res.selected_data_source, 
-                SequenceSelector::None, 
-                "none"
-            );
-
-            if let Some(data_file) = sequential_data_files_res.current_data_file() {
-                if let Some(data_frame) = &data_file.data_frame {
-                    let mut numeric_columns = vec![];
-                    for column in data_frame.get_columns() {
-                        if column.is_numeric_physical() {
-                            numeric_columns.push(column.name())
-                        }
-                    }
-                    if !numeric_columns.is_empty() {
-                        w::heading_label(ui, "loaded data", common::NEUTRAL_ACTIVE_COLOR);
-                        for column in numeric_columns {
-                            ui.radio_value(
-                                &mut sequence_1d_res.selected_data_source, 
-                                SequenceSelector::LoadedData(column.to_string()), 
-                                column
-                            );
-                        }
-                    }
-                }
-            }
-            ui.separator(); ui.end_row();
-        });
-    });
-}
-
-fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
-    Grid::new("flex-points sampling").show(ui, |ui| {
-        ui.vertical(|ui| {
-            ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
-
-            let loaded = sequence_1d_res.loaded_sampling_method.clone();
-
-            w::heading_label(ui, "sampling", common::NEUTRAL_ACTIVE_COLOR);
-
-            ui.radio_value(
-                &mut sequence_1d_res.selected_sampling_method, 
-                SamplingMethodSelector::FlexPoints, 
-                "flex-points"
-            );
-
-            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::FlexPoints {
-                let id = ui.make_persistent_id("flex_points_settings");
-                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
-                    .show_header(ui, |ui| {
-                        ui.label("settings");
-                    })
-                    .body(|ui| {
-                        let first_derivative_box = w::checkbox_row(
-                            ui, "first derivative", &mut sequence_1d_res.flex_points.first_derivative
-                        );
-                        if first_derivative_box.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                        let second_derivative_box = w::checkbox_row(
-                            ui, "second derivative", &mut sequence_1d_res.flex_points.second_derivative
-                        );
-                        if second_derivative_box.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                        let third_derivative_box = w::checkbox_row(
-                            ui, "third derivative", &mut sequence_1d_res.flex_points.third_derivative
-                        );
-                        if third_derivative_box.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                        let fourth_derivative_box = w::checkbox_row(
-                            ui, "fourth derivative", &mut sequence_1d_res.flex_points.fourth_derivative
-                        );
-                        if fourth_derivative_box.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                    });
-            }
-
-            ui.radio_value(
-                &mut sequence_1d_res.selected_sampling_method, 
-                SamplingMethodSelector::RamerDouglasPeucker, 
-                "ramer-douglas-peucker"
-            );
-
-            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::RamerDouglasPeucker {
-                let id = ui.make_persistent_id("rdp_settings");
-                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
-                    .show_header(ui, |ui| {
-                        ui.label("settings");
-                    })
-                    .body(|ui| {
-                        let bounds = sequence_1d_res.rdp.epsilon_bounds.clone();
-                        let slider = w::slider_row(
-                            ui, 
-                            "ε", 
-                            &mut sequence_1d_res.rdp.epsilon, 
-                            bounds
-                        );
-                        if slider.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                    });
-            }
-            
-            ui.radio_value(
-                &mut sequence_1d_res.selected_sampling_method, 
-                SamplingMethodSelector::Random, 
-                "random"
-            );
-
-            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::Random {
-                let id = ui.make_persistent_id("random_sampling_settings");
-                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
-                    .show_header(ui, |ui| {
-                        ui.label("settings");
-                    })
-                    .body(|ui| {
-                        let bounds = (2, sequence_1d_res.loaded_data.len());
-                        let slider = w::slider_row_usize(
-                            ui, 
-                            "n", 
-                            &mut sequence_1d_res.random_sampling_n, 
-                            bounds
-                        );
-                        if slider.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                    });
-            }
-            
-            ui.radio_value(
-                &mut sequence_1d_res.selected_sampling_method, 
-                SamplingMethodSelector::Equal, 
-                "equal"
-            );
-
-            if sequence_1d_res.selected_sampling_method == SamplingMethodSelector::Equal {
-                let id = ui.make_persistent_id("equal_sampling_settings");
-                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
-                    .show_header(ui, |ui| {
-                        ui.label("settings");
-                    })
-                    .body(|ui| {
-                        let bounds = (2, sequence_1d_res.loaded_data.len());
-                        let slider = w::slider_row_usize(
-                            ui, 
-                            "n", 
-                            &mut sequence_1d_res.equal_sampling_n, 
-                            bounds
-                        );
-                        if slider.as_ref().unwrap().changed() {
-                            sequence_1d_res.update_samples()
-                        }
-                    });
-            }
-
-            ui.radio_value(
-                &mut sequence_1d_res.selected_sampling_method, 
-                SamplingMethodSelector::None, 
-                "none"
-            );
-            
-            ui.separator(); ui.end_row();
-        });
     });
 }
 
@@ -231,6 +38,15 @@ fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 
     let measures = &sequence_1d_res.sampling_measures;
     ui.columns(2, |cols| {
+        cols[0].label("sampled points");
+        cols[1].label(
+            format!(
+                "{} / {}",
+                sequence_1d_res.loaded_samples.len(),
+                sequence_1d_res.loaded_data.len()
+            )
+        );
+
         cols[0].label("cf");
         cols[1].label(SamplingMeasures::value_to_string(&measures.compression_factor));
 

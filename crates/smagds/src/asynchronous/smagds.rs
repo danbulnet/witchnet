@@ -61,8 +61,8 @@ pub(crate) struct SMAGDSNeuronGropuIds {
 
 #[derive(Debug, Clone)]
 pub struct SMAGDS {
-    pub(crate) magds: MAGDS,
-    pub(crate) data: Vec<DataPoint2D>,
+    pub magds: MAGDS,
+    pub data: Vec<DataPoint2D>,
     pub(crate) sensors: SMAGDSSensors,
     pub(crate) neuron_group_ids: SMAGDSNeuronGropuIds,
     pub params: SMAGDSParams
@@ -89,7 +89,7 @@ impl SMAGDS {
             sensors: Self::prepare_sensory_fields(&mut magds, &converted_data),
             neuron_group_ids: Self::prepare_neuron_gropus(&mut magds, params.max_pattern_level),
             params,
-            magds: MAGDS::new(),
+            magds,
             data: converted_data,
         };
 

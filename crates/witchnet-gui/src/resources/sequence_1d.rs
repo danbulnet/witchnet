@@ -1,6 +1,7 @@
 use std::{
     sync::Arc,
-    default::Default
+    default::Default,
+    string::ToString
 };
 
 use ndarray::Array1;
@@ -24,6 +25,7 @@ use crate::resources::sequential_data::SequentialDataFiles;
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SequenceSelector {
     ComplexTrigonometric,
+    ComplexTrigonometricShort,
     Tanh,
     LoadedData(String),
     None
@@ -35,6 +37,7 @@ impl SequenceSelector {
     ) -> Vec<[f64; 2]> {
         match self {
             SequenceSelector::ComplexTrigonometric => Self::complex_trigonometric(),
+            SequenceSelector::ComplexTrigonometricShort => Self::complex_trigonometric_short(),
             SequenceSelector::Tanh => Self::tanh(),
             SequenceSelector::LoadedData(name) 
                 => Self::loaded_data_to_sequence(loaded_data, name),
@@ -87,6 +90,23 @@ impl SequenceSelector {
                 )
             },
             -10.0..10.0,
+            2000,
+        );
+        values.points().into_iter().map(|p| [p.x, p.y]).collect()
+    }
+
+    pub fn complex_trigonometric_short() -> Vec<[f64; 2]> {
+        let values = PlotPoints::from_parametric_callback(
+            move |x| {
+                (
+                    x,
+                    f64::sin(2.0 * x - 2.0) 
+                    + x.powi(2).cos() 
+                    + 0.5 * f64::cos(3.0 * f64::powi(x - 0.5, 2))
+                    + x.tanh()
+                )
+            },
+            -2.0..2.0,
             2000,
         );
         values.points().into_iter().map(|p| [p.x, p.y]).collect()
@@ -219,6 +239,18 @@ impl SamplingMethodSelector {
         ramer_douglas_peucker::rdp(&data_points, config.epsilon as f64).into_iter()
             .map(|i| [x[i], y[i]])
             .collect()
+    }
+}
+
+impl ToString for SamplingMethodSelector {
+    fn to_string(&self) -> String {
+        match self {
+            SamplingMethodSelector::FlexPoints => "flex points",
+            SamplingMethodSelector::RamerDouglasPeucker => "rdp",
+            SamplingMethodSelector::Random => "random",
+            SamplingMethodSelector::Equal => "equal",
+            SamplingMethodSelector::None => "none",
+        }.to_string()
     }
 }
 
