@@ -17,8 +17,7 @@ use crate::{
 
 pub(crate) fn simulation(
     ui: &mut Ui,
-    smagds_res: &mut ResMut<SMAGDSMain>,
-    smagds_positions_res: &mut ResMut<SMAGDSPositions>
+    smagds_res: &mut ResMut<SMAGDSMain>
 ) {
     if smagds_res.smagds.is_some() {
         let plot = Plot::new("smagds-2d")
@@ -33,7 +32,7 @@ pub(crate) fn simulation(
             .y_axis_formatter(|_, _| "".to_string())
             .show_axes(smagds_res.appearance.simulation2d.show_grid);
         plot.show(ui, |plot_ui| {
-            smagds_2d::smagds(plot_ui, smagds_res, smagds_positions_res);
+            smagds_2d::smagds(plot_ui, smagds_res);
         });
     } else {
         ui.label("click generate smagds button on sequential data pane");

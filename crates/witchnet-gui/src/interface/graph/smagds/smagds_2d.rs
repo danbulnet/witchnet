@@ -18,16 +18,15 @@ use crate::{
 
 pub(crate) fn smagds(
     ui: &mut PlotUi,
-    smagds_res: &mut ResMut<SMAGDSMain>,
-    position_xy_res: &mut ResMut<SMAGDSPositions>
+    mut smagds_res: &mut SMAGDSMain
 ) {
-    if let Some(smagds) = &smagds_res.smagds {
-        let appearance = &smagds_res.appearance;
+    if smagds_res.smagds.is_some() {
+        let &mut SMAGDSMain { smagds, appearance, loaded_dataset, positions } = &mut smagds_res;
         let neuron_settings = &appearance.neurons[&Selector::All];
         let sensor_settings = &appearance.sensors[&Selector::All];
         let connection_settings = &appearance.connections[&Selector::All];
 
-        let smagds = smagds.read().unwrap();
+        let smagds = smagds.as_ref().unwrap().read().unwrap();
 
         let magds = &smagds.magds;
         let sensors = magds.sensors();
@@ -37,7 +36,7 @@ pub(crate) fn smagds(
             ui, 
             "neurons", 
             neurons, 
-            position_xy_res,
+            positions,
             neuron_settings, 
             connection_settings,
         );
@@ -48,7 +47,7 @@ pub(crate) fn smagds(
                 ui, 
                 &magds.sensor_name(sensor_id).unwrap(),
                 sensor.clone(),
-                position_xy_res,
+                positions,
                 sensor_settings,
                 connection_settings
             );

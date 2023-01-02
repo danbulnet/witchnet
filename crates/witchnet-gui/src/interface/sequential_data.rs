@@ -11,14 +11,6 @@ use rfd::FileDialog;
 
 use smagds::asynchronous::smagds::SMAGDS;
 
-use witchnet_common::{
-    sensor::SensorAsync, 
-    connection::collective::defining::ConstantOneWeightAsync, 
-    data::DataPoint2D
-};
-
-use magds::asynchronous::parser;
-
 use crate::{
     interface::{
         widgets,
@@ -57,9 +49,7 @@ use crate::{
 pub(crate) fn sequential_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
-    loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
-    magds_res: &mut ResMut<SMAGDSMain>,
-    position_xy_res: &mut ResMut<SMAGDSPositions>,
+    smagds_res: &mut ResMut<SMAGDSMain>,
     appearance_res: &mut ResMut<Appearance>,
     sequence_1d_res: &mut ResMut<Sequence1D>
 ) {
@@ -80,15 +70,12 @@ pub(crate) fn sequential_data_window(
             
             add_magds_button_row(
                 ui, 
-                data_files_res, 
-                loaded_datasets_res,
-                magds_res,
-                position_xy_res,
-                appearance_res,
+                data_files_res,
+                smagds_res,
                 sequence_1d_res
             );
 
-            loaded_files(ui, loaded_datasets_res);
+            loaded_files(ui, &mut smagds_res.loaded_dataset);
         });
 }
 
@@ -172,10 +159,7 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<SequentialD
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
-    loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
-    smagds_res: &mut ResMut<SMAGDSMain>,
-    position_xy_res: &mut ResMut<SMAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>,
+    mut smagds_res: &mut SMAGDSMain,
     sequence_1d_res: &mut ResMut<Sequence1D>
 ) {
     if !sequence_1d_res.loaded_samples.is_empty() {
@@ -187,32 +171,37 @@ pub(crate) fn add_magds_button_row(
                 let sampled_data: Vec<_> = (&sequence_1d_res.loaded_samples).into_iter()
                     .map(|point| (point[0] as f32, point[1] as f32))
                     .collect();
+                    
+                let &mut SMAGDSMain { smagds, appearance, loaded_dataset, positions } = &mut smagds_res;
 
-                smagds_res.smagds = Some(
+                *smagds = Some(
                     Arc::new(RwLock::new(SMAGDS::new(&sampled_data).unwrap()))
                 );
-                let mut smagds = smagds_res.smagds.as_ref().unwrap().write().unwrap();
-                let magds = &mut smagds.magds;
 
-                // let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
-                // for sensor_name in magds.sensors_names() {
-                //     let sensor_key = &Selector::One(sensor_name.clone());
-                //     if !appearance_res.sensors.contains_key(sensor_key) {
-                //         appearance_res.sensors.insert(
-                //             sensor_key.clone(), sensor_appearance.clone()
-                //         );
-                //     }
-                // }
-                // let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
-                // for neuron_name in magds.neurons_names() {
-                //     let neuron_key = &Selector::One(neuron_name.clone());
-                //     if !appearance_res.neurons.contains_key(neuron_key) {
-                //         appearance_res.neurons.insert(
-                //             neuron_key.clone(), neuron_appearance.clone()
-                //         );
-                //     }
-                // }
+                let (sensors_names, neurons_names) = {
+                    let smagds = smagds.as_ref().unwrap().read().unwrap();
+                    (smagds.magds.sensors_names(), smagds.magds.neurons_names())
+                };
 
+                let sensor_appearance = appearance.sensors[&Selector::All].clone();
+                for sensor_name in sensors_names {
+                    let sensor_key = &Selector::One(sensor_name.clone());
+                    if !appearance.sensors.contains_key(sensor_key) {
+                        appearance.sensors.insert(
+                            sensor_key.clone(), sensor_appearance.clone()
+                        );
+                    }
+                }
+                let neuron_appearance = appearance.neurons[&Selector::All].clone();
+                for neuron_name in neurons_names {
+                    let neuron_key = &Selector::One(neuron_name.clone());
+                    if !appearance.neurons.contains_key(neuron_key) {
+                        appearance.neurons.insert(
+                            neuron_key.clone(), neuron_appearance.clone()
+                        );
+                    }
+                }
+            
                 let name = match &sequence_1d_res.loaded_data_source {
                     SequenceSelector::ComplexTrigonometric => "complex trigonometric",
                     SequenceSelector::ComplexTrigonometricShort => {
@@ -229,13 +218,16 @@ pub(crate) fn add_magds_button_row(
                     sequence_length: sequence_1d_res.loaded_data.len(),
                     samples: sampled_data.len()
                 };
-                loaded_datasets_res.0 = vec![loaded_dataset];
+                smagds_res.loaded_dataset = vec![loaded_dataset];
+                
+                let mut smagds = smagds_res.smagds.as_ref().unwrap().write().unwrap();
+                let magds = &mut smagds.magds;
 
                 smagds_positions::set_positions(
                     &magds,
                     (0.0, 0.0),
-                    position_xy_res,
-                    appearance_res
+                    &mut smagds_res.positions,
+                    &smagds_res.appearance
                 );
             }
         });
@@ -243,11 +235,11 @@ pub(crate) fn add_magds_button_row(
     }
 }
 
-pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>) {
+pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets: &mut [SMAGDSLoadedDataset]) {
     ui.label(RichText::new("smagds loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
     ui.end_row();
     
-    if loaded_datasets_res.0.is_empty() {
+    if loaded_datasets.is_empty() {
         let label_widget = RichText::new("no data")
             .monospace()
             .size(STANDARD_TEXT_SIZE)
@@ -255,7 +247,7 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<SMAGDSL
         ui.label(label_widget);
     }
 
-    for dataset in &loaded_datasets_res.0 {
+    for dataset in loaded_datasets {
         let name_label = RichText::new(&dataset.name)
             .monospace()
             .size(STANDARD_MONOSPACE_TEXT_SIZE)

@@ -20,11 +20,7 @@ use crate::{
             MAGDSLoadedDatasets, 
             MAGDSPositions 
         },
-        smagds::{ 
-            SMAGDSMain, 
-            SMAGDSLoadedDatasets, 
-            SMAGDSPositions 
-        },
+        smagds::SMAGDSMain,
         layout::{ 
             Layout, 
             DEFAULT_PANEL_SCROLL_WIDTH, 
@@ -53,11 +49,9 @@ pub(crate) fn app_layout(
     mut tabular_data_files_res: ResMut<TabularDataFiles>,
     mut sequential_data_files_res: ResMut<SequentialDataFiles>,
     mut magds_loaded_datasets_res: ResMut<MAGDSLoadedDatasets>,
-    mut sequential_model_loaded_datasets_res: ResMut<SMAGDSLoadedDatasets>,
     mut magds_res: ResMut<MainMAGDS>,
     mut smagds_res: ResMut<SMAGDSMain>,
     mut magds_positions_res: ResMut<MAGDSPositions>,
-    mut sequential_model_positions_res: ResMut<SMAGDSPositions>,
     mut sequence_1d_res: ResMut<Sequence1D>,
     mut appearance_res: ResMut<Appearance>,
 ) {
@@ -68,11 +62,9 @@ pub(crate) fn app_layout(
         &mut tabular_data_files_res,
         &mut sequential_data_files_res,
         &mut magds_loaded_datasets_res,
-        &mut sequential_model_loaded_datasets_res,
         &mut magds_res,
         &mut smagds_res,
         &mut magds_positions_res,
-        &mut sequential_model_positions_res,
         &mut appearance_res,
         &mut sequence_1d_res
     );
@@ -90,7 +82,6 @@ pub(crate) fn app_layout(
         &mut magds_res,
         &mut smagds_res,
         &mut magds_positions_res,
-        &mut sequential_model_positions_res,
         &mut sequence_1d_res,
         &mut appearance_res,
         &mut sequential_data_files_res
@@ -155,11 +146,9 @@ fn left_panel(
     tabular_data_files_res: &mut ResMut<TabularDataFiles>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
     magds_loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
-    sequential_model_loaded_datasets_res: &mut ResMut<SMAGDSLoadedDatasets>,
     magds_res: &mut ResMut<MainMAGDS>,
     smagds_res: &mut ResMut<SMAGDSMain>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
-    sequential_model_positions_res: &mut ResMut<SMAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
     sequence_1d_res: &mut ResMut<Sequence1D>
 ) {
@@ -197,9 +186,7 @@ fn left_panel(
                 sequential_data::sequential_data_window(
                     ui,
                     sequential_data_files_res,
-                    sequential_model_loaded_datasets_res,
                     smagds_res,
-                    sequential_model_positions_res,
                     appearance_res,
                     sequence_1d_res
                 );
@@ -315,7 +302,6 @@ fn central_panel(
     magds_res: &mut ResMut<MainMAGDS>,
     smagds_res: &mut ResMut<SMAGDSMain>,
     magds_positions_res: &mut ResMut<MAGDSPositions>,
-    sequential_model_points_res: &mut ResMut<SMAGDSPositions>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
@@ -329,7 +315,7 @@ fn central_panel(
                 magds_3d::simulation(ui, magds_res, appearance_res);
             },
             LayoutCentralPanel::SequentialModel2D => {
-                smagds_2d::simulation(ui, smagds_res, sequential_model_points_res);
+                smagds_2d::simulation(ui, smagds_res);
             },
             LayoutCentralPanel::Sequence1D => {
                 sequence_1d::simulation(
