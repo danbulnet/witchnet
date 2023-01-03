@@ -34,7 +34,7 @@ pub const SENSOR_TEXT_CUTOFF: usize = 6;
 pub(crate) struct SMAGDSMain {
     pub(crate) smagds: Option<Arc<RwLock<SMAGDS>>>,
     pub(crate) appearance: Appearance,
-    pub(crate) loaded_dataset: Vec<SMAGDSLoadedDataset>,
+    pub(crate) loaded_datasets: Vec<SMAGDSLoadedDataset>,
     pub(crate) positions: SMAGDSPositions
 }
 
@@ -70,7 +70,7 @@ impl Default for SMAGDSMain {
                 selected_neuron: Selector::default(), 
                 selected_connection: Selector::default()
             },
-            loaded_dataset: vec![],
+            loaded_datasets: vec![],
             positions: SMAGDSPositions::default()
         }
     }

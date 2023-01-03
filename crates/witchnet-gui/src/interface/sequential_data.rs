@@ -75,7 +75,7 @@ pub(crate) fn sequential_data_window(
                 sequence_1d_res
             );
 
-            loaded_files(ui, &mut smagds_res.loaded_dataset);
+            loaded_files(ui, &mut smagds_res.loaded_datasets);
         });
 }
 
@@ -172,7 +172,7 @@ pub(crate) fn add_magds_button_row(
                     .map(|point| (point[0] as f32, point[1] as f32))
                     .collect();
                     
-                let &mut SMAGDSMain { smagds, appearance, loaded_dataset, positions } = &mut smagds_res;
+                let &mut SMAGDSMain { smagds, appearance, loaded_datasets: loaded_dataset, positions } = &mut smagds_res;
 
                 *smagds = Some(
                     Arc::new(RwLock::new(SMAGDS::new(&sampled_data).unwrap()))
@@ -218,7 +218,7 @@ pub(crate) fn add_magds_button_row(
                     sequence_length: sequence_1d_res.loaded_data.len(),
                     samples: sampled_data.len()
                 };
-                smagds_res.loaded_dataset = vec![loaded_dataset];
+                smagds_res.loaded_datasets = vec![loaded_dataset];
                 
                 let mut smagds = smagds_res.smagds.as_ref().unwrap().write().unwrap();
                 let magds = &mut smagds.magds;

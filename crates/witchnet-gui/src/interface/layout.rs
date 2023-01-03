@@ -15,11 +15,7 @@ use crate::{
         appearance::Appearance,
         tabular_data::{ TabularDataFiles, DATA_PANEL_SCROLL_WIDTH },
         sequential_data::SequentialDataFiles,
-        magds::{ 
-            MainMAGDS, 
-            MAGDSLoadedDatasets, 
-            MAGDSPositions 
-        },
+        magds::MAGDSMain,
         smagds::SMAGDSMain,
         layout::{ 
             Layout, 
@@ -48,10 +44,8 @@ pub(crate) fn app_layout(
     mut layout_res: ResMut<Layout>,
     mut tabular_data_files_res: ResMut<TabularDataFiles>,
     mut sequential_data_files_res: ResMut<SequentialDataFiles>,
-    mut magds_loaded_datasets_res: ResMut<MAGDSLoadedDatasets>,
-    mut magds_res: ResMut<MainMAGDS>,
+    mut magds_res: ResMut<MAGDSMain>,
     mut smagds_res: ResMut<SMAGDSMain>,
-    mut magds_positions_res: ResMut<MAGDSPositions>,
     mut sequence_1d_res: ResMut<Sequence1D>,
     mut appearance_res: ResMut<Appearance>,
 ) {
@@ -61,10 +55,8 @@ pub(crate) fn app_layout(
         &mut layout_res,
         &mut tabular_data_files_res,
         &mut sequential_data_files_res,
-        &mut magds_loaded_datasets_res,
         &mut magds_res,
         &mut smagds_res,
-        &mut magds_positions_res,
         &mut appearance_res,
         &mut sequence_1d_res
     );
@@ -81,7 +73,6 @@ pub(crate) fn app_layout(
         &mut layout_res,
         &mut magds_res,
         &mut smagds_res,
-        &mut magds_positions_res,
         &mut sequence_1d_res,
         &mut appearance_res,
         &mut sequential_data_files_res
@@ -145,10 +136,8 @@ fn left_panel(
     layout_res: &mut ResMut<Layout>,
     tabular_data_files_res: &mut ResMut<TabularDataFiles>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
-    magds_loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
-    magds_res: &mut ResMut<MainMAGDS>,
+    magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    magds_positions_res: &mut ResMut<MAGDSPositions>,
     appearance_res: &mut ResMut<Appearance>,
     sequence_1d_res: &mut ResMut<Sequence1D>
 ) {
@@ -165,9 +154,7 @@ fn left_panel(
                 tabular_data::tabular_data_window(
                     ui,
                     tabular_data_files_res,
-                    magds_loaded_datasets_res,
                     magds_res,
-                    magds_positions_res,
                     appearance_res
                 );
             }
@@ -198,7 +185,7 @@ fn left_panel(
 fn right_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
-    magds_res: &mut ResMut<MainMAGDS>,
+    magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>
@@ -299,9 +286,8 @@ fn right_panel(
 fn central_panel(
     egui_context: &mut ResMut<EguiContext>,
     layout_res: &mut ResMut<Layout>,
-    magds_res: &mut ResMut<MainMAGDS>,
+    magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    magds_positions_res: &mut ResMut<MAGDSPositions>,
     sequence_1d_res: &mut ResMut<Sequence1D>,
     appearance_res: &mut ResMut<Appearance>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
@@ -309,7 +295,7 @@ fn central_panel(
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
         match layout_res.central_panel {
             LayoutCentralPanel::MAGDS2D => {
-                magds_2d::simulation(ui, magds_res, magds_positions_res, appearance_res);
+                magds_2d::simulation(ui, magds_res, appearance_res);
             }
             LayoutCentralPanel::MAGDS3D => {
                 magds_3d::simulation(ui, magds_res, appearance_res);

@@ -11,6 +11,17 @@ use witchnet_common::neuron::NeuronID;
 
 use magds::asynchronous::magds::MAGDS;
 
+use crate::{
+    resources::appearance::{
+        Appearance,
+        Simulation2DAppearance,
+        Selector,
+        SensorAppearance,
+        NeuronAppearance,
+        ConnectionAppearance
+    }, 
+};
+
 pub const ADDED_TO_MAGDS_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 
 pub const BIG_GAP_FACTOR: f32 = 2.5f32;
@@ -19,10 +30,49 @@ pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
 
 pub const SENSOR_TEXT_CUTOFF: usize = 6;
 
-pub struct MainMAGDS(pub Arc<RwLock<MAGDS>>);
+pub(crate) struct MAGDSMain {
+    pub(crate) magds: Arc<RwLock<MAGDS>>,
+    pub(crate) appearance: Appearance,
+    pub(crate) loaded_datasets: Vec<MAGDSLoadedDataset>,
+    pub(crate) positions: MAGDSPositions
+}
 
-impl Default for MainMAGDS {
-    fn default() -> Self { MainMAGDS(MAGDS::new_arc()) }
+impl Default for MAGDSMain {
+    fn default() -> Self {
+        Self {
+            magds: MAGDS::new_arc(),
+            appearance: Appearance { 
+                simulation2d: Simulation2DAppearance::default(),
+                sensors: HashMap::from([(Selector::All, SensorAppearance::default())]),
+                neurons: HashMap::from([(Selector::All, NeuronAppearance::default())]),
+                connections: HashMap::from([
+                    (Selector::All, ConnectionAppearance::default()),
+                    (
+                        Selector::One(Arc::<str>::from("asa-graph-nodes")), 
+                        ConnectionAppearance::default()
+                    ),
+                    (
+                        Selector::One(Arc::<str>::from("sensor-sensor")), 
+                        ConnectionAppearance::default()
+                    ),
+                    (
+                        Selector::One(Arc::<str>::from("sensor-neuron")), 
+                        ConnectionAppearance::default()
+                    ),
+                    (
+                        Selector::One(Arc::<str>::from("neuron-neuron")), 
+                        ConnectionAppearance::default()
+                    ),
+                ]),
+    
+                selected_sensor: Selector::default(), 
+                selected_neuron: Selector::default(), 
+                selected_connection: Selector::default()
+            },
+            loaded_datasets: vec![],
+            positions: MAGDSPositions::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

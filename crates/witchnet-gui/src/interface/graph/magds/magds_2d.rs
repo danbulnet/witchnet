@@ -10,7 +10,7 @@ use witchnet_common::{
 use crate::{
     resources::{
         appearance::{ Appearance, Selector },
-        magds::{ MainMAGDS, MAGDSPositions, BIG_GAP_FACTOR }
+        magds::{ MAGDSMain, MAGDSPositions, BIG_GAP_FACTOR }
     },
     interface::graph::magds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
@@ -18,15 +18,15 @@ use crate::{
 
 pub(crate) fn magds(
     ui: &mut PlotUi,
-    magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<MAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>,
+    magds_res: &mut ResMut<MAGDSMain>
 ) {
-    let neuron_settings = &appearance_res.neurons[&Selector::All];
-    let sensor_settings = &appearance_res.sensors[&Selector::All];
-    let connection_settings = &appearance_res.connections[&Selector::All];
+    let &mut MAGDSMain { magds, appearance, loaded_datasets, positions } = &mut magds_res.as_mut();
 
-    let magds = magds_res.0.read().unwrap();
+    let neuron_settings = &appearance.neurons[&Selector::All];
+    let sensor_settings = &appearance.sensors[&Selector::All];
+    let connection_settings = &appearance.connections[&Selector::All];
+
+    let magds = magds.read().unwrap();
     let sensors = magds.sensors();
     let neurons = magds.neurons();
 
@@ -38,7 +38,7 @@ pub(crate) fn magds(
         ui, 
         "neurons", 
         neurons, 
-        position_xy_res,
+        positions,
         neuron_settings, 
         connection_settings,
     );
@@ -49,7 +49,7 @@ pub(crate) fn magds(
             ui, 
             &magds.sensor_name(sensor_id).unwrap(),
             sensor.clone(),
-            position_xy_res,
+            positions,
             sensor_settings,
             connection_settings
         );

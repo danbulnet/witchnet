@@ -38,7 +38,7 @@ use crate::{
             DATA_PANEL_WIDTH
         },
         magds::{ 
-            MainMAGDS,
+            MAGDSMain,
             MAGDSLoadedDatasets,
             MAGDSLoadedDataset,
             MAGDSPositions,
@@ -51,9 +51,7 @@ use crate::{
 pub(crate) fn tabular_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<TabularDataFiles>,
-    loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
-    magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<MAGDSPositions>,
+    magds_res: &mut ResMut<MAGDSMain>,
     appearance_res: &mut ResMut<Appearance>,
 ) {
     egui::ScrollArea::vertical()
@@ -69,14 +67,12 @@ pub(crate) fn tabular_data_window(
             
             add_magds_button_row(
                 ui, 
-                data_files_res, 
-                loaded_datasets_res,
+                data_files_res,
                 magds_res,
-                position_xy_res,
                 appearance_res
             );
 
-            loaded_files(ui, loaded_datasets_res);
+            loaded_files(ui, &mut magds_res.loaded_datasets);
         });
 }
 
@@ -160,9 +156,7 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<TabularData
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<TabularDataFiles>,
-    loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>,
-    magds_res: &mut ResMut<MainMAGDS>,
-    position_xy_res: &mut ResMut<MAGDSPositions>,
+    magds_res: &mut ResMut<MAGDSMain>,
     appearance_res: &mut ResMut<Appearance>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
@@ -171,6 +165,7 @@ pub(crate) fn add_magds_button_row(
             let add_button = ui.button("add to magds");
             if add_button.clicked() {
                 if let Some(df) = &data_file.data_frame {
+                    let &mut MAGDSMain { magds, appearance, loaded_datasets, positions } = &mut magds_res.as_mut();
                     let df_name = &data_file.name;
                     {
                         let df_name = df_name.strip_suffix(".csv").unwrap_or(df_name);
@@ -178,7 +173,7 @@ pub(crate) fn add_magds_button_row(
                             .filter(|(_key, value)| !**value)
                             .map(|(key, _value)| &**key)
                             .collect();
-                        let mut magds = magds_res.0.write().unwrap();
+                        let mut magds = magds.write().unwrap();
                         parser::add_df_to_magds(
                             &mut magds, 
                             df_name, 
@@ -192,7 +187,7 @@ pub(crate) fn add_magds_button_row(
                         );
                     }
 
-                    let magds = magds_res.0.read().unwrap();
+                    let magds = magds.read().unwrap();
                     for sensor in magds.sensors() {
                         let mut sensor = sensor.write().unwrap();
                         let value = sensor.values().first().unwrap().clone();
@@ -229,12 +224,12 @@ pub(crate) fn add_magds_button_row(
                             .map(|(key, _value)| key.clone())
                             .collect()
                     };
-                    loaded_datasets_res.0.push(loaded_dataset);
+                    loaded_datasets.push(loaded_dataset);
 
                     magds_positions::set_positions(
                         &magds,
                         (0.0, 0.0),
-                        position_xy_res, 
+                        positions, 
                         appearance_res
                     );
                 }
@@ -244,12 +239,12 @@ pub(crate) fn add_magds_button_row(
     ui.end_row();
 }
 
-pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<MAGDSLoadedDatasets>) {
+pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut [MAGDSLoadedDataset]) {
     ui.separator(); ui.end_row();
     ui.label(RichText::new("loaded data").color(NEUTRAL_ACTIVE_COLOR).strong());
     ui.end_row();
     
-    if loaded_datasets_res.0.is_empty() {
+    if loaded_datasets_res.is_empty() {
         let label_widget = RichText::new("no data")
             .monospace()
             .size(STANDARD_TEXT_SIZE)
@@ -257,7 +252,7 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets_res: &mut ResMut<MAGDSLo
         ui.label(label_widget);
     }
 
-    for dataset in &loaded_datasets_res.0 {
+    for dataset in loaded_datasets_res {
         let label_widget = RichText::new(&dataset.name)
             .monospace()
             .size(STANDARD_MONOSPACE_TEXT_SIZE)

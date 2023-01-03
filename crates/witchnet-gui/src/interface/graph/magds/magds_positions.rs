@@ -37,8 +37,8 @@ use crate::{
 pub(crate) fn set_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut ResMut<MAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>
+    position_xy_res: &mut MAGDSPositions,
+    appearance_res: &mut Appearance
 ) {
     let radius = neuron_positions(magds, origin, position_xy_res, appearance_res);
     
@@ -55,8 +55,8 @@ fn sensor_positions(
     magds: &MAGDS,
     origin: (f64, f64),
     radius: f64,
-    mut position_xy_res: &mut ResMut<MAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>
+    mut position_xy_res: &mut MAGDSPositions,
+    appearance_res: &mut Appearance
 ) {
     let sensors = magds.sensors();
 
@@ -299,8 +299,8 @@ fn sensor_to_asa_3_levels(
 fn neuron_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut ResMut<MAGDSPositions>,
-    appearance_res: &mut ResMut<Appearance>
+    position_xy_res: &mut MAGDSPositions,
+    appearance_res: &mut Appearance
 ) -> f64 {
     let neurons = magds.neurons();
 

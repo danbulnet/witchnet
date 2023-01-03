@@ -21,7 +21,7 @@ pub(crate) fn smagds(
     mut smagds_res: &mut SMAGDSMain
 ) {
     if smagds_res.smagds.is_some() {
-        let &mut SMAGDSMain { smagds, appearance, loaded_dataset, positions } = &mut smagds_res;
+        let &mut SMAGDSMain { smagds, appearance, loaded_datasets, positions } = &mut smagds_res;
         let neuron_settings = &appearance.neurons[&Selector::All];
         let sensor_settings = &appearance.sensors[&Selector::All];
         let connection_settings = &appearance.connections[&Selector::All];
