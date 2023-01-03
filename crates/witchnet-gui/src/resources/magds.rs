@@ -7,7 +7,7 @@ use std::{
 
 use bevy_egui::egui::Color32;
 
-use witchnet_common::neuron::NeuronID;
+use witchnet_common::neuron::{ NeuronID, NeuronAsync };
 
 use magds::asynchronous::magds::MAGDS;
 
@@ -24,9 +24,9 @@ use crate::{
 
 pub const ADDED_TO_MAGDS_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 
-pub const BIG_GAP_FACTOR: f32 = 2.5f32;
-pub const SMALL_GAP_FACTOR: f32 = 0.3f32;
-pub const SENSOR_NEURON_GAP_R_FRACTION: f32 = 1.2f32;
+pub const BIG_GAP_FACTOR: f64 = 0.5f64;
+pub const SMALL_GAP_FACTOR: f64 = 0.3f64;
+pub const SENSOR_NEURON_GAP_R_FRACTION: f64 = 1.0f64;
 
 pub const SENSOR_TEXT_CUTOFF: usize = 6;
 
@@ -95,6 +95,8 @@ impl Default for MAGDSLoadedDatasets {
 
 #[derive(Debug, Clone)]
 pub(crate) struct MAGDSPositions {
+    pub(crate) group_ids_to_neurons: HashMap<u32, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
+    pub(crate) neuron_groups: HashMap<u32, (f64, f64)>,
     pub(crate) neurons: HashMap<NeuronID, (f64, f64)>,
     pub(crate) sensors: HashMap<u32, ((f64, f64), f64)>,
     pub(crate) sensor_neurons: HashMap<NeuronID, (f64, f64)>
@@ -103,6 +105,8 @@ pub(crate) struct MAGDSPositions {
 impl Default for MAGDSPositions {
     fn default() -> Self {
         MAGDSPositions { 
+            group_ids_to_neurons: HashMap::new(),
+            neuron_groups: HashMap::new(),
             neurons: HashMap::new(), 
             sensors: HashMap::new(),
             sensor_neurons: HashMap::new()

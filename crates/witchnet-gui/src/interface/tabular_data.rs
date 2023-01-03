@@ -183,11 +183,11 @@ pub(crate) fn add_magds_button_row(
                     }
 
                     let magds = magds.read().unwrap();
-                    for sensor in magds.sensors() {
-                        let mut sensor = sensor.write().unwrap();
-                        let value = sensor.values().first().unwrap().clone();
-                        let _ = sensor.activate(&value, 1.0f32, true, true);
-                    }
+                    // for sensor in magds.sensors() {
+                    //     let mut sensor = sensor.write().unwrap();
+                    //     let value = sensor.values().first().unwrap().clone();
+                    //     let _ = sensor.activate(&value, 1.0f32, true, true);
+                    // }
                     
                     let sensor_appearance = appearance.sensors[&Selector::All].clone();
                     for sensor_name in magds.sensors_names() {

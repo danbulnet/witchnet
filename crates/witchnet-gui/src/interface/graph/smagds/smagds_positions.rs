@@ -39,20 +39,27 @@ pub(crate) fn set_positions(
 ) {
     group_neurons(magds, positions);
 
-    let group_max_r = find_max_neuron_group_r(magds, origin, positions, appearance);
+    let group_max_r = find_max_neuron_group_r(origin, positions, appearance);
 
     if let Some(group_max_r) = group_max_r {
         let groups_r = neuron_gropu_origins(origin, group_max_r, positions);
         let neuron_gropu_centers = positions.neuron_groups.clone();
+        let neuron_gropu_len = neuron_gropu_centers.len();
     
         for (group_id, group_origin) in neuron_gropu_centers {
-            let _ = neuron_positions(group_id, group_origin, positions, appearance);
+            let group_name: Arc<str> = magds.neuron_group_name_from_id(group_id).unwrap().into();
+            let _ = neuron_positions(group_id, group_name, group_origin, positions, appearance);
         }
     
+        let sensors_radius = if neuron_gropu_len <= 1 {
+            (group_max_r + BIG_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FRACTION
+        } else {
+            (groups_r + BIG_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FRACTION
+        };
         sensor_positions(
             magds, 
             origin, 
-            (groups_r + group_max_r) * SENSOR_NEURON_GAP_R_FRACTION as f64, 
+            sensors_radius,
             positions, 
             appearance
         );
@@ -76,7 +83,7 @@ fn sensor_positions(
         radius,
         sensors.len(),
         sensor_size as f64,
-        BIG_GAP_FACTOR as f64
+        SMALL_GAP_FACTOR
     );
 
     for (i, sensor) in sensors.into_iter().enumerate() {
@@ -308,8 +315,10 @@ fn group_neurons(
     magds: &MAGDS,
     positions: &mut SMAGDSPositions
 ) {
+    positions.group_ids_to_neurons = HashMap::new();
     let neurons = magds.neurons();
     for neuron in neurons {
+        #[allow(unused)]
         let NeuronID { id, parent_id } = neuron.read().unwrap().id();
         if positions.group_ids_to_neurons.contains_key(&parent_id) {
             positions.group_ids_to_neurons.get_mut(&parent_id).unwrap().push(neuron.clone());
@@ -321,7 +330,6 @@ fn group_neurons(
 }
 
 fn find_max_neuron_group_r(
-    magds: &MAGDS,
     origin: (f64, f64),
     positions: &mut SMAGDSPositions,
     appearance: &Appearance
@@ -365,12 +373,13 @@ fn neuron_gropu_origins(
 
 fn neuron_positions(
     group_id: u32,
+    group_name: Arc<str>,
     origin: (f64, f64),
     positions: &mut SMAGDSPositions,
     appearance: &Appearance
 ) -> f64 {
     let neurons = &positions.group_ids_to_neurons[&group_id];
-    let neuron_size = appearance.neurons[&Selector::All].size;
+    let neuron_size = appearance.neurons[&Selector::One(group_name)].size;
     let neuron_points = &mut positions.neurons;
 
     let (neuron_points_vec, r) = full_circle_positions(

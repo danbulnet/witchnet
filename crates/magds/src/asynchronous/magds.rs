@@ -256,7 +256,7 @@ impl MAGDS {
         }
     }
 
-    pub fn neuron_group_names_from_id(&self, id: u32) -> Option<&str> { 
+    pub fn neuron_group_name_from_id(&self, id: u32) -> Option<&str> { 
         match self.neuron_group_names.get(&id) {
             Some(id) => Some(&id),
             None => None
@@ -279,7 +279,7 @@ impl Display for MAGDS {
         writeln!(f, "========== neurons ==========")?;
         for neuron in &self.neurons {
             let neuron_id = neuron.read().unwrap().id().parent_id;
-            let parent_name = self.neuron_group_names_from_id(neuron_id).unwrap();
+            let parent_name = self.neuron_group_name_from_id(neuron_id).unwrap();
             writeln!(f, "{number}: {parent_name}({neuron_id})")?;
             writeln!(f, "{}", neuron.read().unwrap())?;
             number += 1;
@@ -331,7 +331,7 @@ mod tests {
         magds.add_neuron_group("1", Some(parent_id));
         println!("{:?}", magds.neuron_group_ids);
         assert_eq!(magds.neuron_group_ids_from_name("1").unwrap().first().unwrap(), &1);
-        assert_eq!(magds.neuron_group_names_from_id(1).unwrap(), "1");
+        assert_eq!(magds.neuron_group_name_from_id(1).unwrap(), "1");
 
         magds.add_sensor("test_1".into(), Arc::new(RwLock::new(sensor_1.into())));
         magds.add_sensor("test_2".into(), Arc::new(RwLock::new(sensor_2.into())));
