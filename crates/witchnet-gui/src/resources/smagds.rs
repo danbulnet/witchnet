@@ -4,9 +4,11 @@ use std::{
     collections::HashMap
 };
 
+use bevy::prelude::*;
+
 use bevy_egui::egui::Color32;
 
-use witchnet_common::neuron::NeuronID;
+use witchnet_common::neuron::{ NeuronID, NeuronAsync };
 
 use smagds::asynchronous::smagds::SMAGDS;
 
@@ -44,7 +46,7 @@ impl Default for SMAGDSMain {
             appearance: Appearance { 
                 simulation2d: Simulation2DAppearance::default(),
                 sensors: HashMap::from([(Selector::All, SensorAppearance::default())]),
-                neurons: HashMap::from([(Selector::All, NeuronAppearance::default())]),
+                neurons: HashMap::from([(Selector::All, Self::neuron_appearance())]),
                 connections: HashMap::from([
                     (Selector::All, ConnectionAppearance::default()),
                     (
@@ -75,6 +77,34 @@ impl Default for SMAGDSMain {
     }
 }
 
+impl SMAGDSMain {
+    pub fn neuron_appearance() -> NeuronAppearance {
+        NeuronAppearance {
+            show: true,
+            show_text: true,
+
+            size: 0.2f32,
+            size_bounds: (0f32, 10.0f32),
+            text_size: 7.0f32,
+            text_size_bounds: (1.0f32, 20f32),
+
+            rounded: true,
+
+            primary_color: Color::rgba(0.8, 0.8, 0.8, 1.0),
+            primary_marked_color: Color::rgba(0.352, 0.493, 0.880, 1.0),
+            primary_active_color: Color::rgba(0.583, 0.659, 0.870, 1.0),
+        
+            secondary_color: Color::rgba(0.500, 0.172, 0.0200, 1.0),
+            secondary_marked_color: Color::rgba(0.640, 0.364, 0.237, 1.0),
+            secondary_active_color: Color::rgba(0.710, 0.564, 0.497, 1.0),
+            
+            text_color: Color::rgba(0.0, 0.0, 0.0, 0.7),
+            text_marked_color: Color::rgba(0.0, 0.0, 0.0, 0.85),
+            text_active_color: Color::rgba(0.0, 0.0, 0.0, 1.0),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct SMAGDSLoadedDataset {
     pub(crate) name: String,
@@ -92,6 +122,8 @@ impl Default for SMAGDSLoadedDatasets {
 
 #[derive(Debug, Clone)]
 pub(crate) struct SMAGDSPositions {
+    pub(crate) group_ids_to_neurons: HashMap<u32, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
+    pub(crate) neuron_groups: HashMap<u32, (f64, f64)>,
     pub(crate) neurons: HashMap<NeuronID, (f64, f64)>,
     pub(crate) sensors: HashMap<u32, ((f64, f64), f64)>,
     pub(crate) sensor_neurons: HashMap<NeuronID, (f64, f64)>
@@ -100,6 +132,8 @@ pub(crate) struct SMAGDSPositions {
 impl Default for SMAGDSPositions {
     fn default() -> Self {
         SMAGDSPositions { 
+            group_ids_to_neurons: HashMap::new(),
+            neuron_groups: HashMap::new(),
             neurons: HashMap::new(), 
             sensors: HashMap::new(),
             sensor_neurons: HashMap::new()

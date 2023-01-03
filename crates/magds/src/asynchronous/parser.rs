@@ -654,7 +654,7 @@ mod tests {
         let sl58 = magds.sensor_search(sepal_length_sensor_id, &5.8_f64.into()).unwrap();
         assert_eq!(sl58.read().unwrap().counter(), 7);
 
-        let iris_neuron_group_id = *magds.neuron_group_ids("iris").unwrap().first().unwrap();
+        let iris_neuron_group_id = *magds.neuron_group_ids_from_name("iris").unwrap().first().unwrap();
         let neuron_1 = magds.neuron(1, iris_neuron_group_id).unwrap();
         println!("neuron_1 {}", neuron_1.read().unwrap());
 

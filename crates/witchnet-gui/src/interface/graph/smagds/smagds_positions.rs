@@ -34,31 +34,42 @@ use crate::{
 pub(crate) fn set_positions(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut SMAGDSPositions,
-    appearance_res: &Appearance
+    positions: &mut SMAGDSPositions,
+    appearance: &Appearance
 ) {
-    let radius = neuron_positions(magds, origin, position_xy_res, appearance_res);
+    group_neurons(magds, positions);
 
-    sensor_positions(
-        magds, 
-        origin, 
-        radius * SENSOR_NEURON_GAP_R_FRACTION as f64, 
-        position_xy_res, 
-        appearance_res
-    );
+    let group_max_r = find_max_neuron_group_r(magds, origin, positions, appearance);
+
+    if let Some(group_max_r) = group_max_r {
+        let groups_r = neuron_gropu_origins(origin, group_max_r, positions);
+        let neuron_gropu_centers = positions.neuron_groups.clone();
+    
+        for (group_id, group_origin) in neuron_gropu_centers {
+            let _ = neuron_positions(group_id, group_origin, positions, appearance);
+        }
+    
+        sensor_positions(
+            magds, 
+            origin, 
+            (groups_r + group_max_r) * SENSOR_NEURON_GAP_R_FRACTION as f64, 
+            positions, 
+            appearance
+        );
+    }
 }
 
 fn sensor_positions(
     magds: &MAGDS,
     origin: (f64, f64),
     radius: f64,
-    mut position_xy_res: &mut SMAGDSPositions,
-    appearance_res: &Appearance
+    positions: &mut SMAGDSPositions,
+    appearance: &Appearance
 ) {
     let sensors = magds.sensors();
 
-    let sensor_size = appearance_res.sensors[&Selector::All].size;
-    let level_gap = appearance_res.sensors[&Selector::All].level_gap;
+    let sensor_size = appearance.sensors[&Selector::All].size;
+    let level_gap = appearance.sensors[&Selector::All].level_gap;
 
     let sensor_points_vec = empty_circle_positions(
         origin,
@@ -75,10 +86,10 @@ fn sensor_positions(
         let (position, angle) = sensor_points_vec[i];
         let angle = angle - PI / 2.0;
         let title_pos = sensor_neurons_positions(
-            magds, position, angle, level_gap as f64, &sensor, &mut position_xy_res
+            magds, position, angle, level_gap as f64, &sensor, positions
         );
         
-        position_xy_res.sensors.insert(sensor_id, (title_pos, angle));
+        positions.sensors.insert(sensor_id, (title_pos, angle));
     }
 }
 
@@ -88,7 +99,7 @@ fn sensor_neurons_positions(
     angle: f64,
     level_gap: f64,
     sensor: &SensorConatiner,
-    position_xy_res: &mut SMAGDSPositions
+    positions: &mut SMAGDSPositions
 ) -> (f64, f64) {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
     let gap = SMALL_GAP_FACTOR as f64;
@@ -138,7 +149,7 @@ fn sensor_neurons_positions(
         y += level_gap * gap;
     }
 
-    rotate_by_angle(&unrotated_points, angle, origin, position_xy_res);
+    rotate_by_angle(&unrotated_points, angle, origin, positions);
     
     rotate_point_around_origin((origin.0, y), origin, angle)
 }
@@ -147,11 +158,11 @@ fn rotate_by_angle(
     points: &HashMap<NeuronID, (f64, f64)>,
     angle_in_radians: f64,
     origin: (f64, f64),
-    position_xy_res: &mut SMAGDSPositions
+    positions: &mut SMAGDSPositions
 ) {
     for (id, point) in &mut points.into_iter() {
         let point = rotate_point_around_origin(*point, origin, angle_in_radians);
-        position_xy_res.sensor_neurons.insert(id.clone(), point);
+        positions.sensor_neurons.insert(id.clone(), point);
     }
 }
 
@@ -293,16 +304,74 @@ fn sensor_to_asa_3_levels(
     }
 }
 
-fn neuron_positions(
+fn group_neurons(
+    magds: &MAGDS,
+    positions: &mut SMAGDSPositions
+) {
+    let neurons = magds.neurons();
+    for neuron in neurons {
+        let NeuronID { id, parent_id } = neuron.read().unwrap().id();
+        if positions.group_ids_to_neurons.contains_key(&parent_id) {
+            positions.group_ids_to_neurons.get_mut(&parent_id).unwrap().push(neuron.clone());
+        } else {
+            positions.group_ids_to_neurons.insert(parent_id, vec![]);
+            positions.group_ids_to_neurons.get_mut(&parent_id).unwrap().push(neuron.clone());
+        }
+    }
+}
+
+fn find_max_neuron_group_r(
     magds: &MAGDS,
     origin: (f64, f64),
-    position_xy_res: &mut SMAGDSPositions,
-    appearance_res: &Appearance
-) -> f64 {
-    let neurons = magds.neurons();
+    positions: &mut SMAGDSPositions,
+    appearance: &Appearance
+) -> Option<f64> {
+    let max_len = (&positions.group_ids_to_neurons).into_iter()
+        .max_by(|a, b| a.1.len().cmp(&b.1.len()))?
+        .1.len();
+    let neuron_size = appearance.neurons.values()
+        .max_by(|a, b| a.size.partial_cmp(&b.size).unwrap())?
+        .size as f64;
+    let (_, r) = full_circle_positions(
+        origin, 
+        max_len, 
+        neuron_size,
+        SMALL_GAP_FACTOR as f64
+    );
+    Some(r)
+}
 
-    let neuron_size = appearance_res.neurons[&Selector::All].size;
-    let neuron_points = &mut position_xy_res.neurons;
+fn neuron_gropu_origins(
+    origin: (f64, f64),
+    group_size: f64,
+    positions: &mut SMAGDSPositions
+) -> f64 {
+    let neuron_gropu_ids: Vec<u32> = (&positions.group_ids_to_neurons).keys()
+        .map(|x| *x).collect();
+
+    let (neuron_group_points, r) = full_circle_positions(
+        origin, 
+        neuron_gropu_ids.len(), 
+        group_size,
+        BIG_GAP_FACTOR as f64
+    );
+
+    for (i, id) in neuron_gropu_ids.into_iter().enumerate() {
+        positions.neuron_groups.insert(id, neuron_group_points[i]);
+    }
+
+    r
+}
+
+fn neuron_positions(
+    group_id: u32,
+    origin: (f64, f64),
+    positions: &mut SMAGDSPositions,
+    appearance: &Appearance
+) -> f64 {
+    let neurons = &positions.group_ids_to_neurons[&group_id];
+    let neuron_size = appearance.neurons[&Selector::All].size;
+    let neuron_points = &mut positions.neurons;
 
     let (neuron_points_vec, r) = full_circle_positions(
         origin,

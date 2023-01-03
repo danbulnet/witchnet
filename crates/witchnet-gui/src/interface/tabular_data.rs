@@ -199,7 +199,7 @@ pub(crate) fn add_magds_button_row(
                         }
                     }
                     let neuron_appearance = appearance.neurons[&Selector::All].clone();
-                    for neuron_name in magds.neurons_names() {
+                    for neuron_name in magds.neuron_group_names() {
                         let neuron_key = &Selector::One(neuron_name.clone());
                         if !appearance.neurons.contains_key(neuron_key) {
                             appearance.neurons.insert(

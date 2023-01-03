@@ -179,7 +179,7 @@ pub(crate) fn add_magds_button_row(
 
                 let (sensors_names, neurons_names) = {
                     let smagds = smagds.as_ref().unwrap().read().unwrap();
-                    (smagds.magds.sensors_names(), smagds.magds.neurons_names())
+                    (smagds.magds.sensors_names(), smagds.magds.neuron_group_names())
                 };
 
                 let sensor_appearance = appearance.sensors[&Selector::All].clone();
