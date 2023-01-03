@@ -3,6 +3,7 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Name(pub String);
 
+#[allow(unused)]
 #[derive(Component)]
 pub struct Position {
     x: f32,

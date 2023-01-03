@@ -13,4 +13,3 @@ pub mod neurons;
 pub mod connections;
 pub mod flex_points;
 pub mod graph;
-pub mod transform;
