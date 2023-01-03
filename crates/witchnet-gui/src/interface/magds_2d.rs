@@ -4,14 +4,10 @@ use bevy_egui::egui::{
     Ui,
 };
 
-use witchnet_common::sensor::SensorAsync;
-
 use crate::{
     resources::{
-        appearance::{ Appearance, Selector },
-        magds::{ MAGDSMain, MAGDSPositions }
+        magds::MAGDSMain
     },
-    utils,
     interface::{
         graph::magds::magds_2d
     },
@@ -22,11 +18,8 @@ use crate::{
 
 pub(crate) fn simulation(
     ui: &mut Ui,
-    magds_res: &mut ResMut<MAGDSMain>,
-    appearance_res: &mut ResMut<Appearance>,
+    magds_res: &mut ResMut<MAGDSMain>
 ) {
-    let simulation_settings = &mut appearance_res.simulation2d;
-
     let plot = Plot::new("magds-2d")
         .allow_scroll(false)
         .allow_boxed_zoom(true)
@@ -37,7 +30,7 @@ pub(crate) fn simulation(
         .data_aspect(1.0)
         .x_axis_formatter(|_, _| "".to_string())
         .y_axis_formatter(|_, _| "".to_string())
-        .show_axes(simulation_settings.show_grid);
+        .show_axes(magds_res.appearance.simulation2d.show_grid);
     plot.show(ui, |plot_ui| {
         magds_2d::magds(plot_ui, magds_res);
     });

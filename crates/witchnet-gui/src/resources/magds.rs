@@ -75,6 +75,7 @@ impl Default for MAGDSMain {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct MAGDSLoadedDataset {
     pub(crate) name: String,

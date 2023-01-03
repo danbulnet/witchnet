@@ -1,19 +1,13 @@
 use std::{
-    collections::HashMap,
     sync::{ Arc, RwLock }
 };
 
 use bevy_egui::egui::{
-    TextStyle,
     Align2
 };
 
-use bevy::prelude::*;
-
 use witchnet_common::{
-    sensor::{SensorAsync, SensorData},
-    data::{DataCategory, DataTypeValue}, 
-    neuron::{ NeuronAsync, NeuronID }
+    neuron::NeuronAsync
 };
 
 use crate::{
@@ -132,12 +126,12 @@ pub(crate) fn neurons(
     let sensor_positions = &position_xy_res.sensor_neurons;
 
     if neurons.is_empty() { return }
-    let no_neurons = neurons.len();
+    // let no_neurons = neurons.len();
 
-    let neuron_values: Vec<String> = neurons.into_iter().map(|n| {
-        let neuron = n.read().unwrap();
-        format!("{} [{}]", neuron.id(), neuron.counter())
-    }).collect();
+    // let neuron_values: Vec<String> = neurons.into_iter().map(|n| {
+    //     let neuron = n.read().unwrap();
+    //     format!("{} [{}]", neuron.id(), neuron.counter())
+    // }).collect();
 
     // let points_vec: Vec<[f64; 2]> = (0..neurons.len())
     //     .map(|x| {

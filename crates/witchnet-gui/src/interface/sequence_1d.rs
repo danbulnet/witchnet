@@ -6,14 +6,13 @@ use bevy_egui::egui::{
         Line, 
         Plot,
         PlotPoints,
-        Points,
-        LineStyle
+        Points
     }
 };
 
 use crate::{
     resources::{
-        sequence_1d::Sequence1D, 
+        sequence_1d::Sequence2D, 
         sequential_data::SequentialDataFiles
     },
     utils
@@ -21,7 +20,7 @@ use crate::{
 
 pub(crate) fn simulation(
     ui: &mut Ui,
-    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequence_1d_res: &mut ResMut<Sequence2D>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
 ) {
     sequence_1d_control(sequence_1d_res, sequential_data_files_res);
@@ -30,7 +29,7 @@ pub(crate) fn simulation(
 }
 
 fn sequence_1d_control(
-    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequence_1d_res: &mut ResMut<Sequence2D>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     if sequence_1d_res.loaded_data_source != sequence_1d_res.selected_data_source {
@@ -47,7 +46,7 @@ fn sequence_1d_control(
     }
 }
 
-fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn sequence_1d(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     ui.label("Zoom in on the X-axis to see hours and minutes");
 
     Plot::new("custom_axes")

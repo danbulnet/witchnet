@@ -1,25 +1,21 @@
 use bevy::prelude::*;
 
-use bevy_egui::egui::{ 
-    self, 
+use bevy_egui::egui::{
     Ui,
-    Grid,
     ComboBox,
     plot::{ MarkerShape, LineStyle }
 };
 
 use crate::{
     resources::{
-        sequence_1d::{ Sequence1D, SamplingMethodSelector, SequenceSelector, SamplingMeasures },
-        layout::DEFAULT_PANEL_WIDTH,
-        common, 
-        sequential_data::SequentialDataFiles
+        sequence_1d::{ Sequence2D,SamplingMeasures },
+        common
     },
     interface::widgets as w,
     utils
 };
 
-pub(crate) fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+pub(crate) fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     w::heading_label(ui, "measures", common::NEUTRAL_ACTIVE_COLOR);
 
     let measures = &sequence_1d_res.sampling_measures;
@@ -61,7 +57,7 @@ pub(crate) fn measures(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     ui.separator(); ui.end_row();
 }
 
-pub(crate) fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+pub(crate) fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     line_settings(ui, sequence_1d_res);
 
     ui.separator(); ui.end_row();
@@ -75,7 +71,7 @@ pub(crate) fn appearance(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) 
     ui.separator(); ui.end_row();
 }
 
-fn line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     w::heading_label(ui, "line settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.line_color);
@@ -151,7 +147,7 @@ fn line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     }
 }
 
-fn samples_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn samples_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     w::heading_label(ui, "samples settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.samples_color);
@@ -194,7 +190,7 @@ fn samples_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
     });
 }
 
-fn approximation_line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn approximation_line_settings(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     w::heading_label(ui, "approximation line settings", common::NEUTRAL_ACTIVE_COLOR);
 
     w::color_picker_row(ui, "color", &mut sequence_1d_res.approximation_line_color);

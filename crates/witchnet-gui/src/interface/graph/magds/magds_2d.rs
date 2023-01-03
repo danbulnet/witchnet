@@ -1,16 +1,13 @@
-use std::collections::HashMap;
-
 use bevy::prelude::*;
 
 use witchnet_common::{
-    neuron::NeuronID,
     sensor::SensorAsync
 };
 
 use crate::{
     resources::{
-        appearance::{ Appearance, Selector },
-        magds::{ MAGDSMain, MAGDSPositions, BIG_GAP_FACTOR }
+        appearance::Selector,
+        magds::MAGDSMain
     },
     interface::graph::magds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
@@ -20,6 +17,7 @@ pub(crate) fn magds(
     ui: &mut PlotUi,
     magds_res: &mut ResMut<MAGDSMain>
 ) {
+    #[allow(unused)]
     let &mut MAGDSMain { magds, appearance, loaded_datasets, positions } = &mut magds_res.as_mut();
 
     let neuron_settings = &appearance.neurons[&Selector::All];
@@ -30,9 +28,9 @@ pub(crate) fn magds(
     let sensors = magds.sensors();
     let neurons = magds.neurons();
 
-    let mut current_top_x = 0.0f64;
-    let mut current_bottom_x = 0.0f64;
-    let mut sensor_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::new();
+    // let mut current_top_x = 0.0f64;
+    // let mut current_bottom_x = 0.0f64;
+    // let mut sensor_point_map: HashMap<NeuronID, [f64; 2]> = HashMap::new();
 
     neuron_2d::neurons(
         ui, 

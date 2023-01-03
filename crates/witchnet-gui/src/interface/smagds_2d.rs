@@ -6,8 +6,7 @@ use bevy_egui::egui::{
 
 use crate::{
     resources::{
-        appearance::Appearance,
-        smagds::{ SMAGDSMain, SMAGDSPositions }
+        smagds::SMAGDSMain
     },
     interface::graph::smagds::smagds_2d,
     widgets::plot::{

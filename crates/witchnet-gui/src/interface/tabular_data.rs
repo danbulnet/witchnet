@@ -22,7 +22,7 @@ use crate::{
         graph::magds::magds_positions
     },
     resources::{
-        appearance::{ Appearance, Selector },
+        appearance::Selector,
         common::{
             NEUTRAL_ACTIVE_COLOR,
             NEUTRAL_COLOR,
@@ -39,9 +39,7 @@ use crate::{
         },
         magds::{ 
             MAGDSMain,
-            MAGDSLoadedDatasets,
             MAGDSLoadedDataset,
-            MAGDSPositions,
             ADDED_TO_MAGDS_COLOR
         }
     },
@@ -51,8 +49,7 @@ use crate::{
 pub(crate) fn tabular_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<TabularDataFiles>,
-    magds_res: &mut ResMut<MAGDSMain>,
-    appearance_res: &mut ResMut<Appearance>,
+    magds_res: &mut ResMut<MAGDSMain>
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
@@ -69,7 +66,6 @@ pub(crate) fn tabular_data_window(
                 ui, 
                 data_files_res,
                 magds_res,
-                appearance_res
             );
 
             loaded_files(ui, &mut magds_res.loaded_datasets);
@@ -156,8 +152,7 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<TabularData
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<TabularDataFiles>,
-    magds_res: &mut ResMut<MAGDSMain>,
-    appearance_res: &mut ResMut<Appearance>
+    magds_res: &mut ResMut<MAGDSMain>
 ) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
@@ -194,20 +189,20 @@ pub(crate) fn add_magds_button_row(
                         let _ = sensor.activate(&value, 1.0f32, true, true);
                     }
                     
-                    let sensor_appearance = appearance_res.sensors[&Selector::All].clone();
+                    let sensor_appearance = appearance.sensors[&Selector::All].clone();
                     for sensor_name in magds.sensors_names() {
                         let sensor_key = &Selector::One(sensor_name.clone());
-                        if !appearance_res.sensors.contains_key(sensor_key) {
-                            appearance_res.sensors.insert(
+                        if !appearance.sensors.contains_key(sensor_key) {
+                            appearance.sensors.insert(
                                 sensor_key.clone(), sensor_appearance.clone()
                             );
                         }
                     }
-                    let neuron_appearance = appearance_res.neurons[&Selector::All].clone();
+                    let neuron_appearance = appearance.neurons[&Selector::All].clone();
                     for neuron_name in magds.neurons_names() {
                         let neuron_key = &Selector::One(neuron_name.clone());
-                        if !appearance_res.neurons.contains_key(neuron_key) {
-                            appearance_res.neurons.insert(
+                        if !appearance.neurons.contains_key(neuron_key) {
+                            appearance.neurons.insert(
                                 neuron_key.clone(), neuron_appearance.clone()
                             );
                         }
@@ -230,7 +225,7 @@ pub(crate) fn add_magds_button_row(
                         &magds,
                         (0.0, 0.0),
                         positions, 
-                        appearance_res
+                        appearance
                     );
                 }
             }

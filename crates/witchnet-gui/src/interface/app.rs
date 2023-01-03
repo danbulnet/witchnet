@@ -1,15 +1,18 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+#[allow(unused)]
+use bevy::{
+    prelude::*, 
+    sprite::MaterialMesh2dBundle
+};
 
 use bevy_egui::EguiPlugin;
 
 use crate::{
     resources::{
-        appearance::Appearance,
         tabular_data::TabularDataFiles,
         sequential_data::SequentialDataFiles,
         magds::MAGDSMain,
         smagds::SMAGDSMain,
-        sequence_1d::Sequence1D,
+        sequence_1d::Sequence2D,
         layout::Layout, 
         args::ProgramArgs
     },
@@ -25,8 +28,7 @@ pub fn app(args: Vec<String>) {
         .insert_resource(SMAGDSMain::default())
         .insert_resource(TabularDataFiles::default())
         .insert_resource(SequentialDataFiles::default())
-        .insert_resource(Sequence1D::default())
-        .insert_resource(Appearance::default())
+        .insert_resource(Sequence2D::default())
         .insert_resource(ProgramArgs::from(args))
         .add_startup_system(setup)
         .add_startup_system(ProgramArgs::handle_args)

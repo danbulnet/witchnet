@@ -1,5 +1,3 @@
-use bevy::prelude::*;
-
 use bevy_egui::egui::{ Ui, Grid, RichText };
 
 use crate::{

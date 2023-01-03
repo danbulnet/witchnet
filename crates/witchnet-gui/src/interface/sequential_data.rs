@@ -17,7 +17,7 @@ use crate::{
         graph::smagds::smagds_positions
     },
     resources::{
-        appearance::{ Appearance, Selector },
+        appearance::Selector,
         common::{
             NEUTRAL_ACTIVE_COLOR,
             NEUTRAL_COLOR,
@@ -34,13 +34,11 @@ use crate::{
         },
         smagds::{ 
             SMAGDSMain,
-            SMAGDSLoadedDatasets,
             SMAGDSLoadedDataset,
-            SMAGDSPositions,
             ADDED_TO_SEQUENTIAL_MODEL_COLOR,
             SAMPLING_METHOD_COLOR
         }, 
-        sequence_1d::{ Sequence1D, SequenceSelector, SamplingMethodSelector }, 
+        sequence_1d::{ Sequence2D, SequenceSelector, SamplingMethodSelector }, 
         layout::DEFAULT_PANEL_WIDTH
     },
     utils
@@ -50,8 +48,7 @@ pub(crate) fn sequential_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    appearance_res: &mut ResMut<Appearance>,
-    sequence_1d_res: &mut ResMut<Sequence1D>
+    sequence_1d_res: &mut ResMut<Sequence2D>
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
@@ -142,6 +139,7 @@ pub fn data_points(ui: &mut Ui, data_files_res: &mut ResMut<SequentialDataFiles>
     }
 }
 
+#[allow(unused)]
 pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<SequentialDataFiles>) {
     if let Some(data_file) = data_files_res.current_data_file() {
         ui.separator(); ui.end_row();
@@ -160,7 +158,7 @@ pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
     mut smagds_res: &mut SMAGDSMain,
-    sequence_1d_res: &mut ResMut<Sequence1D>
+    sequence_1d_res: &mut ResMut<Sequence2D>
 ) {
     if !sequence_1d_res.loaded_samples.is_empty() {
         ui.horizontal(|ui| {
@@ -172,6 +170,7 @@ pub(crate) fn add_magds_button_row(
                     .map(|point| (point[0] as f32, point[1] as f32))
                     .collect();
                     
+                #[allow(unused)]
                 let &mut SMAGDSMain { smagds, appearance, loaded_datasets: loaded_dataset, positions } = &mut smagds_res;
 
                 *smagds = Some(
@@ -275,7 +274,7 @@ pub(crate) fn loaded_files(ui: &mut Ui, loaded_datasets: &mut [SMAGDSLoadedDatas
 
 fn data(
     ui: &mut Ui, 
-    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequence_1d_res: &mut ResMut<Sequence2D>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     Grid::new("flex-points data").show(ui, |ui| {
@@ -330,12 +329,10 @@ fn data(
     });
 }
 
-fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
+fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence2D>) {
     Grid::new("flex-points sampling").show(ui, |ui| {
         ui.vertical(|ui| {
             ui.set_min_width(DEFAULT_PANEL_WIDTH - 25f32);
-
-            let loaded = sequence_1d_res.loaded_sampling_method.clone();
 
             widgets::heading_label(ui, "sampling", NEUTRAL_ACTIVE_COLOR);
 
@@ -469,7 +466,7 @@ fn sampling(ui: &mut Ui, sequence_1d_res: &mut ResMut<Sequence1D>) {
 }
 
 fn sequence_1d_control(
-    sequence_1d_res: &mut ResMut<Sequence1D>,
+    sequence_1d_res: &mut ResMut<Sequence2D>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     if sequence_1d_res.loaded_data_source != sequence_1d_res.selected_data_source {

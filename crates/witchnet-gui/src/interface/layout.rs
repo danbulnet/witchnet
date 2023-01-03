@@ -12,7 +12,6 @@ use bevy_egui::{
 
 use crate::{
     resources::{
-        appearance::Appearance,
         tabular_data::{ TabularDataFiles, DATA_PANEL_SCROLL_WIDTH },
         sequential_data::SequentialDataFiles,
         magds::MAGDSMain,
@@ -22,7 +21,7 @@ use crate::{
             DEFAULT_PANEL_SCROLL_WIDTH, 
             CentralPanel as LayoutCentralPanel 
         }, 
-        sequence_1d::Sequence1D,
+        sequence_1d::Sequence2D,
     },
     interface::{ 
         tabular_data, 
@@ -46,8 +45,7 @@ pub(crate) fn app_layout(
     mut sequential_data_files_res: ResMut<SequentialDataFiles>,
     mut magds_res: ResMut<MAGDSMain>,
     mut smagds_res: ResMut<SMAGDSMain>,
-    mut sequence_1d_res: ResMut<Sequence1D>,
-    mut appearance_res: ResMut<Appearance>,
+    mut sequence_1d_res: ResMut<Sequence2D>
 ) {
     top_panel(&mut egui_context, &mut layout_res);
     left_panel(
@@ -57,7 +55,6 @@ pub(crate) fn app_layout(
         &mut sequential_data_files_res,
         &mut magds_res,
         &mut smagds_res,
-        &mut appearance_res,
         &mut sequence_1d_res
     );
     right_panel(
@@ -66,7 +63,6 @@ pub(crate) fn app_layout(
         &mut magds_res, 
         &mut smagds_res, 
         &mut sequence_1d_res,
-        &mut appearance_res
     );
     central_panel(
         &mut egui_context, 
@@ -74,7 +70,6 @@ pub(crate) fn app_layout(
         &mut magds_res,
         &mut smagds_res,
         &mut sequence_1d_res,
-        &mut appearance_res,
         &mut sequential_data_files_res
     );
 }
@@ -138,8 +133,7 @@ fn left_panel(
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>,
     magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    appearance_res: &mut ResMut<Appearance>,
-    sequence_1d_res: &mut ResMut<Sequence1D>
+    sequence_1d_res: &mut ResMut<Sequence2D>
 ) {
     if layout_res.tabular_data {
         SidePanel::left("tabular_data_panel")
@@ -151,12 +145,7 @@ fn left_panel(
                     ui.heading("🖹 tabular data");
                 });
                 ui.separator();
-                tabular_data::tabular_data_window(
-                    ui,
-                    tabular_data_files_res,
-                    magds_res,
-                    appearance_res
-                );
+                tabular_data::tabular_data_window(ui, tabular_data_files_res, magds_res);
             }
         );
     }
@@ -174,7 +163,6 @@ fn left_panel(
                     ui,
                     sequential_data_files_res,
                     smagds_res,
-                    appearance_res,
                     sequence_1d_res
                 );
             }
@@ -187,8 +175,7 @@ fn right_panel(
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>
+    sequence_1d_res: &mut ResMut<Sequence2D>
 ) {
     if layout_res.flex_points_appearance {
         SidePanel::right("flex_points_settings_panel")
@@ -225,7 +212,7 @@ fn right_panel(
                     ui.heading("🔧 magds settings");
                 });
                 ui.separator();
-                appearance::appearance_window(ui, appearance_res);
+                appearance::appearance_window(ui, &mut magds_res.appearance);
             }
         );
     }
@@ -251,7 +238,7 @@ fn right_panel(
                     ui.heading("❄ sensors");
                 });
                 ui.separator();
-                sensors::sensors(ui, magds_res, appearance_res);
+                sensors::sensors(ui, magds_res);
             }
         );
     }
@@ -264,7 +251,7 @@ fn right_panel(
                     ui.heading("Ψ neurons");
                 });
                 ui.separator();
-                neurons::neurons(ui, magds_res, appearance_res);
+                neurons::neurons(ui, magds_res);
             }
         );
     }
@@ -277,7 +264,7 @@ fn right_panel(
                     ui.heading("🎟 connections");
                 });
                 ui.separator();
-                connections::connections(ui, magds_res, appearance_res);
+                connections::connections(ui, magds_res);
             }
         );
     }
@@ -288,17 +275,16 @@ fn central_panel(
     layout_res: &mut ResMut<Layout>,
     magds_res: &mut ResMut<MAGDSMain>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    sequence_1d_res: &mut ResMut<Sequence1D>,
-    appearance_res: &mut ResMut<Appearance>,
+    sequence_1d_res: &mut ResMut<Sequence2D>,
     sequential_data_files_res: &mut ResMut<SequentialDataFiles>
 ) {
     CentralPanel::default().show(egui_context.ctx_mut(), |ui| {
         match layout_res.central_panel {
             LayoutCentralPanel::MAGDS2D => {
-                magds_2d::simulation(ui, magds_res, appearance_res);
+                magds_2d::simulation(ui, magds_res);
             }
             LayoutCentralPanel::MAGDS3D => {
-                magds_3d::simulation(ui, magds_res, appearance_res);
+                magds_3d::simulation(ui, magds_res);
             },
             LayoutCentralPanel::SequentialModel2D => {
                 smagds_2d::simulation(ui, smagds_res);

@@ -1,5 +1,4 @@
 use std::{
-    sync::Arc,
     default::Default,
     string::ToString
 };
@@ -56,7 +55,7 @@ impl SequenceSelector {
                             if let Ok(float_vec) = column.f64() {
                                 return float_vec.into_iter()
                                     .enumerate()
-                                    .filter(|(i, x)| x.is_some())
+                                    .filter(|(_i, x)| x.is_some())
                                     .map(|(i, x)| [i as f64, x.unwrap()])
                                     .collect()
                             }
@@ -136,7 +135,7 @@ impl SamplingMethodSelector {
     pub(crate) fn samples(
         &self, 
         data: &[[f64; 2]],
-        sequence_1d: &Sequence1D 
+        sequence_1d: &Sequence2D 
     ) -> Vec<[f64; 2]> {
         match self {
             SamplingMethodSelector::FlexPoints => Self::flex_points(
@@ -254,7 +253,7 @@ impl ToString for SamplingMethodSelector {
     }
 }
 
-pub(crate) struct Sequence1D {
+pub(crate) struct Sequence2D {
     pub selected_data_source: SequenceSelector,
     pub loaded_data_source: SequenceSelector,
     pub loaded_data: Vec<[f64; 2]>,
@@ -292,8 +291,8 @@ pub(crate) struct Sequence1D {
     pub equal_sampling_n: usize,
 }
 
-impl Default for Sequence1D {
-    fn default() -> Sequence1D {
+impl Default for Sequence2D {
+    fn default() -> Sequence2D {
         let loaded_data = SequenceSelector::ComplexTrigonometric.data(None);
         let loaded_samples = SamplingMethodSelector::FlexPoints.samples_default(&loaded_data);
         let loaded_samples_len = loaded_samples.len();
@@ -304,7 +303,7 @@ impl Default for Sequence1D {
         
         let sampling_measures = Self::sampling_measures_data(&loaded_data, &loaded_samples);
 
-        Sequence1D {
+        Sequence2D {
             selected_sampling_method: SamplingMethodSelector::FlexPoints,
             loaded_sampling_method: SamplingMethodSelector::FlexPoints,
             loaded_samples,
@@ -360,7 +359,7 @@ impl Default for Sequence1D {
     }
 }
 
-impl Sequence1D {
+impl Sequence2D {
     pub(crate) fn update_samples(&mut self) {
         self.loaded_samples = self.loaded_sampling_method.samples(
             &self.loaded_data, &self

@@ -1,7 +1,6 @@
 use std::{
     default::Default,
     sync::{ Arc, RwLock },
-    path::PathBuf,
     collections::HashMap
 };
 

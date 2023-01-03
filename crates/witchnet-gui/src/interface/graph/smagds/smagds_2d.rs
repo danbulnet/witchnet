@@ -1,18 +1,13 @@
-use std::collections::HashMap;
-
-use bevy::prelude::*;
-
 use witchnet_common::{
-    neuron::NeuronID,
     sensor::SensorAsync
 };
 
 use crate::{
     resources::{
-        appearance::{ Appearance, Selector },
-        smagds::{ SMAGDSMain, SMAGDSPositions, BIG_GAP_FACTOR }
+        appearance::Selector ,
+        smagds::SMAGDSMain
     },
-    interface::{graph::smagds::{ sensor_2d, neuron_2d }, appearance},
+    interface::graph::smagds::{ sensor_2d, neuron_2d },
     widgets::plot::PlotUi
 };
 
@@ -21,6 +16,7 @@ pub(crate) fn smagds(
     mut smagds_res: &mut SMAGDSMain
 ) {
     if smagds_res.smagds.is_some() {
+        #[allow(unused)]
         let &mut SMAGDSMain { smagds, appearance, loaded_datasets, positions } = &mut smagds_res;
         let neuron_settings = &appearance.neurons[&Selector::All];
         let sensor_settings = &appearance.sensors[&Selector::All];

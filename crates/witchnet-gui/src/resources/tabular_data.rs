@@ -74,7 +74,7 @@ impl TabularDataFiles {
                         .show();
                     data_files_res.current = None;
                 } else {
-                    let mut features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
+                    let features: BTreeMap<String, bool> = data_frame.as_ref().unwrap()
                         .get_column_names()
                         .into_iter()
                         .map(|x| (x.to_string(), true))

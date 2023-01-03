@@ -4,7 +4,6 @@ use std::{
 };
 
 use bevy_egui::egui::{
-    TextStyle,
     Align2
 };
 
@@ -38,6 +37,7 @@ fn weight(first: &DataTypeValue, second: &DataTypeValue, range: f32) -> f32 {
     1.0f32 - (first.distance(second) as f32).abs() / range
 }
 
+#[allow(unused)]
 pub(crate) fn sensor(
     ui: &mut PlotUi, 
     name: &str, 

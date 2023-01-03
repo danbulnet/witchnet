@@ -7,10 +7,6 @@ use std::{
 
 use bevy::prelude::*;
 
-use bevy_egui::egui::Vec2;
-
-use crate::interface::transform::{ ScreenTransform, AxisBools };
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
 pub enum Selector {
     All,

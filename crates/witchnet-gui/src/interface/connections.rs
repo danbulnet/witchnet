@@ -4,7 +4,6 @@ use bevy_egui::egui::{ self, Ui };
 
 use crate::{
     resources::{
-        appearance::Appearance,
         magds::MAGDSMain,
         layout::DEFAULT_PANEL_WIDTH
     }
@@ -12,8 +11,7 @@ use crate::{
 
 pub(crate) fn connections(
     ui: &mut Ui,
-    _magds_res: &mut ResMut<MAGDSMain>,
-    _appearance_res: &mut ResMut<Appearance>,
+    _magds_res: &mut ResMut<MAGDSMain>
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)

@@ -1,13 +1,11 @@
 use std::{
     f64::consts::PI,
     collections::HashMap,
-    sync::{ Arc, RwLock },
+    sync::Arc,
     marker::PhantomData
 };
 
-use rand::{thread_rng, Rng, seq::SliceRandom};
-
-use bevy::prelude::*;
+use rand::{thread_rng, seq::SliceRandom};
 
 use witchnet_common::{
     sensor::{SensorAsync, SensorData},
@@ -16,8 +14,7 @@ use witchnet_common::{
 };
 
 use asa_graphs::neural_async::{
-    graph::ASAGraph,
-    element::Element
+    graph::ASAGraph
 };
 
 use magds::asynchronous::{ magds::MAGDS, sensor::SensorConatiner };
