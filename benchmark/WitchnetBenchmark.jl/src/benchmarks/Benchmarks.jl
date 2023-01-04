@@ -16,15 +16,18 @@ function warmup(dataset::Module=Iris)
     end
 end
 
-function predictall(models=fast_classification_models())
-    Iris.classify(models=models)
-    Iris.estimate(models=models)
-    Penguin.classify(models=models)
-    Penguin.classify(models=models)
-    Star.estimate(models=models)
-    Star.estimate(models=models)
-    WhiteWine.estimate(models=models)
-    WhiteWine.estimate(models=models)
-    RedWine.estimate(models=models)
-    RedWine.estimate(models=models)
+function predictall(
+    classifymodels=fast_classification_models(),
+    estimatemodels=fast_regression_models()
+)
+    Iris.classify(models=classifymodels)
+    Iris.estimate(models=estimatemodels)
+    Penguin.classify(models=classifymodels)
+    Penguin.estimate(models=estimatemodels)
+    Star.classify(models=classifymodels)
+    Star.estimate(models=estimatemodels)
+    WhiteWine.classify(models=classifymodels)
+    WhiteWine.estimate(models=estimatemodels)
+    RedWine.classify(models=classifymodels)
+    RedWine.estimate(models=estimatemodels)
 end
