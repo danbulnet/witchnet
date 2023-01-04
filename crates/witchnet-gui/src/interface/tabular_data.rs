@@ -10,7 +10,6 @@ use bevy_egui::egui::{ self, Ui, RichText };
 use rfd::FileDialog;
 
 use witchnet_common::{
-    sensor::SensorAsync, 
     connection::collective::defining::ConstantOneWeightAsync
 };
 

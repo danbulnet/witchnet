@@ -26,9 +26,10 @@ use crate::{
 pub const ADDED_TO_SEQUENTIAL_MODEL_COLOR: Color32 = Color32::from_rgb(194, 232, 148);
 pub const SAMPLING_METHOD_COLOR: Color32 = Color32::from_rgb(170, 150, 100);
 
-pub const BIG_GAP_FACTOR: f64 = 0.5f64;
-pub const SMALL_GAP_FACTOR: f64 = 0.3f64;
-pub const SENSOR_NEURON_GAP_R_FRACTION: f64 = 1.0f64;
+pub const BIG_GAP_FACTOR: f64 = 3.0f64;
+pub const SENSOR_SMALL_GAP_FACTOR: f64 = 0.3f64;
+pub const NEURON_SMALL_GAP_FACTOR: f64 = 0.5f64;
+pub const SENSOR_NEURON_GAP_R_FACTOR: f64 = 1.0f64;
 
 pub const SENSOR_TEXT_CUTOFF: usize = 6;
 

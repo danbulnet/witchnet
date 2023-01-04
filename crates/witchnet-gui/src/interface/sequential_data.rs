@@ -167,7 +167,7 @@ pub(crate) fn add_magds_button_row(
                 sequence_1d_control(sequence_1d_res, data_files_res);
 
                 let sampled_data: Vec<_> = (&sequence_1d_res.loaded_samples).into_iter()
-                    .map(|point| (point[0] as f32, point[1] as f32))
+                    .map(|point| (point[0], point[1]))
                     .collect();
                     
                 #[allow(unused)]

@@ -264,6 +264,48 @@ impl SMAGDS {
                     relative_pattern_lvl1_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
             }
+            
+            {
+                let sapi_neuron = SimpleNeuron::new_custom(
+                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_absolute_patterns_interval },
+                    Arc::new(ConstantOneWeightAsync)
+                );
+                magds.add_neuron(sapi_neuron.clone());
+                let sapi_sn = sapi.insert(&first_point.x);
+                sapi_sn.write().unwrap().connect_bilateral(
+                    sapi_neuron.clone(), false, ConnectionKind::Defining
+                ).unwrap();
+
+                let srpi_neuron = SimpleNeuron::new_custom(
+                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_relative_patterns_interval },
+                    Arc::new(ConstantOneWeightAsync)
+                );
+                magds.add_neuron(srpi_neuron.clone());
+                let srpi_sn = srpi.insert(&first_point.y);
+                srpi_sn.write().unwrap().connect_bilateral(
+                    srpi_neuron.clone(), false, ConnectionKind::Defining
+                ).unwrap();
+
+                let dapi_neuron = SimpleNeuron::new_custom(
+                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_absolute_patterns_interval },
+                    Arc::new(ConstantOneWeightAsync)
+                );
+                magds.add_neuron(dapi_neuron.clone());
+                let dapi_sn = dapi.insert(&second_point.x);
+                dapi_sn.write().unwrap().connect_bilateral(
+                    dapi_neuron.clone(), false, ConnectionKind::Defining
+                ).unwrap();
+
+                let drpi_neuron = SimpleNeuron::new_custom(
+                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_relative_patterns_interval },
+                    Arc::new(ConstantOneWeightAsync)
+                );
+                magds.add_neuron(drpi_neuron.clone());
+                let drpi_sn = drpi.insert(&second_point.y);
+                drpi_sn.write().unwrap().connect_bilateral(
+                    drpi_neuron.clone(), false, ConnectionKind::Defining
+                ).unwrap();
+            }
 
             if i >= 2 {
                 for j in (0..(i - 2)).rev() {

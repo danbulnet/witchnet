@@ -25,8 +25,9 @@ use crate::{
         smagds::{ 
             SMAGDSPositions,
             BIG_GAP_FACTOR,
-            SMALL_GAP_FACTOR,
-            SENSOR_NEURON_GAP_R_FRACTION
+            SENSOR_SMALL_GAP_FACTOR,
+            NEURON_SMALL_GAP_FACTOR,
+            SENSOR_NEURON_GAP_R_FACTOR
         }
     }
 };
@@ -52,9 +53,9 @@ pub(crate) fn set_positions(
         }
     
         let sensors_radius = if neuron_gropu_len <= 1 {
-            (group_max_r + BIG_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FRACTION
+            (group_max_r + SENSOR_SMALL_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FACTOR
         } else {
-            (groups_r) * SENSOR_NEURON_GAP_R_FRACTION
+            (groups_r) * SENSOR_NEURON_GAP_R_FACTOR
         };
         sensor_positions(
             magds, 
@@ -83,7 +84,7 @@ fn sensor_positions(
         radius,
         sensors.len(),
         sensor_size as f64,
-        SMALL_GAP_FACTOR
+        SENSOR_SMALL_GAP_FACTOR
     );
 
     for (i, sensor) in sensors.into_iter().enumerate() {
@@ -109,7 +110,7 @@ fn sensor_neurons_positions(
     positions: &mut SMAGDSPositions
 ) -> (f64, f64) {
     let sensor_levels = sensor_to_asa_3_levels(magds, &sensor);
-    let gap = SMALL_GAP_FACTOR as f64;
+    let gap = SENSOR_SMALL_GAP_FACTOR as f64;
 
     let mut unrotated_points: HashMap<NeuronID, (f64, f64)> = HashMap::new();
 
@@ -344,7 +345,7 @@ fn find_max_neuron_group_r(
         origin, 
         max_len, 
         neuron_size,
-        BIG_GAP_FACTOR as f64
+        NEURON_SMALL_GAP_FACTOR as f64
     );
     Some(r)
 }
@@ -360,8 +361,8 @@ fn neuron_gropu_origins(
     let (neuron_group_points, r) = full_circle_positions(
         origin, 
         neuron_gropu_ids.len(), 
-        group_size,
-        BIG_GAP_FACTOR as f64
+        2.0 * group_size,
+        NEURON_SMALL_GAP_FACTOR as f64
     );
 
     for (i, id) in neuron_gropu_ids.into_iter().enumerate() {
@@ -386,7 +387,7 @@ fn neuron_positions(
         origin,
         neurons.len(),
         neuron_size as f64,
-        BIG_GAP_FACTOR as f64
+        NEURON_SMALL_GAP_FACTOR as f64
     );
 
     for (i, neuron) in neurons.into_iter().enumerate() {
