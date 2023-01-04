@@ -49,7 +49,7 @@ end
 "load ready-to-use red wine quality data"
 function dataset()::DataFrame 
     df = Utils.uciurl2df("wine-quality/winequality-red.csv")
-    df[!, :quality] = categorical(df[!, :quality])
+    df[!, :quality] = categorical("grade " .* string.(df[!, :quality]))
     df
 end
 
