@@ -89,6 +89,86 @@ example:
     ````
     trainfile = "crates/magds/data/iris_original_train.csv"
     testfile = "crates/magds/data/iris_original_test.csv"
+    magds_nrmse("iris", trainfile, testfile, "sepal.length")
+    ```
+"""
+function magds_nrmse(
+    train_file::String, 
+    test_file::String, 
+    target::String,
+    weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
+    interelement_activation_threshold::Float32,
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
+)::Float64
+    result = ccall(
+        (:magds_regression_nrmse, libpath), 
+        Float64, 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
+        "magds_nrmse",
+        train_file,
+        test_file,
+        target,
+        weighting_strategy,
+        fuzzy,
+        weighted,
+        interelement_activation_threshold,
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
+    )
+    @info string("magds nrmse: ", result)
+    result
+end
+
+"""
+example:
+    ````
+    trainfile = "crates/magds/data/iris_original_train.csv"
+    testfile = "crates/magds/data/iris_original_test.csv"
+    magds_rmsp("iris", trainfile, testfile, "sepal.length")
+    ```
+"""
+function magds_rmsp(
+    train_file::String, 
+    test_file::String, 
+    target::String,
+    weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
+    interelement_activation_threshold::Float32,
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
+)::Float64
+    result = ccall(
+        (:magds_regression_rmsp, libpath), 
+        Float64, 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
+        "magds_rmsp",
+        train_file,
+        test_file,
+        target,
+        weighting_strategy,
+        fuzzy,
+        weighted,
+        interelement_activation_threshold,
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
+    )
+    @info string("magds rmsp: ", result)
+    result
+end
+
+"""
+example:
+    ````
+    trainfile = "crates/magds/data/iris_original_train.csv"
+    testfile = "crates/magds/data/iris_original_test.csv"
     magds_mae("iris", trainfile, testfile, "sepal.length")
     ```
 """

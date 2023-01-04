@@ -63,12 +63,12 @@ function summarizeall(results=predictall())::Dict{Symbol, DataFrame}
         :memory => memory
     )
 
-    rmse = sum(getproperty.(values(regression), :rmse)) / regressionlen
+    nrmse = sum(getproperty.(values(regression), :nrmse)) / regressionlen
     time = sum(getproperty.(values(regression), :time)) / regressionlen
     memory = sum(getproperty.(values(regression), :memory)) / regressionlen
     regressionmean = DataFrame(
         :model => first(values(regression)).model,
-        :rmse => rmse,
+        :nrmse => nrmse,
         :time => time,
         :memory => memory
     )
@@ -79,9 +79,9 @@ function summarizeall(results=predictall())::Dict{Symbol, DataFrame}
     Utils.writeimg(plot, "summary", "accuracy", :mean)
 
     Utils.writecsv(regressionmean, "summary", "regression", :mean)
-    title = string("regression rmse mean of ", regressionlen, " datasets")
-    plot = value_barplot(regressionmean, :model, :rmse, title)
-    Utils.writeimg(plot, "summary", "rmse", :mean)
+    title = string("regression nrmse mean of ", regressionlen, " datasets")
+    plot = percent_barplot(regressionmean, :model, :nrmse, title)
+    Utils.writeimg(plot, "summary", "nrmse", :mean)
 
     Dict(
         :classificationmean => classificationmean,

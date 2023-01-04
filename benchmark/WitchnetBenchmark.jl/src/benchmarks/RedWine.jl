@@ -31,7 +31,7 @@ end
 "regression task on the red wine quality dataset"
 function estimate(;
     target::Symbol=:sulphates,
-    measure::Symbol=:rmse,
+    measure::Symbol=:nrmse,
     models=fast_regression_models()
 )::DataFrame
     data = dataset()
@@ -40,7 +40,7 @@ function estimate(;
     Utils.writecsv(result, "red_wine", "estimate", target)
     
     title = string("red wine quality", lowercase(string(target)), " estimation ", measure)
-    plot = value_barplot(result, :model, measure, title)
+    plot = percent_barplot(result, :model, measure, title)
     Utils.writeimg(plot, "red_wine", "estimate", target)
     
     result

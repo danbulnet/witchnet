@@ -30,7 +30,7 @@ end
 "regression task on the star dataset"
 function estimate(
     ;target::Symbol=:Read, 
-    measure::Symbol=:rmse, 
+    measure::Symbol=:nrmse, 
     models=fast_regression_models()
 )::DataFrame
     data = dataset()
@@ -39,7 +39,7 @@ function estimate(
     Utils.writecsv(result, "star", "estimate", target)
     
     title = string("star ", lowercase(string(target)), " estimation ", measure)
-    plot = value_barplot(result, :model, measure, title)
+    plot = percent_barplot(result, :model, measure, title)
     Utils.writeimg(plot, "star", "estimate", target)
     
     result

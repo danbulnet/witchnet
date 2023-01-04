@@ -1,3 +1,5 @@
+use statrs::statistics::{ Data, OrderStatistics };
+
 use crate::{
     data::DataTypeValue, 
     distances::Distance
@@ -75,6 +77,48 @@ impl SupervisedPerformance {
                 Ok(1.0f64 - (total_error / data_len as f64))
             }
             Self::Regression(_) => { anyhow::bail!("accuracy is for classification only") }
+        }
+    }
+
+    pub fn rmsp(&self) -> anyhow::Result<f64> {
+        match self {
+            Self::Classification(_) => { anyhow::bail!("rmse is for regression only") }
+            Self::Regression(data) => {
+                self.is_ok()?;
+
+                let data_len = data.references.len();
+                let mut total_error: f64 = 0.0;
+                for i in 0..data_len {
+                    total_error += (
+                        data.references[i].distance(&data.predictions[i]) 
+                        / data.references[i].to_f64().unwrap()
+                    ).powf(2.0);
+                }
+
+                Ok((total_error / data_len as f64).sqrt())
+            }
+        }
+    }
+
+    pub fn nrmse(&self) -> anyhow::Result<f64> {
+        match self {
+            Self::Classification(_) => { anyhow::bail!("rmse is for regression only") }
+            Self::Regression(data) => {
+                self.is_ok()?;
+
+                let data_len = data.references.len();
+                let references_f64: Vec<f64> = (&data.references).into_iter()
+                    .map(|x| x.to_f64().unwrap()).collect();
+                let mut total_error: f64 = 0.0;
+                for i in 0..data_len {
+                    total_error += (data.references[i].distance(&data.predictions[i])).powf(2.0);
+                }
+
+                Ok(
+                    (total_error / data_len as f64).sqrt() 
+                    / Data::new(references_f64).interquartile_range()
+                )
+            }
         }
     }
 
@@ -187,6 +231,12 @@ mod tests {
         
         let rmse_result = performace.rmse().unwrap();
         assert!(rmse_result > 1.224 && rmse_result < 1.225);
+
+        let nrmse_result = performace.nrmse().unwrap();
+        assert!(nrmse_result > 0.0);
+
+        let rmsp_result = performace.rmsp().unwrap();
+        assert!(rmsp_result > 0.0);
         
         let mean_probability_result = performace.mean_probability().unwrap();
         assert!(mean_probability_result > 0.76 && mean_probability_result < 0.77);

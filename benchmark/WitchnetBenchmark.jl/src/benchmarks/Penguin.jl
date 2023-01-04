@@ -32,7 +32,7 @@ end
 "regression task on the palmer penguins dataset"
 function estimate(;
     target::Symbol=:body_mass_g, 
-    measure::Symbol=:rmse, 
+    measure::Symbol=:nrmse, 
     models=fast_regression_models()
 )::DataFrame
     data = dataset()
@@ -41,7 +41,7 @@ function estimate(;
     Utils.writecsv(result, "penguin", "estimate", target)
     
     title = string("penguin ", lowercase(string(target)), " estimation ", measure)
-    plot = value_barplot(result, :model, measure, title)
+    plot = percent_barplot(result, :model, measure, title)
     Utils.writeimg(plot, "penguin", "estimate", target)
     
     result

@@ -151,6 +151,74 @@ unsafe extern "C" fn async_magds_regression_rmse(
 }
 
 #[no_mangle]
+unsafe extern "C" fn async_magds_regression_nrmse(
+    name_ptr: *const i8,
+    train_file_ptr: *const i8,
+    test_file_ptr: *const i8,
+    target_ptr: *const i8,
+    weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
+) -> f64 {
+    match panic::catch_unwind(|| {
+        extern_supervised_performance(
+            name_ptr,
+            train_file_ptr,
+            test_file_ptr,
+            target_ptr,
+            weighting_strategy_ptr,
+            fuzzy,
+            weighted,
+            interelement_activation_threshold,
+            interelement_activation_exponent,
+            winners_limit,
+            weight_ratio
+        ).nrmse().unwrap()
+    }) {
+        Ok(r) => r,
+        Err(e) => { println!("{:?}", e); -1.0 }
+    }
+}
+
+#[no_mangle]
+unsafe extern "C" fn async_magds_regression_rmsp(
+    name_ptr: *const i8,
+    train_file_ptr: *const i8,
+    test_file_ptr: *const i8,
+    target_ptr: *const i8,
+    weighting_strategy_ptr: *const i8,
+    fuzzy: bool,
+    weighted: bool,
+    interelement_activation_threshold: f32,
+    interelement_activation_exponent: i32,
+    winners_limit: usize, 
+    weight_ratio: f32
+) -> f64 {
+    match panic::catch_unwind(|| {
+        extern_supervised_performance(
+            name_ptr,
+            train_file_ptr,
+            test_file_ptr,
+            target_ptr,
+            weighting_strategy_ptr,
+            fuzzy,
+            weighted,
+            interelement_activation_threshold,
+            interelement_activation_exponent,
+            winners_limit,
+            weight_ratio
+        ).rmsp().unwrap()
+    }) {
+        Ok(r) => r,
+        Err(e) => { println!("{:?}", e); -1.0 }
+    }
+}
+
+#[no_mangle]
 unsafe extern "C" fn async_magds_regression_mae(
     name_ptr: *const i8,
     train_file_ptr: *const i8,

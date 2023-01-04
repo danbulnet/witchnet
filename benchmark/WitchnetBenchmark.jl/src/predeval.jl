@@ -6,6 +6,7 @@ using CSV
 import Random
 import MLJ
 import CategoricalArrays.CategoricalValue
+import StatsBase
 
 """
     example: 
@@ -32,10 +33,16 @@ end
 
 function predeval(modelfactory, X, y, measure::Symbol; ttratio=0.7, seed=58)
     ytest, ŷtest = pred(modelfactory, X, y, measure; ttratio=ttratio, seed=seed)
-    result = getproperty(MLJ, measure)(ŷtest, ytest)
+    result = if measure == :nrmse
+        nrmse(ŷtest, ytest)
+    else
+        getproperty(MLJ, measure)(ŷtest, ytest)
+    end
     @info string(measure, ": ", result)
     result
 end
+
+nrmse(ŷtest, ytest) = MLJ.rmse(ŷtest, ytest) / StatsBase.iqr(ytest)
 
 function evalmodels(
     data::DataFrame, target::Symbol, models::Dict, metric::Symbol;
