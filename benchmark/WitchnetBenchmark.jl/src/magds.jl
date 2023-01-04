@@ -1,5 +1,5 @@
-export magds_accuracy, magds_rmse, magds_mae
-export asyncmagds_accuracy, asyncmagds_rmse, asyncmagds_mae
+export magds_accuracy, magds_rmse, magds_nrmse, magds_rmsp, magds_mae
+export asyncmagds_accuracy, asyncmagds_rmse, asyncmagds_nrmse, asyncmagds_rmsp, asyncmagds_mae
 
 # const libpath::String = "benchmark/WitchnetBenchmark.jl/lib/magds.dll"
 const libpath::String = "target/release/magds.dll"
@@ -281,6 +281,86 @@ function asyncmagds_rmse(
         weight_ratio
     )
     @info string("async magds rmse: ", result)
+    result
+end
+
+"""
+example:
+    ````
+    trainfile = "crates/magds/data/iris_original_train.csv"
+    testfile = "crates/magds/data/iris_original_test.csv"
+    asyncmagds_nrmse("iris", trainfile, testfile, "sepal.length")
+    ```
+"""
+function asyncmagds_nrmse(
+    train_file::String, 
+    test_file::String, 
+    target::String,
+    weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
+    interelement_activation_threshold::Float32,
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
+)::Float64
+    result = ccall(
+        (:async_magds_regression_nrmse, libpath), 
+        Float64, 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
+        "asyncmagds_nrmse",
+        train_file,
+        test_file,
+        target,
+        weighting_strategy,
+        fuzzy,
+        weighted,
+        interelement_activation_threshold,
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
+    )
+    @info string("async magds nrmse: ", result)
+    result
+end
+
+"""
+example:
+    ````
+    trainfile = "crates/magds/data/iris_original_train.csv"
+    testfile = "crates/magds/data/iris_original_test.csv"
+    asyncmagds_rmsp("iris", trainfile, testfile, "sepal.length")
+    ```
+"""
+function asyncmagds_rmsp(
+    train_file::String, 
+    test_file::String, 
+    target::String,
+    weighting_strategy::String,
+    fuzzy::Bool,
+    weighted::Bool,
+    interelement_activation_threshold::Float32,
+    interelement_activation_exponent::Int32,
+    winners_limit::UInt, 
+    weight_ratio::Float32
+)::Float64
+    result = ccall(
+        (:async_magds_regression_rmsp, libpath), 
+        Float64, 
+        (Cstring, Cstring, Cstring, Cstring, Cstring, Bool, Bool, Float32, Int32, UInt, Float32),
+        "asyncmagds_rmsp",
+        train_file,
+        test_file,
+        target,
+        weighting_strategy,
+        fuzzy,
+        weighted,
+        interelement_activation_threshold,
+        interelement_activation_exponent,
+        winners_limit,
+        weight_ratio
+    )
+    @info string("async magds rmsp: ", result)
     result
 end
 

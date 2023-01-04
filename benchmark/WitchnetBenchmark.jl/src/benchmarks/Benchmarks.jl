@@ -1,10 +1,14 @@
 export warmup, predictall, classifyall, estimateall, summarizeall
 
+import Logging
+
 include("Iris.jl")
 include("Penguin.jl")
 include("Star.jl")
 include("WhiteWine.jl")
 include("RedWine.jl")
+
+ALL_DATASETS = [Iris, Penguin, Star, WhiteWine, RedWine]
 
 function warmup(dataset::Module=Iris)
     for _ in 1:5
@@ -26,24 +30,42 @@ function predictall(
     )
 end
 
-function classifyall(classifymodels=fast_classification_models())::Dict{Symbol, DataFrame}
-    Dict(
-        :iris => Iris.classify(models=classifymodels),
-        :penguin => Penguin.classify(models=classifymodels),
-        :star => Star.classify(models=classifymodels),
-        :whitewine => WhiteWine.classify(models=classifymodels),
-        :redwine => RedWine.classify(models=classifymodels)
-    )
+function classifyall(
+    classifymodels=fast_classification_models(),
+    datasets=ALL_DATASETS
+)::Dict{Symbol, DataFrame}
+    results = Dict{Symbol, DataFrame}()
+    for dataset in datasets
+        key = Symbol(lowercase(string(dataset)))
+        
+        Logging.disable_logging(Logging.Debug)
+        @info "$key classification"
+        Logging.disable_logging(Logging.Warn)
+
+        redirect_stdout(devnull) do
+            results[key] = dataset.classify(models=classifymodels)
+        end
+    end
+    results
 end
 
-function estimateall(estimatemodels=fast_classification_models())::Dict{Symbol, DataFrame}
-    Dict(        
-        :iris => Iris.estimate(models=estimatemodels),
-        :penguin => Penguin.estimate(models=estimatemodels),
-        :star => Star.estimate(models=estimatemodels),
-        :whitewine => WhiteWine.estimate(models=estimatemodels),
-        :redwine => RedWine.estimate(models=estimatemodels)
-    )
+function estimateall(
+    estimatemodels=fast_classification_models(),
+    datasets=ALL_DATASETS
+)::Dict{Symbol, DataFrame}    
+    results = Dict{Symbol, DataFrame}()
+    for dataset in datasets
+        key = Symbol(lowercase(string(dataset)))
+
+        Logging.disable_logging(Logging.Debug)
+        @info "$key regression"
+        Logging.disable_logging(Logging.Warn)
+
+        redirect_stdout(devnull) do
+            results[key] = dataset.estimate(models=estimatemodels)
+        end
+    end
+    results
 end
 
 function summarizeall(results=predictall())::Dict{Symbol, DataFrame}
