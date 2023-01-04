@@ -228,7 +228,7 @@ pub(crate) fn sensory_field(
 
     let title = RichText::new(PlotPoint::new(title_point.0, title_point.1), name)
         .name(name)
-        .color(utils::color_bevy_to_egui(&settings.primary_color))
+        .color(utils::color_bevy_to_egui(&settings.primary_active_color))
         .text_size(settings.text_size * 2.0)
         .available_width(f32::INFINITY)
         .anchor(Align2::CENTER_CENTER);

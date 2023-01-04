@@ -54,7 +54,7 @@ pub(crate) fn set_positions(
         let sensors_radius = if neuron_gropu_len <= 1 {
             (group_max_r + BIG_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FRACTION
         } else {
-            (groups_r + BIG_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FRACTION
+            (groups_r) * SENSOR_NEURON_GAP_R_FRACTION
         };
         sensor_positions(
             magds, 
@@ -344,7 +344,7 @@ fn find_max_neuron_group_r(
         origin, 
         max_len, 
         neuron_size,
-        SMALL_GAP_FACTOR as f64
+        BIG_GAP_FACTOR as f64
     );
     Some(r)
 }
@@ -386,7 +386,7 @@ fn neuron_positions(
         origin,
         neurons.len(),
         neuron_size as f64,
-        SMALL_GAP_FACTOR as f64
+        BIG_GAP_FACTOR as f64
     );
 
     for (i, neuron) in neurons.into_iter().enumerate() {

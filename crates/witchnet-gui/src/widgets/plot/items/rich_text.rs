@@ -80,11 +80,14 @@ impl PlotItem for RichText {
             transform.dpos_dvalue_x() as f32 / 100.0 * self.text_size, 
             1.0f32
         );
+        let available_width_fixed = if self.available_width.is_finite() {
+            transform.dpos_dvalue_x() as f32 * self.available_width
+        } else { self.available_width };
         let galley =
             self.text
                 .clone()
                 .into_galley(
-                    ui, Some(true), self.available_width, FontId::proportional(font_size)
+                    ui, Some(true), available_width_fixed, FontId::proportional(font_size)
                 );
 
         let pos = transform.position_from_point(&self.position);

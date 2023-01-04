@@ -361,7 +361,7 @@ fn neuron_gropu_origins(
         origin, 
         neuron_gropu_ids.len(), 
         group_size,
-        BIG_GAP_FACTOR as f64
+        SMALL_GAP_FACTOR as f64
     );
 
     for (i, id) in neuron_gropu_ids.into_iter().enumerate() {

@@ -140,18 +140,18 @@ impl SMAGDS {
         let y_data_type: DataType = (&data[0].y).into();
 
         let (x, _) = magds.create_sensor("x", x_data_type);
-        let (x_interval, _) = magds.create_sensor("x_interval", DataType::F64);
+        let (x_interval, _) = magds.create_sensor("x interval", DataType::F64);
         let (y, _) = magds.create_sensor("y", y_data_type);
-        let (y_interval, _) = magds.create_sensor("y_interval", DataType::F64);
-        let (y_entry, _) = magds.create_sensor("y_entry", y_data_type);
+        let (y_interval, _) = magds.create_sensor("y interval", DataType::F64);
+        let (y_entry, _) = magds.create_sensor("y entry", y_data_type);
         let (same_absolute_patterns_interval, _) = 
-            magds.create_sensor("same_absolute_patterns_interval", DataType::F64);
+            magds.create_sensor("same absolute patterns interval", DataType::F64);
         let (same_relative_patterns_interval, _) = 
-            magds.create_sensor("same_relative_patterns_interval", DataType::F64);
+            magds.create_sensor("same relative patterns interval", DataType::F64);
         let (different_absolute_patterns_interval, _) = 
-            magds.create_sensor("different_absolute_patterns_interval", DataType::F64);
+            magds.create_sensor("different absolute patterns interval", DataType::F64);
         let (different_relative_patterns_interval, _) = 
-            magds.create_sensor("different_relative_patterns_interval", DataType::F64);
+            magds.create_sensor("different relative patterns interval", DataType::F64);
 
         SMAGDSSensors {
             x,
@@ -183,23 +183,23 @@ impl SMAGDS {
         for lvl in 1..=max_pattern_level {
             ids.absolute_pattern_level.insert(lvl, next_absolute_pattern_lvl_id);
             ids.relative_pattern_level.insert(lvl, next_relative_pattern_lvl_id);
-            magds.add_neuron_group(&format!("absolute_pattern_level_{lvl}"), Some(next_absolute_pattern_lvl_id));
-            magds.add_neuron_group(&format!("relative_pattern_level_{lvl}"), Some(next_relative_pattern_lvl_id));
+            magds.add_neuron_group(&format!("absolute pattern level {lvl}"), Some(next_absolute_pattern_lvl_id));
+            magds.add_neuron_group(&format!("relative pattern level {lvl}"), Some(next_relative_pattern_lvl_id));
 
             next_absolute_pattern_lvl_id += 1;
             next_relative_pattern_lvl_id += 1;
         }
         magds.add_neuron_group(
-            "same_absolute_patterns_interval", Some(ids.same_absolute_patterns_interval)
+            "same absolute patterns interval", Some(ids.same_absolute_patterns_interval)
         );
         magds.add_neuron_group(
-            "same_relative_patterns_interval", Some(ids.same_relative_patterns_interval)
+            "same relative patterns interval", Some(ids.same_relative_patterns_interval)
         );
         magds.add_neuron_group(
-            "different_absolute_patterns_interval", Some(ids.different_absolute_patterns_interval)
+            "different absolute patterns interval", Some(ids.different_absolute_patterns_interval)
         );
         magds.add_neuron_group(
-            "different_relative_patterns_interval", Some(ids.different_relative_patterns_interval)
+            "different relative patterns interval", Some(ids.different_relative_patterns_interval)
         );
 
         ids
