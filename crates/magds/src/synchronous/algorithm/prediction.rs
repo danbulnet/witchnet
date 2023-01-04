@@ -65,7 +65,7 @@ pub fn predict_weighted(
             Some(s) => s,
             None => {
                 match magds.sensor_data_category(id.clone()) {
-                    Some(DataCategory::Continuous) | Some(DataCategory::Ordinal) => {
+                    Some(DataCategory::Continuous) | Some(DataCategory::Discrete) => {
                         if fuzzy {
                             log::info!("cannot find sensor {id} value {:?}, inserting", value);
                             match magds.sensor_insert(id.clone(), value) {
@@ -162,7 +162,7 @@ pub fn predict_weighted(
             let proba: f32 = probas.iter().sum::<f32>() / weights;
             Some(DataProbability(predicted_value.into(), proba))
         }
-        DataCategory::Categorical | DataCategory::Ordinal => {
+        DataCategory::Categorical | DataCategory::Discrete => {
             let mut values: HashMap<String, f32> = HashMap::new();
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
@@ -295,7 +295,7 @@ pub fn prediction_score_custom(
         DataCategory::Continuous => {
             SupervisedPerformance::regression(references, predictions, probabilities)
         }
-        DataCategory::Categorical | DataCategory::Ordinal => {
+        DataCategory::Categorical | DataCategory::Discrete => {
             SupervisedPerformance::classification(references, predictions, probabilities)
         }
     }
@@ -395,7 +395,7 @@ pub fn prediction_score_df_custom(
         DataCategory::Continuous => {
             SupervisedPerformance::regression(references, predictions, probabilities)
         }
-        DataCategory::Categorical | DataCategory::Ordinal => {
+        DataCategory::Categorical | DataCategory::Discrete => {
             SupervisedPerformance::classification(references, predictions, probabilities)
         }
     }

@@ -18,7 +18,7 @@ use crate::{
 pub enum DataCategory {
     Continuous,
     Categorical,
-    Ordinal,
+    Discrete,
 }
 
 impl DataCategory {
@@ -26,21 +26,21 @@ impl DataCategory {
         match self {
             DataCategory::Continuous => true,
             DataCategory::Categorical => false,
-            DataCategory::Ordinal => true,
+            DataCategory::Discrete => true,
         }
     }
 }
 
-macro_rules! impl_ordinal {
+macro_rules! impl_discrete {
     ( $($t:ty),* ) => {
         $( impl From<&$t> for DataCategory {
-            fn from(_data: &$t) -> DataCategory { DataCategory::Ordinal }
+            fn from(_data: &$t) -> DataCategory { DataCategory::Discrete }
         }
         impl From<&[$t]> for DataCategory {
-            fn from(_data: &[$t]) -> DataCategory { DataCategory::Ordinal }
+            fn from(_data: &[$t]) -> DataCategory { DataCategory::Discrete }
         }
         impl From<&[Option<$t>]> for DataCategory {
-            fn from(_data: &[Option<$t>]) -> DataCategory { DataCategory::Ordinal }
+            fn from(_data: &[Option<$t>]) -> DataCategory { DataCategory::Discrete }
         }) *
     }
 }
@@ -73,7 +73,7 @@ macro_rules! impl_categorical {
     }
 }
 
-impl_ordinal! { 
+impl_discrete! { 
     i8, i16, i32, i64, i128, isize,
     u8, u16, u32, u64, u128, usize
 }
@@ -240,18 +240,18 @@ impl From<&DataTypeValue> for DataCategory {
     fn from(data: &DataTypeValue) -> DataCategory {
         match data {
             DataTypeValue::Bool(_) => DataCategory::Categorical,
-            DataTypeValue::U8(_) => DataCategory::Ordinal,
-            DataTypeValue::U16(_) => DataCategory::Ordinal,
-            DataTypeValue::U32(_) => DataCategory::Ordinal,
-            DataTypeValue::U64(_) => DataCategory::Ordinal,
-            DataTypeValue::U128(_) => DataCategory::Ordinal,
-            DataTypeValue::USize(_) => DataCategory::Ordinal,
-            DataTypeValue::I8(_) => DataCategory::Ordinal,
-            DataTypeValue::I16(_) => DataCategory::Ordinal,
-            DataTypeValue::I32(_) => DataCategory::Ordinal,
-            DataTypeValue::I64(_) => DataCategory::Ordinal,
-            DataTypeValue::I128(_) => DataCategory::Ordinal,
-            DataTypeValue::ISize(_) => DataCategory::Ordinal,
+            DataTypeValue::U8(_) => DataCategory::Discrete,
+            DataTypeValue::U16(_) => DataCategory::Discrete,
+            DataTypeValue::U32(_) => DataCategory::Discrete,
+            DataTypeValue::U64(_) => DataCategory::Discrete,
+            DataTypeValue::U128(_) => DataCategory::Discrete,
+            DataTypeValue::USize(_) => DataCategory::Discrete,
+            DataTypeValue::I8(_) => DataCategory::Discrete,
+            DataTypeValue::I16(_) => DataCategory::Discrete,
+            DataTypeValue::I32(_) => DataCategory::Discrete,
+            DataTypeValue::I64(_) => DataCategory::Discrete,
+            DataTypeValue::I128(_) => DataCategory::Discrete,
+            DataTypeValue::ISize(_) => DataCategory::Discrete,
             DataTypeValue::F32(_) => DataCategory::Continuous,
             DataTypeValue::F64(_) => DataCategory::Continuous,
             DataTypeValue::ArcStr(_) => DataCategory::Categorical,

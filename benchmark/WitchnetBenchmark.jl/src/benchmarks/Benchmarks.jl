@@ -9,7 +9,7 @@ include("RedWine.jl")
 function warmup(dataset::Module=Iris)
     for _ in 1:5
         try
-            eval(dataset.classify)()
+            Base.@invokelatest dataset.classify()
         catch
             continue
         end
