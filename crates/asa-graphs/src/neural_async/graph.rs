@@ -459,7 +459,7 @@ where
                     DataCategory::Categorical => {
                         anyhow::bail!("activating missing categorical sensory neuron {}", key)
                     },
-                    DataCategory::Numerical | DataCategory::Ordinal => {
+                    DataCategory::Continuous | DataCategory::Ordinal => {
                         if propagate_horizontal {
                             log::warn!(
                                 "activating missing non-categorical sensory neuron {}, inserting",

@@ -54,7 +54,7 @@ pub fn recommend_weighted(
             Some(s) => s,
             None => {
                 match magds.sensor_data_category(id.clone()) {
-                    Some(DataCategory::Numerical) | Some(DataCategory::Ordinal) => {
+                    Some(DataCategory::Continuous) | Some(DataCategory::Ordinal) => {
                         if fuzzy {
                             log::info!("cannot find sensor {id} value {:?}, inserting", value);
                             match magds.sensor_insert(id.clone(), value) {

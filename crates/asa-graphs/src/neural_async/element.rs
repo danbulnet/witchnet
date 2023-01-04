@@ -296,7 +296,7 @@ where
     ) -> f32 {
         let data_category: DataCategory = self.data_type.data_category();
         let is_fuzzy_ok = match data_category {
-            DataCategory::Numerical | DataCategory::Ordinal => true,
+            DataCategory::Continuous | DataCategory::Ordinal => true,
             _ => false
         };
         let neurons_activation = if propagate_horizontal && is_fuzzy_ok {

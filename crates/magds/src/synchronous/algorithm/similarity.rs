@@ -112,7 +112,7 @@ pub fn features_target_weights(magds: &MAGDS, target_id: u32) -> Result<HashMap<
     let mut ret = HashMap::new();
     for id in features_ids {
         let sensor = magds.sensor(id).context("error getting sensor id {id}")?;
-        let similarity = if sensor.borrow().data_category().is_numerical() {
+        let similarity = if sensor.borrow().data_category().is_sortable() {
             1.0f64
         } else {
             similarity::mutual_information(

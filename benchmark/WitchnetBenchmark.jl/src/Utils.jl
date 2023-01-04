@@ -8,6 +8,7 @@ using Gadfly
 using PythonCall
 using CondaPkg
 using Pkg
+using HTTP
 
 CondaPkg.add("cairosvg")
 Pkg.build("PyCall")
@@ -30,6 +31,15 @@ end
 function svg2png(filein::String, fileout::String)
     cairosvg = pyimport("cairosvg")
     cairosvg.svg2png(url=filein, write_to=fileout, dpi=600)
+end
+
+function url2df(url::String)::DataFrame
+    HTTP.get(url).body |> IOBuffer |> CSV.File |> DataFrame
+end
+
+function uciurl2df(dataset::String)::DataFrame
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/" * dataset
+    url2df(url)
 end
 
 end

@@ -145,13 +145,13 @@ impl SMAGDS {
         let (y_interval, _) = magds.create_sensor("y interval", DataType::F64);
         let (y_entry, _) = magds.create_sensor("y entry", y_data_type);
         let (same_absolute_patterns_interval, _) = 
-            magds.create_sensor("same absolute patterns interval", DataType::F64);
+            magds.create_sensor("same absolute patterns interval", x_data_type);
         let (same_relative_patterns_interval, _) = 
-            magds.create_sensor("same relative patterns interval", DataType::F64);
+            magds.create_sensor("same relative patterns interval", y_data_type);
         let (different_absolute_patterns_interval, _) = 
-            magds.create_sensor("different absolute patterns interval", DataType::F64);
+            magds.create_sensor("different absolute patterns interval", x_data_type);
         let (different_relative_patterns_interval, _) = 
-            magds.create_sensor("different relative patterns interval", DataType::F64);
+            magds.create_sensor("different relative patterns interval", y_data_type);
 
         SMAGDSSensors {
             x,

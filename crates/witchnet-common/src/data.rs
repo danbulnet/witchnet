@@ -16,21 +16,45 @@ use crate::{
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumAsInner)]
 pub enum DataCategory {
-    Numerical,
+    Continuous,
     Categorical,
     Ordinal,
 }
 
-macro_rules! impl_numerical {
+impl DataCategory {
+    pub fn is_sortable(&self) -> bool {
+        match self {
+            DataCategory::Continuous => true,
+            DataCategory::Categorical => false,
+            DataCategory::Ordinal => true,
+        }
+    }
+}
+
+macro_rules! impl_ordinal {
     ( $($t:ty),* ) => {
         $( impl From<&$t> for DataCategory {
-            fn from(_data: &$t) -> DataCategory { DataCategory::Numerical }
+            fn from(_data: &$t) -> DataCategory { DataCategory::Ordinal }
         }
         impl From<&[$t]> for DataCategory {
-            fn from(_data: &[$t]) -> DataCategory { DataCategory::Numerical }
+            fn from(_data: &[$t]) -> DataCategory { DataCategory::Ordinal }
         }
         impl From<&[Option<$t>]> for DataCategory {
-            fn from(_data: &[Option<$t>]) -> DataCategory { DataCategory::Numerical }
+            fn from(_data: &[Option<$t>]) -> DataCategory { DataCategory::Ordinal }
+        }) *
+    }
+}
+
+macro_rules! impl_continuous {
+    ( $($t:ty),* ) => {
+        $( impl From<&$t> for DataCategory {
+            fn from(_data: &$t) -> DataCategory { DataCategory::Continuous }
+        }
+        impl From<&[$t]> for DataCategory {
+            fn from(_data: &[$t]) -> DataCategory { DataCategory::Continuous }
+        }
+        impl From<&[Option<$t>]> for DataCategory {
+            fn from(_data: &[Option<$t>]) -> DataCategory { DataCategory::Continuous }
         }) *
     }
 }
@@ -49,11 +73,12 @@ macro_rules! impl_categorical {
     }
 }
 
-impl_numerical! { 
+impl_ordinal! { 
     i8, i16, i32, i64, i128, isize,
-    u8, u16, u32, u64, u128, usize,
-    f32, f64
+    u8, u16, u32, u64, u128, usize
 }
+
+impl_continuous! { f32, f64 }
 
 impl_categorical! { String, Arc<str>, bool }
 
@@ -215,20 +240,20 @@ impl From<&DataTypeValue> for DataCategory {
     fn from(data: &DataTypeValue) -> DataCategory {
         match data {
             DataTypeValue::Bool(_) => DataCategory::Categorical,
-            DataTypeValue::U8(_) => DataCategory::Numerical,
-            DataTypeValue::U16(_) => DataCategory::Numerical,
-            DataTypeValue::U32(_) => DataCategory::Numerical,
-            DataTypeValue::U64(_) => DataCategory::Numerical,
-            DataTypeValue::U128(_) => DataCategory::Numerical,
-            DataTypeValue::USize(_) => DataCategory::Numerical,
-            DataTypeValue::I8(_) => DataCategory::Numerical,
-            DataTypeValue::I16(_) => DataCategory::Numerical,
-            DataTypeValue::I32(_) => DataCategory::Numerical,
-            DataTypeValue::I64(_) => DataCategory::Numerical,
-            DataTypeValue::I128(_) => DataCategory::Numerical,
-            DataTypeValue::ISize(_) => DataCategory::Numerical,
-            DataTypeValue::F32(_) => DataCategory::Numerical,
-            DataTypeValue::F64(_) => DataCategory::Numerical,
+            DataTypeValue::U8(_) => DataCategory::Ordinal,
+            DataTypeValue::U16(_) => DataCategory::Ordinal,
+            DataTypeValue::U32(_) => DataCategory::Ordinal,
+            DataTypeValue::U64(_) => DataCategory::Ordinal,
+            DataTypeValue::U128(_) => DataCategory::Ordinal,
+            DataTypeValue::USize(_) => DataCategory::Ordinal,
+            DataTypeValue::I8(_) => DataCategory::Ordinal,
+            DataTypeValue::I16(_) => DataCategory::Ordinal,
+            DataTypeValue::I32(_) => DataCategory::Ordinal,
+            DataTypeValue::I64(_) => DataCategory::Ordinal,
+            DataTypeValue::I128(_) => DataCategory::Ordinal,
+            DataTypeValue::ISize(_) => DataCategory::Ordinal,
+            DataTypeValue::F32(_) => DataCategory::Continuous,
+            DataTypeValue::F64(_) => DataCategory::Continuous,
             DataTypeValue::ArcStr(_) => DataCategory::Categorical,
             DataTypeValue::String(_) => DataCategory::Categorical,
             DataTypeValue::Unknown => DataCategory::Categorical
@@ -621,72 +646,72 @@ impl DataDeductor for bool {
 
 impl DataDeductor for u8 {
     fn data_type(&self) -> DataType { DataType::U8 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for u16 {
     fn data_type(&self) -> DataType { DataType::U16 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for u32 {
     fn data_type(&self) -> DataType { DataType::U32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for u64 {
     fn data_type(&self) -> DataType { DataType::U64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for usize {
     fn data_type(&self) -> DataType { DataType::U128 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for u128 {
     fn data_type(&self) -> DataType { DataType::USize }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for i8 {
     fn data_type(&self) -> DataType { DataType::I8 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for i16 {
     fn data_type(&self) -> DataType { DataType::I16 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for i32 {
     fn data_type(&self) -> DataType { DataType::I32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for i64 {
     fn data_type(&self) -> DataType { DataType::I64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for i128 {
     fn data_type(&self) -> DataType { DataType::I128 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for isize {
     fn data_type(&self) -> DataType { DataType::ISize }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for f32 {
     fn data_type(&self) -> DataType { DataType::F32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for f64 {
     fn data_type(&self) -> DataType { DataType::F64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for Arc<str> {
@@ -706,72 +731,72 @@ impl DataDeductor for PhantomData<bool> {
 
 impl DataDeductor for PhantomData<u8> {
     fn data_type(&self) -> DataType { DataType::U8 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<u16> {
     fn data_type(&self) -> DataType { DataType::U16 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<u32> {
     fn data_type(&self) -> DataType { DataType::U32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<u64> {
     fn data_type(&self) -> DataType { DataType::U64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<usize> {
     fn data_type(&self) -> DataType { DataType::U128 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<u128> {
     fn data_type(&self) -> DataType { DataType::USize }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<i8> {
     fn data_type(&self) -> DataType { DataType::I8 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<i16> {
     fn data_type(&self) -> DataType { DataType::I16 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<i32> {
     fn data_type(&self) -> DataType { DataType::I32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<i64> {
     fn data_type(&self) -> DataType { DataType::I64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<i128> {
     fn data_type(&self) -> DataType { DataType::I128 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<isize> {
     fn data_type(&self) -> DataType { DataType::ISize }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<f32> {
     fn data_type(&self) -> DataType { DataType::F32 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<f64> {
     fn data_type(&self) -> DataType { DataType::F64 }
-    fn data_category(&self) -> DataCategory { DataCategory::Numerical }
+    fn data_category(&self) -> DataCategory { DataCategory::Continuous }
 }
 
 impl DataDeductor for PhantomData<Arc<str>> {

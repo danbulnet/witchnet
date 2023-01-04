@@ -65,7 +65,7 @@ pub fn predict_weighted(
             Some(s) => s,
             None => {
                 match magds.sensor_data_category(id.clone()) {
-                    Some(DataCategory::Numerical) | Some(DataCategory::Ordinal) => {
+                    Some(DataCategory::Continuous) | Some(DataCategory::Ordinal) => {
                         if fuzzy {
                             log::info!("cannot find sensor {id} value {:?}, inserting", value);
                             match magds.sensor_insert(id.clone(), value) {
@@ -118,7 +118,7 @@ pub fn predict_weighted(
     // let weight_ratio = f32::ln(features.len() as f32);
 
     match target_data_category {
-        DataCategory::Numerical => {
+        DataCategory::Continuous => {
             let mut targets_weighted: Vec<f64> = Vec::new();
             let mut probas: Vec<f32> = Vec::new();
             let mut weights = 0.0f32;
@@ -292,7 +292,7 @@ pub fn prediction_score_custom(
         None => anyhow::bail!("error getting sensor {target}")
     };
     match target_data_category {
-        DataCategory::Numerical => {
+        DataCategory::Continuous => {
             SupervisedPerformance::regression(references, predictions, probabilities)
         }
         DataCategory::Categorical | DataCategory::Ordinal => {
@@ -392,7 +392,7 @@ pub fn prediction_score_df_custom(
         None => anyhow::bail!("error getting sensor {target}")
     };
     match target_data_category {
-        DataCategory::Numerical => {
+        DataCategory::Continuous => {
             SupervisedPerformance::regression(references, predictions, probabilities)
         }
         DataCategory::Categorical | DataCategory::Ordinal => {

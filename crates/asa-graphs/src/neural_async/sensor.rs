@@ -103,7 +103,7 @@ mod tests {
         for i in (1..=9).rev() { graph.insert(&i); }
         
         assert_eq!(graph.id(), 1);
-        assert_eq!(graph.data_category(), DataCategory::Numerical);
+        assert_eq!(graph.data_category(), DataCategory::Continuous);
 
         let max_activation = graph.activate(&5, 1.0f32, true, true);
         assert!(max_activation.is_ok());

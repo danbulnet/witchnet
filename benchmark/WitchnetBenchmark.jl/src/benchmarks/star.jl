@@ -10,7 +10,11 @@ using CSV
 using Gadfly
 
 "classification task on the star dataset"
-function classify(;target::Symbol=:SchType, measure::Symbol=:accuracy, models=classification_models())::DataFrame
+function classify(
+    ;target::Symbol=:SchType,
+    measure::Symbol=:accuracy,
+    models=fast_classification_models()
+)::DataFrame
     data = dataset()
     result = evalmodels(data, target, models, measure)
     
@@ -24,7 +28,11 @@ function classify(;target::Symbol=:SchType, measure::Symbol=:accuracy, models=cl
 end
 
 "regression task on the star dataset"
-function estimate(;target::Symbol=:Read, measure::Symbol=:rmse, models=regression_models())::DataFrame
+function estimate(
+    ;target::Symbol=:Read, 
+    measure::Symbol=:rmse, 
+    models=fast_regression_models()
+)::DataFrame
     data = dataset()
     result = evalmodels(data, target, models, measure)
     
