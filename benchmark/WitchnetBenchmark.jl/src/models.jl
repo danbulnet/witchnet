@@ -1,7 +1,7 @@
 export 
     fast_classification_models, classification_models,
     fast_regression_models, regression_models,
-    magds_models
+    magds_model
 
 using MLJ
 using MLJFlux
@@ -66,6 +66,10 @@ function regression_models()
     models
 end
 
-magds_models() = Dict(
+magds_model() = Dict(
     :MAGDS => nothing
+)
+
+magds_gridsearch_models() = Dict(
+    :MAGDS_gridsearch => nothing
 )

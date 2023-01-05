@@ -78,6 +78,23 @@ function evalmodels(
             magds_predict = getproperty(@__MODULE__, Symbol("magds_" * string(metric)))
             asyncmagds_predict = getproperty(@__MODULE__, Symbol("asyncmagds_" * string(metric)))
 
+            push!(modelnames, :MAGDS)
+            time = @elapsed begin
+                mem = @allocated result = magds_predict(
+                    trainpath, 
+                    testpath, 
+                    string(target), 
+                    "ConstantOneWeight",
+                    true,
+                    true,
+                    Float32(0.00001), 
+                    Int32(1),
+                    UInt(1000),
+                    Float32(1.5)
+                )
+            end
+            push!(results, result); push!(memory, mem); push!(times, time)
+
             push!(modelnames, :MAGDS_sh_f1_w1_t0e5_e2_l1k_r1p1)
             time = @elapsed begin
                 mem = @allocated result = magds_predict(
@@ -164,6 +181,47 @@ function evalmodels(
             push!(results, result); push!(memory, mem); push!(times, time)
 
             rm(tmpdir; recursive=true)
+        elseif name == :MAGDS_gridsearch
+            for weightingstrategy in ["ConstantOneWeight", "OneOverOuts", "OneOverOutsUpperHalf", "OneOverOutsUpperQuarter"]
+                for fuzzy in [true, false]
+                    for weighted in [true, false]
+                        for ieth in [0.00001, 0.1, 0.5, 0.8, 0.9, 0.95, 0.98, 0.99]
+                            for iee in 1:5
+                                for winnerslimit in [1, 2, 5, 10, 25, 50, 100, 500, 1000]
+                                    for weightratio in 1.0:0.1:5.0
+                                        modelname = Symbol(string(
+                                            "weightingstrategy[", weightingstrategy, "]_",
+                                            "fuzzy[", fuzzy, "]_",
+                                            "weighted[", weighted, "]_",
+                                            "ieth[", ieth, "]_",
+                                            "iee[", iee, "]_",
+                                            "winnerslimit[", winnerslimit, "]_",
+                                            "weightratio[", weightratio, "]_",
+                                        ))
+                                        push!(modelnames, modelname)
+                                        time = @elapsed begin
+                                            mem = @allocated result = magds_predict(
+                                                trainpath, 
+                                                testpath, 
+                                                string(target), 
+                                                weightingstrategy,
+                                                fuzzy,
+                                                weighted,
+                                                Float32(ieth), 
+                                                Int32(iee),
+                                                UInt(winnerslimit),
+                                                Float32(weightratio)
+                                            )
+                                        end
+                                        push!(results, result); 
+                                        push!(memory, mem); push!(times, time)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         else
             push!(modelnames, name)
             time = @elapsed begin

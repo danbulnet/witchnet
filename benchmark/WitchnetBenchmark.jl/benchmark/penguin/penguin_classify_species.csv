@@ -1,10 +1,7 @@
 model,accuracy,time,memory
-DecisionTreeClassifier_BetaML,0.99,4.1357703,555090376
-RandomForestClassifier_ScikitLearn,0.99,0.3241174,24783008
-XGBoostClassifier_XGBoost,0.99,1.2105248,151940296
-MAGDS_sh_f1_w1_t0e5_e2_l1k_r1p1,0.97,0.0231478,40
-MAGDS_sh_f1_w0_t0e5_e2_l1k_r1p1,0.97,0.0202457,40
-MAGDS_sh_f1_w1_t0e5_e1_l1k_r1p1,0.97,0.0179095,40
-MAGDS_sh_f0_w1_t0e5_e2_l1k_r1p1,0.79,0.0087517,40
-MAGDS_sh_f0_w0_t0e5_e2_l1k_r1p1,0.77,0.0085311,40
-AdaBoostClassifier_ScikitLearn,0.72,0.1739892,6114422
+MAGDS,0.98,0.0225138,40
+MAGDS_sh_f1_w1_t0e5_e2_l1k_r1p1,0.97,0.0684917,40
+MAGDS_sh_f1_w0_t0e5_e2_l1k_r1p1,0.97,0.0206284,40
+MAGDS_sh_f1_w1_t0e5_e1_l1k_r1p1,0.97,0.0189132,40
+MAGDS_sh_f0_w1_t0e5_e2_l1k_r1p1,0.79,0.0081544,40
+MAGDS_sh_f0_w0_t0e5_e2_l1k_r1p1,0.77,0.0080677,40

@@ -7,8 +7,16 @@ include("Penguin.jl")
 include("Star.jl")
 include("WhiteWine.jl")
 include("RedWine.jl")
+include("BostonHousing.jl")
 
-ALL_DATASETS = [Iris, Penguin, Star, WhiteWine, RedWine]
+ALL_DATASETS = [
+    Iris,
+    Penguin,
+    Star,
+    WhiteWine,
+    RedWine,
+    BostonHousing
+]
 
 function warmup(dataset::Module=Iris)
     for _ in 1:5
