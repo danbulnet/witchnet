@@ -23,7 +23,7 @@ use witchnet_common::{
 
 #[derive(Debug, Clone)]
 pub struct SMAGDSParams {
-    pub max_pattern_length: Option<DataTypeValue>,
+    pub max_pattern_length: Option<f64>,
     pub max_pattern_level: usize,
 }
 
@@ -206,8 +206,12 @@ impl SMAGDS {
     }
 
     fn create_neurons(&mut self) {
+        self.insert_data_to_sensors();
+
         let magds = &mut self.magds;
+        
         let data = &self.data;
+        let data_len = data.len();
         let SMAGDSParams { max_pattern_length, max_pattern_level } = &self.params;
 
         let mut x = self.sensors.x.write().unwrap();
@@ -232,14 +236,14 @@ impl SMAGDS {
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
 
-            let x1_sn = x.insert(&first_point.x);
-            let x2_sn = x.insert(&second_point.x);
-            let x_interval_sn = x_interval.insert(&points_x_interval.into());
+            let x1_sn = x.search(&first_point.x).unwrap();
+            let x2_sn = x.search(&second_point.x).unwrap();
+            let x_interval_sn = x_interval.search(&points_x_interval.into()).unwrap();
 
-            let y1_sn = y.insert(&first_point.y);
-            let y2_sn = y.insert(&second_point.y);
-            let y_interval_sn = y_interval.insert(&points_y_interval.into());
-            let y_entry_sn = y_entry.insert(&first_point.y);
+            let y1_sn = y.search(&first_point.y).unwrap();
+            let y2_sn = y.search(&second_point.y).unwrap();
+            let y_interval_sn = y_interval.search(&points_y_interval.into()).unwrap();
+            let y_entry_sn = y_entry.search(&first_point.y).unwrap();
 
             let absolute_pattern_lvl1_neuron = SimpleNeuron::new_custom(
                 NeuronID{ id: i as u32, parent_id: absolute_pattern_id[&1] },
@@ -264,54 +268,98 @@ impl SMAGDS {
                     relative_pattern_lvl1_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
             }
-            
-            {
-                let sapi_neuron = SimpleNeuron::new_custom(
-                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_absolute_patterns_interval },
-                    Arc::new(ConstantOneWeightAsync)
-                );
-                magds.add_neuron(sapi_neuron.clone());
-                let sapi_sn = sapi.insert(&first_point.x);
-                sapi_sn.write().unwrap().connect_bilateral(
-                    sapi_neuron.clone(), false, ConnectionKind::Defining
-                ).unwrap();
 
-                let srpi_neuron = SimpleNeuron::new_custom(
-                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_relative_patterns_interval },
-                    Arc::new(ConstantOneWeightAsync)
-                );
-                magds.add_neuron(srpi_neuron.clone());
-                let srpi_sn = srpi.insert(&first_point.y);
-                srpi_sn.write().unwrap().connect_bilateral(
-                    srpi_neuron.clone(), false, ConnectionKind::Defining
-                ).unwrap();
+            let mut current_longest_pattern_len = points_x_interval;
+            let mut current_absolute_pattern = absolute_pattern_lvl1_neuron;
+            let mut current_relative_pattern = relative_pattern_lvl1_neuron;
+            for j in (i + 1)..usize::min(i + max_pattern_level, data.len()) {
+                if let Some(max_pattern_length) = max_pattern_length {
+                    if current_longest_pattern_len > *max_pattern_length { break }
+                    
+                    let first_point = &data[j - 1];
+                    let second_point = &data[j];
+                    let points_x_interval = second_point.x.distance(&first_point.x);
+                    let points_y_interval = second_point.y.distance(&first_point.y);
 
-                let dapi_neuron = SimpleNeuron::new_custom(
-                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_absolute_patterns_interval },
-                    Arc::new(ConstantOneWeightAsync)
-                );
-                magds.add_neuron(dapi_neuron.clone());
-                let dapi_sn = dapi.insert(&second_point.x);
-                dapi_sn.write().unwrap().connect_bilateral(
-                    dapi_neuron.clone(), false, ConnectionKind::Defining
-                ).unwrap();
-
-                let drpi_neuron = SimpleNeuron::new_custom(
-                    NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_relative_patterns_interval },
-                    Arc::new(ConstantOneWeightAsync)
-                );
-                magds.add_neuron(drpi_neuron.clone());
-                let drpi_sn = drpi.insert(&second_point.y);
-                drpi_sn.write().unwrap().connect_bilateral(
-                    drpi_neuron.clone(), false, ConnectionKind::Defining
-                ).unwrap();
-            }
-
-            if i >= 2 {
-                for j in (0..(i - 2)).rev() {
-    
+                    let x2_sn = x.search(&second_point.x).unwrap();
+                    let y2_sn = y.search(&second_point.y).unwrap();
+                    let x_interval_sn = x_interval.search(&points_x_interval.into()).unwrap();
+                    let y_interval_sn = y_interval.search(&points_y_interval.into()).unwrap();
                 }
             }
+            
+            // {
+            //     let sapi_neuron = SimpleNeuron::new_custom(
+            //         NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_absolute_patterns_interval },
+            //         Arc::new(ConstantOneWeightAsync)
+            //     );
+            //     magds.add_neuron(sapi_neuron.clone());
+            //     let sapi_sn = sapi.insert(&first_point.x);
+            //     sapi_sn.write().unwrap().connect_bilateral(
+            //         sapi_neuron.clone(), false, ConnectionKind::Defining
+            //     ).unwrap();
+
+            //     let srpi_neuron = SimpleNeuron::new_custom(
+            //         NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.same_relative_patterns_interval },
+            //         Arc::new(ConstantOneWeightAsync)
+            //     );
+            //     magds.add_neuron(srpi_neuron.clone());
+            //     let srpi_sn = srpi.insert(&first_point.y);
+            //     srpi_sn.write().unwrap().connect_bilateral(
+            //         srpi_neuron.clone(), false, ConnectionKind::Defining
+            //     ).unwrap();
+
+            //     let dapi_neuron = SimpleNeuron::new_custom(
+            //         NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_absolute_patterns_interval },
+            //         Arc::new(ConstantOneWeightAsync)
+            //     );
+            //     magds.add_neuron(dapi_neuron.clone());
+            //     let dapi_sn = dapi.insert(&second_point.x);
+            //     dapi_sn.write().unwrap().connect_bilateral(
+            //         dapi_neuron.clone(), false, ConnectionKind::Defining
+            //     ).unwrap();
+
+            //     let drpi_neuron = SimpleNeuron::new_custom(
+            //         NeuronID{ id: i as u32, parent_id: self.neuron_group_ids.different_relative_patterns_interval },
+            //         Arc::new(ConstantOneWeightAsync)
+            //     );
+            //     magds.add_neuron(drpi_neuron.clone());
+            //     let drpi_sn = drpi.insert(&second_point.y);
+            //     drpi_sn.write().unwrap().connect_bilateral(
+            //         drpi_neuron.clone(), false, ConnectionKind::Defining
+            //     ).unwrap();
+            // }
+
+            // if i >= 2 {
+            //     for j in (0..(i - 2)).rev() {
+    
+            //     }
+            // }
+        }
+    }
+
+    fn insert_data_to_sensors(&mut self) {
+        let data = &self.data;
+        let mut x = self.sensors.x.write().unwrap();
+        let mut x_interval = self.sensors.x_interval.write().unwrap();
+        let mut y = self.sensors.y.write().unwrap();
+        let mut y_interval = self.sensors.y_interval.write().unwrap();
+        let mut y_entry = self.sensors.y_entry.write().unwrap();
+
+        for i in 1..data.len() {
+            let first_point = &data[i - 1];
+            let second_point = &data[i];
+            let points_x_interval = second_point.x.distance(&first_point.x);
+            let points_y_interval = second_point.y.distance(&first_point.y);
+
+            x.insert(&first_point.x);
+            x.insert(&second_point.x);
+            x_interval.insert(&points_x_interval.into());
+
+            y.insert(&first_point.y);
+            y.insert(&second_point.y);
+            y_interval.insert(&points_y_interval.into());
+            y_entry.insert(&first_point.y);
         }
     }
 }
