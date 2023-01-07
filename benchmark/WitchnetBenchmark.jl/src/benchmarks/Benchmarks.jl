@@ -12,7 +12,7 @@ include("BostonHousing.jl")
 ALL_DATASETS = [
     Iris,
     Penguin,
-    Star,
+    # Star,
     WhiteWine,
     RedWine,
     BostonHousing

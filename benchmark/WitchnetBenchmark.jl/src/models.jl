@@ -1,7 +1,7 @@
 export 
     fast_classification_models, classification_models,
     fast_regression_models, regression_models,
-    magds_model
+    magds_model, magds_gridsearch_models
 
 using MLJ
 using MLJFlux
@@ -16,7 +16,11 @@ fast_classification_models() = Dict(
 	:XGBoostClassifier_XGBoost => 
 		(ins, outs) -> @load(XGBoostClassifier, pkg=XGBoost, verbosity=false)(),
 	:AdaBoostClassifier_ScikitLearn => 
-        (ins, outs) -> @load(AdaBoostClassifier, pkg=ScikitLearn, verbosity=false)()
+        (ins, outs) -> @load(AdaBoostClassifier, pkg=ScikitLearn, verbosity=false)(),
+    :KNeighborsClassifier_ScikitLearn =>
+        (ins, outs) -> @load(KNeighborsClassifier, pkg=ScikitLearn, verbosity=false)(),
+    :LogisticClassifier_ScikitLearn =>
+        (ins, outs) -> @load(LogisticClassifier, pkg=ScikitLearn, verbosity=false)()
 )
 
 fast_regression_models() = Dict(
@@ -28,7 +32,11 @@ fast_regression_models() = Dict(
 	:XGBoostRegressor_XGBoost => 
 		(ins, outs) -> @load(XGBoostRegressor, pkg=XGBoost, verbosity=false)(),
     :AdaBoostRegressor_ScikitLearn => 
-        (ins, outs) -> @load(AdaBoostRegressor, pkg=ScikitLearn, verbosity=false)()
+        (ins, outs) -> @load(AdaBoostRegressor, pkg=ScikitLearn, verbosity=false)(),
+    :KNeighborsRegressor_ScikitLearn =>
+        (ins, outs) -> @load(KNeighborsRegressor, pkg=ScikitLearn, verbosity=false)(),
+    :LinearRegressor_ScikitLearn =>
+        (ins, outs) -> @load(LinearRegressor, pkg=ScikitLearn, verbosity=false)()
 )
 
 function classification_models()

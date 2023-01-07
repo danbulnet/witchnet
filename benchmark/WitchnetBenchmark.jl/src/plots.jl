@@ -7,9 +7,9 @@ using Compose
 
 function percent_barplot(
     df::DataFrame, x::Symbol, y::Symbol, title::String;
-    width=15cm, height=8cm,
+    width=15cm, height=12cm,
     barspacing=2.0mm,
-    palette=ColorSchemes.seaborn_colorblind,
+    palette=ColorSchemes.glasbey_bw_minc_20_minl_30_n256,
     xlabel::String=string(y), ylabel::String=string(x)
 )
     set_default_plot_size(width, height)

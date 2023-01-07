@@ -3,7 +3,7 @@
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:gadfly="http://www.gadflyjl.org/ns"
      version="1.2"
-     width="150mm" height="80mm" viewBox="0 0 150 80"
+     width="150mm" height="120mm" viewBox="0 0 150 120"
      stroke="none"
      fill="#000000"
      stroke-width="0.3"
@@ -14,195 +14,307 @@
     <path d="M0,0 L15,3.5 L0,7 z" stroke="context-stroke" fill="context-stroke"/>
   </marker>
 </defs>
-<g class="plotroot xscalable" id="img-94e6ad1d-1">
-  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-94e6ad1d-2">
-    <g transform="translate(104.11,68.39)">
+<g class="plotroot xscalable" id="img-a46ffa55-1">
+  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-a46ffa55-2">
+    <g transform="translate(105.12,108.39)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">nrmse</text>
       </g>
     </g>
   </g>
-  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-94e6ad1d-3">
-    <g transform="translate(65.22,61.72)">
+  <g class="guide xlabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-a46ffa55-3">
+    <g transform="translate(67.24,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.0</text>
       </g>
     </g>
-    <g transform="translate(80.78,61.72)">
+    <g transform="translate(82.39,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.1</text>
       </g>
     </g>
-    <g transform="translate(96.34,61.72)">
+    <g transform="translate(97.54,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.2</text>
       </g>
     </g>
-    <g transform="translate(111.89,61.72)">
+    <g transform="translate(112.7,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.3</text>
       </g>
     </g>
-    <g transform="translate(127.44,61.72)">
+    <g transform="translate(127.85,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.4</text>
       </g>
     </g>
-    <g transform="translate(143,61.72)">
+    <g transform="translate(143,101.72)">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">0.5</text>
       </g>
     </g>
   </g>
-  <g clip-path="url(#img-94e6ad1d-4)">
-    <g id="img-94e6ad1d-5">
-      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-94e6ad1d-6">
-        <g transform="translate(104.11,35.66)" id="img-94e6ad1d-7">
-          <path d="M-40.89,-25.05 L40.89,-25.05 40.89,25.05 -40.89,25.05  z" class="primitive"/>
+  <g clip-path="url(#img-a46ffa55-4)">
+    <g id="img-a46ffa55-5">
+      <g pointer-events="visible" stroke-width="0.3" fill="#000000" fill-opacity="0.000" stroke="#000000" stroke-opacity="0.000" class="guide background" id="img-a46ffa55-6">
+        <g transform="translate(105.12,55.66)" id="img-a46ffa55-7">
+          <path d="M-39.88,-45.05 L39.88,-45.05 39.88,45.05 -39.88,45.05  z" class="primitive"/>
         </g>
       </g>
-      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-94e6ad1d-8">
-        <g transform="translate(104.11,18.96)" id="img-94e6ad1d-9">
-          <path fill="none" d="M-40.89,0 L40.89,0 " class="primitive"/>
+      <g class="guide ygridlines xfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-a46ffa55-8">
+        <g transform="translate(105.12,17.54)" id="img-a46ffa55-9">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
         </g>
-        <g transform="translate(104.11,27.31)" id="img-94e6ad1d-10">
-          <path fill="none" d="M-40.89,0 L40.89,0 " class="primitive"/>
+        <g transform="translate(105.12,24.47)" id="img-a46ffa55-10">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
         </g>
-        <g transform="translate(104.11,35.66)" id="img-94e6ad1d-11">
-          <path fill="none" d="M-40.89,0 L40.89,0 " class="primitive"/>
+        <g transform="translate(105.12,31.4)" id="img-a46ffa55-11">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
         </g>
-        <g transform="translate(104.11,44.01)" id="img-94e6ad1d-12">
-          <path fill="none" d="M-40.89,0 L40.89,0 " class="primitive"/>
+        <g transform="translate(105.12,38.34)" id="img-a46ffa55-12">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
         </g>
-        <g transform="translate(104.11,52.36)" id="img-94e6ad1d-13">
-          <path fill="none" d="M-40.89,0 L40.89,0 " class="primitive"/>
+        <g transform="translate(105.12,45.27)" id="img-a46ffa55-13">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,52.2)" id="img-a46ffa55-14">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,59.13)" id="img-a46ffa55-15">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,66.06)" id="img-a46ffa55-16">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,72.99)" id="img-a46ffa55-17">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,79.92)" id="img-a46ffa55-18">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,86.85)" id="img-a46ffa55-19">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
+        </g>
+        <g transform="translate(105.12,93.78)" id="img-a46ffa55-20">
+          <path fill="none" d="M-39.88,0 L39.88,0 " class="primitive"/>
         </g>
       </g>
-      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-94e6ad1d-14">
-        <g transform="translate(65.22,35.66)" id="img-94e6ad1d-15">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+      <g class="guide xgridlines yfixed" stroke-dasharray="0.5,0.5" stroke-width="0.2" stroke="#D0D0E0" id="img-a46ffa55-21">
+        <g transform="translate(67.24,55.66)" id="img-a46ffa55-22">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
-        <g transform="translate(80.78,35.66)" id="img-94e6ad1d-16">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+        <g transform="translate(82.39,55.66)" id="img-a46ffa55-23">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
-        <g transform="translate(96.34,35.66)" id="img-94e6ad1d-17">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+        <g transform="translate(97.54,55.66)" id="img-a46ffa55-24">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
-        <g transform="translate(111.89,35.66)" id="img-94e6ad1d-18">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+        <g transform="translate(112.7,55.66)" id="img-a46ffa55-25">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
-        <g transform="translate(127.44,35.66)" id="img-94e6ad1d-19">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+        <g transform="translate(127.85,55.66)" id="img-a46ffa55-26">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
-        <g transform="translate(143,35.66)" id="img-94e6ad1d-20">
-          <path fill="none" d="M0,-25.05 L0,25.05 " class="primitive"/>
+        <g transform="translate(143,55.66)" id="img-a46ffa55-27">
+          <path fill="none" d="M0,-45.05 L0,45.05 " class="primitive"/>
         </g>
       </g>
-      <g class="plotpanel" id="img-94e6ad1d-21">
+      <g class="plotpanel" id="img-a46ffa55-28">
         <metadata>
-          <boundingbox value="63.224999999999994mm 10.611666666666665mm 81.775mm 50.10333333333334mm"/>
-          <unitbox value="-0.012857602057216326 0.5 0.5257152041144326 6.0"/>
+          <boundingbox value="65.23833333333336mm 10.611666666666665mm 79.76166666666667mm 90.10333333333334mm"/>
+          <unitbox value="-0.01319928723848912 0.5 0.5263985744769782 13.0"/>
         </metadata>
-        <g shape-rendering="crispEdges" stroke-width="0.3" id="img-94e6ad1d-22">
-          <g stroke="#000000" stroke-opacity="0.000" class="geometry" id="img-94e6ad1d-23">
-            <g transform="translate(88.98,56.54)" id="img-94e6ad1d-24" fill="#CA9161">
-              <path d="M-23.75,-3.18 L23.75,-3.18 23.75,3.18 -23.75,3.18  z" class="primitive"/>
+        <g shape-rendering="crispEdges" stroke-width="0.3" id="img-a46ffa55-29">
+          <g stroke="#000000" stroke-opacity="0.000" class="geometry" id="img-a46ffa55-30">
+            <g transform="translate(86.78,97.25)" id="img-a46ffa55-31" fill="#376A62">
+              <path d="M-19.55,-2.47 L19.55,-2.47 19.55,2.47 -19.55,2.47  z" class="primitive"/>
             </g>
-            <g transform="translate(91.98,48.19)" id="img-94e6ad1d-25" fill="#CC78BC">
-              <path d="M-26.76,-3.18 L26.76,-3.18 26.76,3.18 -26.76,3.18  z" class="primitive"/>
+            <g transform="translate(89.81,90.32)" id="img-a46ffa55-32" fill="#9A6900">
+              <path d="M-22.57,-2.47 L22.57,-2.47 22.57,2.47 -22.57,2.47  z" class="primitive"/>
             </g>
-            <g transform="translate(92.99,39.84)" id="img-94e6ad1d-26" fill="#D55E00">
-              <path d="M-27.76,-3.18 L27.76,-3.18 27.76,3.18 -27.76,3.18  z" class="primitive"/>
+            <g transform="translate(90.12,83.39)" id="img-a46ffa55-33" fill="#94AD84">
+              <path d="M-22.88,-2.47 L22.88,-2.47 22.88,2.47 -22.88,2.47  z" class="primitive"/>
             </g>
-            <g transform="translate(97.09,31.49)" id="img-94e6ad1d-27" fill="#029E73">
-              <path d="M-31.87,-3.18 L31.87,-3.18 31.87,3.18 -31.87,3.18  z" class="primitive"/>
+            <g transform="translate(90.35,76.46)" id="img-a46ffa55-34" fill="#B0A5FF">
+              <path d="M-23.11,-2.47 L23.11,-2.47 23.11,2.47 -23.11,2.47  z" class="primitive"/>
             </g>
-            <g transform="translate(97.58,23.14)" id="img-94e6ad1d-28" fill="#DE8F05">
-              <path d="M-32.35,-3.18 L32.35,-3.18 32.35,3.18 -32.35,3.18  z" class="primitive"/>
+            <g transform="translate(90.73,69.53)" id="img-a46ffa55-35" fill="#00FECF">
+              <path d="M-23.49,-2.47 L23.49,-2.47 23.49,2.47 -23.49,2.47  z" class="primitive"/>
             </g>
-            <g transform="translate(98.6,14.79)" id="img-94e6ad1d-29" fill="#0173B2">
-              <path d="M-33.37,-3.18 L33.37,-3.18 33.37,3.18 -33.37,3.18  z" class="primitive"/>
+            <g transform="translate(90.84,62.59)" id="img-a46ffa55-36" fill="#79525F">
+              <path d="M-23.6,-2.47 L23.6,-2.47 23.6,2.47 -23.6,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(91,55.66)" id="img-a46ffa55-37" fill="#FF8FC8">
+              <path d="M-23.76,-2.47 L23.76,-2.47 23.76,2.47 -23.76,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(93.3,48.73)" id="img-a46ffa55-38" fill="#FFA530">
+              <path d="M-26.07,-2.47 L26.07,-2.47 26.07,2.47 -26.07,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(94.28,41.8)" id="img-a46ffa55-39" fill="#98FF00">
+              <path d="M-27.04,-2.47 L27.04,-2.47 27.04,2.47 -27.04,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(95.4,34.87)" id="img-a46ffa55-40" fill="#06ACC6">
+              <path d="M-28.16,-2.47 L28.16,-2.47 28.16,2.47 -28.16,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(98.28,27.94)" id="img-a46ffa55-41" fill="#B600FF">
+              <path d="M-31.04,-2.47 L31.04,-2.47 31.04,2.47 -31.04,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(98.75,21.01)" id="img-a46ffa55-42" fill="#028800">
+              <path d="M-31.52,-2.47 L31.52,-2.47 31.52,2.47 -31.52,2.47  z" class="primitive"/>
+            </g>
+            <g transform="translate(99.75,14.08)" id="img-a46ffa55-43" fill="#D70000">
+              <path d="M-32.51,-2.47 L32.51,-2.47 32.51,2.47 -32.51,2.47  z" class="primitive"/>
             </g>
           </g>
         </g>
       </g>
-      <g class="geometry" id="img-94e6ad1d-30">
-        <g fill="#000000" font-size="2.5" id="img-94e6ad1d-31">
-          <g transform="translate(127.31,14.79)" id="img-94e6ad1d-32">
+      <g class="geometry" id="img-a46ffa55-44">
+        <g fill="#000000" font-size="2.5" id="img-a46ffa55-45">
+          <g transform="translate(127.71,14.08)" id="img-a46ffa55-46">
             <g class="primitive">
               <text text-anchor="end" dy="0.35em">42.911%</text>
             </g>
           </g>
-          <g transform="translate(125.27,23.14)" id="img-94e6ad1d-33">
+          <g transform="translate(125.73,21.01)" id="img-a46ffa55-47">
             <g class="primitive">
               <text text-anchor="end" dy="0.35em">41.599%</text>
             </g>
           </g>
-          <g transform="translate(124.29,31.49)" id="img-94e6ad1d-34">
+          <g transform="translate(124.78,27.94)" id="img-a46ffa55-48">
             <g class="primitive">
               <text text-anchor="end" dy="0.35em">40.973%</text>
             </g>
           </g>
-          <g transform="translate(116.08,39.84)" id="img-94e6ad1d-35">
+          <g transform="translate(119.01,34.87)" id="img-a46ffa55-49">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">37.169%</text>
+            </g>
+          </g>
+          <g transform="translate(116.78,41.8)" id="img-a46ffa55-50">
             <g class="primitive">
               <text text-anchor="end" dy="0.35em">35.694%</text>
             </g>
           </g>
-          <g transform="translate(114.08,48.19)" id="img-94e6ad1d-36">
+          <g transform="translate(114.82,48.73)" id="img-a46ffa55-51">
             <g class="primitive">
               <text text-anchor="end" dy="0.35em">34.405%</text>
             </g>
           </g>
-          <g transform="translate(108.06,56.54)" id="img-94e6ad1d-37">
+          <g transform="translate(110.22,55.66)" id="img-a46ffa55-52">
             <g class="primitive">
-              <text text-anchor="end" dy="0.35em">30.538%</text>
+              <text text-anchor="end" dy="0.35em">31.365%</text>
+            </g>
+          </g>
+          <g transform="translate(109.89,62.59)" id="img-a46ffa55-53">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">31.147%</text>
+            </g>
+          </g>
+          <g transform="translate(109.68,69.53)" id="img-a46ffa55-54">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">31.007%</text>
+            </g>
+          </g>
+          <g transform="translate(108.92,76.46)" id="img-a46ffa55-55">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">30.507%</text>
+            </g>
+          </g>
+          <g transform="translate(108.45,83.39)" id="img-a46ffa55-56">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">30.197%</text>
+            </g>
+          </g>
+          <g transform="translate(107.83,90.32)" id="img-a46ffa55-57">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">29.789%</text>
+            </g>
+          </g>
+          <g transform="translate(101.78,97.25)" id="img-a46ffa55-58">
+            <g class="primitive">
+              <text text-anchor="end" dy="0.35em">25.799%</text>
             </g>
           </g>
         </g>
       </g>
     </g>
   </g>
-  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-94e6ad1d-38">
-    <g transform="translate(62.22,14.79)" id="img-94e6ad1d-39">
+  <g class="guide ylabels" font-size="2.82" font-family="'PT Sans Caption','Helvetica Neue','Helvetica',sans-serif" fill="#6C606B" id="img-a46ffa55-59">
+    <g transform="translate(64.24,14.08)" id="img-a46ffa55-60">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS_sh_f0_w1_t0e5_e2_l1k_r1p1</text>
       </g>
     </g>
-    <g transform="translate(62.22,23.14)" id="img-94e6ad1d-40">
+    <g transform="translate(64.24,21.01)" id="img-a46ffa55-61">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS_sh_f0_w0_t0e5_e2_l1k_r1p1</text>
       </g>
     </g>
-    <g transform="translate(62.22,31.49)" id="img-94e6ad1d-41">
+    <g transform="translate(64.24,27.94)" id="img-a46ffa55-62">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS_sh_f1_w1_t0e5_e1_l1k_r1p1</text>
       </g>
     </g>
-    <g transform="translate(62.22,39.84)" id="img-94e6ad1d-42">
+    <g transform="translate(64.24,34.87)" id="img-a46ffa55-63">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">DecisionTreeRegressor_BetaML</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,41.8)" id="img-a46ffa55-64">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS_sh_f1_w0_t0e5_e2_l1k_r1p1</text>
       </g>
     </g>
-    <g transform="translate(62.22,48.19)" id="img-94e6ad1d-43">
+    <g transform="translate(64.24,48.73)" id="img-a46ffa55-65">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS_sh_f1_w1_t0e5_e2_l1k_r1p1</text>
       </g>
     </g>
-    <g transform="translate(62.22,56.54)" id="img-94e6ad1d-44">
+    <g transform="translate(64.24,55.66)" id="img-a46ffa55-66">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">MAGDS_grid</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,62.59)" id="img-a46ffa55-67">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">KNeighborsRegressor_ScikitLearn</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,69.53)" id="img-a46ffa55-68">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">XGBoostRegressor_XGBoost</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,76.46)" id="img-a46ffa55-69">
       <g class="primitive">
         <text text-anchor="end" dy="0.35em">MAGDS</text>
       </g>
     </g>
+    <g transform="translate(64.24,83.39)" id="img-a46ffa55-70">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">AdaBoostRegressor_ScikitLearn</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,90.32)" id="img-a46ffa55-71">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">RandomForestRegressor_ScikitLearn</text>
+      </g>
+    </g>
+    <g transform="translate(64.24,97.25)" id="img-a46ffa55-72">
+      <g class="primitive">
+        <text text-anchor="end" dy="0.35em">LinearRegressor_ScikitLearn</text>
+      </g>
+    </g>
   </g>
-  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-94e6ad1d-45">
-    <g transform="translate(8.81,33.66)" id="img-94e6ad1d-46">
+  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-a46ffa55-73">
+    <g transform="translate(8.81,53.66)" id="img-a46ffa55-74">
       <g class="primitive">
         <text text-anchor="middle" dy="0.35em" transform="rotate(-90,0, 2)">model</text>
       </g>
     </g>
   </g>
-  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-94e6ad1d-47">
-    <g transform="translate(104.11,5)" id="img-94e6ad1d-48">
+  <g font-size="3.88" font-family="'PT Sans','Helvetica Neue','Helvetica',sans-serif" fill="#564A55" stroke="#000000" stroke-opacity="0.000" id="img-a46ffa55-75">
+    <g transform="translate(105.12,5)" id="img-a46ffa55-76">
       <g class="primitive">
         <text text-anchor="middle" dy="0.6em">iris sepallength estimation nrmse</text>
       </g>
@@ -210,8 +322,8 @@
   </g>
 </g>
 <defs>
-  <clipPath id="img-94e6ad1d-4">
-    <path d="M63.22,10.61 L145,10.61 145,60.72 63.22,60.72 " />
+  <clipPath id="img-a46ffa55-4">
+    <path d="M65.24,10.61 L145,10.61 145,100.72 65.24,100.72 " />
   </clipPath>
 </defs>
 </svg>

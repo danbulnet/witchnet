@@ -38,7 +38,6 @@ impl Default for SMAGDSParams {
 
 #[derive(Debug, Clone)]
 pub(crate) struct SMAGDSSensors {
-    x: Arc<RwLock<SensorConatiner>>,
     x_interval: Arc<RwLock<SensorConatiner>>,
     y: Arc<RwLock<SensorConatiner>>,
     y_interval: Arc<RwLock<SensorConatiner>>,
@@ -64,7 +63,8 @@ pub struct SMAGDS {
     pub magds: MAGDS,
     pub data: Vec<DataPoint2D>,
     pub(crate) sensors: SMAGDSSensors,
-    pub(crate) neuron_group_ids: SMAGDSNeuronGropuIds,
+    pub(crate) neuron_groups: SMAGDSNeuronGropuIds,
+    pub(crate) pattern_level_neuron_counter: HashMap<usize, u32>,
     pub params: SMAGDSParams
 }
 
@@ -85,12 +85,16 @@ impl SMAGDS {
 
         let params = SMAGDSParams::default();
         let mut magds = MAGDS::new();
+        let pattern_level_neuron_counter = Self::prepare_pattern_level_neuron_counter(
+            params.max_pattern_level
+        );
         let mut smagds = Self {
             sensors: Self::prepare_sensory_fields(&mut magds, &converted_data),
-            neuron_group_ids: Self::prepare_neuron_gropus(&mut magds, params.max_pattern_level),
+            neuron_groups: Self::prepare_neuron_gropus(&mut magds, params.max_pattern_level),
             params,
             magds,
             data: converted_data,
+            pattern_level_neuron_counter
         };
 
         smagds.create_neurons();
@@ -139,7 +143,6 @@ impl SMAGDS {
         let x_data_type: DataType = (&data[0].x).into();
         let y_data_type: DataType = (&data[0].y).into();
 
-        let (x, _) = magds.create_sensor("x", x_data_type);
         let (x_interval, _) = magds.create_sensor("x interval", DataType::F64);
         let (y, _) = magds.create_sensor("y", y_data_type);
         let (y_interval, _) = magds.create_sensor("y interval", DataType::F64);
@@ -154,7 +157,6 @@ impl SMAGDS {
             magds.create_sensor("different relative patterns interval", y_data_type);
 
         SMAGDSSensors {
-            x,
             x_interval,
             y,
             y_interval,
@@ -178,16 +180,13 @@ impl SMAGDS {
             different_relative_patterns_interval: 4
         };
 
-        let mut next_absolute_pattern_lvl_id: u32 = 1_000_000;
-        let mut next_relative_pattern_lvl_id: u32 = 2_000_000;
         for lvl in 1..=max_pattern_level {
-            ids.absolute_pattern_level.insert(lvl, next_absolute_pattern_lvl_id);
-            ids.relative_pattern_level.insert(lvl, next_relative_pattern_lvl_id);
-            magds.add_neuron_group(&format!("absolute pattern level {lvl}"), Some(next_absolute_pattern_lvl_id));
-            magds.add_neuron_group(&format!("relative pattern level {lvl}"), Some(next_relative_pattern_lvl_id));
-
-            next_absolute_pattern_lvl_id += 1;
-            next_relative_pattern_lvl_id += 1;
+            let absolute_id = 4 + lvl as u32;
+            let relative_id = 4 + max_pattern_level as u32 + lvl as u32;
+            ids.absolute_pattern_level.insert(lvl, absolute_id);
+            ids.relative_pattern_level.insert(lvl, relative_id);
+            magds.add_neuron_group(&format!("absolute pattern level {lvl}"), Some(absolute_id));
+            magds.add_neuron_group(&format!("relative pattern level {lvl}"), Some(relative_id));
         }
         magds.add_neuron_group(
             "same absolute patterns interval", Some(ids.same_absolute_patterns_interval)
@@ -208,13 +207,12 @@ impl SMAGDS {
     fn create_neurons(&mut self) {
         self.insert_data_to_sensors();
 
-        let magds = &mut self.magds;
+        let mut magds = &mut self.magds;
         
         let data = &self.data;
         let data_len = data.len();
         let SMAGDSParams { max_pattern_length, max_pattern_level } = &self.params;
 
-        let mut x = self.sensors.x.write().unwrap();
         let mut x_interval = self.sensors.x_interval.write().unwrap();
         let mut y = self.sensors.y.write().unwrap();
         let mut y_interval = self.sensors.y_interval.write().unwrap();
@@ -224,20 +222,16 @@ impl SMAGDS {
         let mut dapi = self.sensors.different_absolute_patterns_interval.write().unwrap();
         let mut drpi = self.sensors.different_relative_patterns_interval.write().unwrap();
 
-        let absolute_pattern_id = &self.neuron_group_ids.absolute_pattern_level;
-        let relative_pattern_id = &self.neuron_group_ids.relative_pattern_level;
-
-        let mut absolute_patterns: Vec<Vec<Arc<RwLock<dyn NeuronAsync>>>> = Vec::new();
-        let mut relative_patterns: Vec<Vec<Arc<RwLock<dyn NeuronAsync>>>> = Vec::new();
+        let absolute_pattern_id = &mut self.neuron_groups.absolute_pattern_level;
+        let relative_pattern_id = &mut self.neuron_groups.relative_pattern_level;
+        let mut level_neuron_counter = &mut self.pattern_level_neuron_counter;
         
         for i in 1..data.len() {
             let first_point = &data[i - 1];
             let second_point = &data[i];
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
-
-            let x1_sn = x.search(&first_point.x).unwrap();
-            let x2_sn = x.search(&second_point.x).unwrap();
+            
             let x_interval_sn = x_interval.search(&points_x_interval.into()).unwrap();
 
             let y1_sn = y.search(&first_point.y).unwrap();
@@ -245,46 +239,61 @@ impl SMAGDS {
             let y_interval_sn = y_interval.search(&points_y_interval.into()).unwrap();
             let y_entry_sn = y_entry.search(&first_point.y).unwrap();
 
-            let absolute_pattern_lvl1_neuron = SimpleNeuron::new_custom(
-                NeuronID{ id: i as u32, parent_id: absolute_pattern_id[&1] },
-                Arc::new(ConstantOneWeightAsync)
+            let (
+                absolute_pattern_lvl1_neuron, relative_pattern_lvl1_neuron
+            ) = Self::add_pattern_ra_neurons(
+                magds, 1, &mut level_neuron_counter, &self.neuron_groups
             );
-            magds.add_neuron(absolute_pattern_lvl1_neuron.clone());
 
-            let relative_pattern_lvl1_neuron = SimpleNeuron::new_custom(
-                NeuronID{ id: i as u32, parent_id: relative_pattern_id[&1] },
-                Arc::new(ConstantOneWeightAsync)
-            );
-            magds.add_neuron(relative_pattern_lvl1_neuron.clone());
-
-            for sn in [&x1_sn, &x_interval_sn, &y1_sn, &y_interval_sn, &y_entry_sn] {
+            for sn in [&x_interval_sn, &y1_sn, &y2_sn, &y_entry_sn] {
                 sn.write().unwrap().connect_bilateral(
                     absolute_pattern_lvl1_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
             }
 
-            for sn in [&x1_sn, &x_interval_sn, &y_interval_sn] {
+            for sn in [&x_interval_sn, &y_interval_sn, &y_entry_sn] {
                 sn.write().unwrap().connect_bilateral(
                     relative_pattern_lvl1_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
             }
 
-            let mut current_longest_pattern_len = points_x_interval;
+            let mut current_pattern_len = points_x_interval;
             let mut current_absolute_pattern = absolute_pattern_lvl1_neuron;
             let mut current_relative_pattern = relative_pattern_lvl1_neuron;
             for j in (i + 1)..usize::min(i + max_pattern_level, data.len()) {
-                if let Some(max_pattern_length) = max_pattern_length {
-                    if current_longest_pattern_len > *max_pattern_length { break }
-                    
-                    let first_point = &data[j - 1];
-                    let second_point = &data[j];
-                    let points_x_interval = second_point.x.distance(&first_point.x);
-                    let points_y_interval = second_point.y.distance(&first_point.y);
+                let first_point = &data[j - 1];
+                let second_point = &data[j];
+                let points_x_interval = second_point.x.distance(&first_point.x);
+                let points_y_interval = second_point.y.distance(&first_point.y);
 
-                    let x2_sn = x.search(&second_point.x).unwrap();
-                    let y2_sn = y.search(&second_point.y).unwrap();
-                    let x_interval_sn = x_interval.search(&points_x_interval.into()).unwrap();
-                    let y_interval_sn = y_interval.search(&points_y_interval.into()).unwrap();
+                if let Some(max_pattern_length) = max_pattern_length {
+                    current_pattern_len += points_x_interval;
+                    if current_pattern_len > *max_pattern_length { break }
+                }
+                
+                let y2_sn = y.search(&second_point.y).unwrap();
+                let x_interval_sn = x_interval.search(&points_x_interval.into()).unwrap();
+                let y_interval_sn = y_interval.search(&points_y_interval.into()).unwrap();
+                
+                let level = j - i;
+
+                let (
+                    absolute_pattern_neuron, relative_pattern_neuron
+                ) = Self::add_pattern_ra_neurons(
+                    magds, level, &mut level_neuron_counter, &self.neuron_groups
+                );
+
+                
+                for sn in [&x_interval_sn, &y1_sn, &y2_sn, &y_entry_sn] {
+                    sn.write().unwrap().connect_bilateral(
+                        absolute_pattern_neuron.clone(), false, ConnectionKind::Defining
+                    ).unwrap();
+                }
+
+                for sn in [&x_interval_sn, &y_interval_sn, &y_entry_sn] {
+                    sn.write().unwrap().connect_bilateral(
+                        relative_pattern_neuron.clone(), false, ConnectionKind::Defining
+                    ).unwrap();
                 }
             }
             
@@ -340,7 +349,6 @@ impl SMAGDS {
 
     fn insert_data_to_sensors(&mut self) {
         let data = &self.data;
-        let mut x = self.sensors.x.write().unwrap();
         let mut x_interval = self.sensors.x_interval.write().unwrap();
         let mut y = self.sensors.y.write().unwrap();
         let mut y_interval = self.sensors.y_interval.write().unwrap();
@@ -351,9 +359,6 @@ impl SMAGDS {
             let second_point = &data[i];
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
-
-            x.insert(&first_point.x);
-            x.insert(&second_point.x);
             x_interval.insert(&points_x_interval.into());
 
             y.insert(&first_point.y);
@@ -361,6 +366,41 @@ impl SMAGDS {
             y_interval.insert(&points_y_interval.into());
             y_entry.insert(&first_point.y);
         }
+    }
+
+    fn add_pattern_neuron(magds: &mut MAGDS, neuron_id: NeuronID) -> Arc<RwLock<SimpleNeuron>> {
+        let neuron = SimpleNeuron::new_custom(neuron_id, Arc::new(ConstantOneWeightAsync));
+        magds.add_neuron(neuron.clone());
+        neuron
+    }
+
+    fn add_pattern_ra_neurons(
+        magds: &mut MAGDS,
+        level: usize, 
+        level_neuron_counter: &mut HashMap<usize, u32>,
+        group_ids: &SMAGDSNeuronGropuIds
+    ) -> (Arc<RwLock<SimpleNeuron>>, Arc<RwLock<SimpleNeuron>>) {
+        let absolute_neuron_id = level_neuron_counter.get_mut(&level).unwrap();
+        let absolute_neuron = Self::add_pattern_neuron(magds, NeuronID {
+            id: *absolute_neuron_id as u32, parent_id: group_ids.absolute_pattern_level[&level] 
+        });
+        *absolute_neuron_id += 1;
+
+        let relative_neuron_id = level_neuron_counter.get_mut(&level).unwrap();
+        let relative_neuron = Self::add_pattern_neuron(magds, NeuronID { 
+            id: *relative_neuron_id as u32, parent_id: group_ids.relative_pattern_level[&level] 
+        });
+        *relative_neuron_id += 1;
+
+        (absolute_neuron, relative_neuron)
+    }
+
+    fn prepare_pattern_level_neuron_counter(max_pattern_level: usize) -> HashMap<usize, u32> {
+        let mut result = HashMap::new();
+        for lvl in 1..=max_pattern_level {
+            result.insert(lvl, 0);
+        }
+        result
     }
 }
 
