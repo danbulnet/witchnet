@@ -20,7 +20,6 @@ use super::{
     node::Node
 };
 
-#[derive(Clone)]
 pub struct ASAGraph<Key, const ORDER: usize = 25>
 where Key: SensorData, [(); ORDER + 1]: {
     pub id: u32,
@@ -140,7 +139,8 @@ where
             if self.data_category().is_categorical() { return None }
 
             let element_ptr = self.insert(item);
-            let element = element_ptr.borrow();
+            let mut element = element_ptr.borrow_mut();
+            element.decrement_counter();
 
             if let Some(next) = &element.next {
                 let next_element = next.0.upgrade().unwrap();
@@ -618,6 +618,26 @@ where
         }
 
         ret
+    }
+}
+
+impl<'a, Key, const ORDER: usize> Clone for ASAGraph<Key, ORDER> 
+where Key: SensorData, [(); ORDER + 1]: {
+    fn clone(&self) -> Self {
+        ASAGraph {
+            id: self.id,
+            root: self.root.clone(),
+            element_min: self.element_min.clone(),
+            element_max: self.element_max.clone(),
+            elements_counter: self.elements_counter,
+            key_min: if let Some(key) = &self.key_min { 
+                Some(*dyn_clone::clone_box(key)) 
+            } else { None },
+            key_max: if let Some(key) = &self.key_max { 
+                Some(*dyn_clone::clone_box(key)) 
+            } else { None },
+            data_type: self.data_type
+        }
     }
 }
 

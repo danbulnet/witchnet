@@ -26,3 +26,4 @@ asa-graphs = { path = "../asa-graphs", version = "0.1.0" }
 flex-points = { path = "../flex-points", version = "0.1.0" }
 dyn-clone = "1.0.9"
 anyhow = "1.0.65"
+log = "0.4.17"

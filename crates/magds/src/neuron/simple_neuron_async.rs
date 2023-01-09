@@ -171,6 +171,11 @@ impl NeuronAsync for SimpleNeuron {
         self.counter
     }
 
+    fn decrement_counter(&mut self) -> usize {
+        if self.counter > 0 { self.counter -= 1; }
+        self.counter
+    }
+
     fn explain(&self) -> &[Arc<RwLock<dyn NeuronAsync>>] {
         self.explain()
     }

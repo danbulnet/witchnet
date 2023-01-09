@@ -170,6 +170,11 @@ impl Neuron for SimpleNeuron {
         self.counter
     }
 
+    fn decrement_counter(&mut self) -> usize {
+        if self.counter > 0 { self.counter -= 1; }
+        self.counter
+    }
+
     fn counter(&self) -> usize { self.counter() }
 
     fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>] {

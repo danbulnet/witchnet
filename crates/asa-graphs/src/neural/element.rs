@@ -261,6 +261,11 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
         self.counter += 1;
         self.counter
     }
+    
+    fn decrement_counter(&mut self) -> usize {
+        if self.counter > 0 { self.counter -= 1; }
+        self.counter
+    }
 
     fn counter(&self) -> usize { self.counter }
     

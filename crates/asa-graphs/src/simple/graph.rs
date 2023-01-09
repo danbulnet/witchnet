@@ -145,6 +145,26 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         }
     }
 
+    // pub fn remove(&mut self, key: &Key) -> bool {
+    //     // 1. Use the search operation to find an element containing the key intended for removal.
+    //     let mut node = self.root.clone();
+    //     if node.borrow().size == 0 { return false }
+
+    //     let (key_min, key_max) = self.extreme_keys().unwrap_or_else(|| {
+    //         panic!("element_min / element_min must not be nullptr")
+    //     });
+
+    //     loop {
+    //         let node_insert_result = if key.distance(key_max) > key.distance(key_min) {
+                
+    //         } else {
+
+    //         }
+    //     }
+
+    //     false
+    // }
+
     pub fn print_graph(&self) {
         let mut height = 0;
         let mut node = self.root.clone();
