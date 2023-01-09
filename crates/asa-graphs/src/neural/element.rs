@@ -135,7 +135,7 @@ where
     }
 
     pub fn fuzzy_activate(&mut self, signal: f32) -> Vec<(Rc<RefCell<dyn Neuron>>, f32)> {
-        self.activation += signal;
+        self.activation += signal; 
 
         let mut neurons: Vec<(Rc<RefCell<dyn Neuron>>, f32)> = self
             .defining_neurons()

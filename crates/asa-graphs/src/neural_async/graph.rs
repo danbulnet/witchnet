@@ -129,6 +129,51 @@ where
 
     pub fn data_category(&self) -> DataCategory { self.data_type.data_category() }
 
+    pub fn fuzzy_search(
+        &mut self, item: &Key, threshold: f32
+    ) -> Option<(Arc<RwLock<Element<Key, ORDER>>>, f32)> {
+        if let Some(element) = self.search(item) {
+            return Some((element, 1.0))
+        } else {
+            if self.data_category().is_categorical() { return None }
+
+            let element = self.insert(item);
+            let element = element.read().unwrap();
+
+            if let Some(next) = &element.next {
+                let next_element = next.0.upgrade().unwrap();
+                let next_weight = next.1;
+                if let Some(prev) = &element.prev {
+                    let prev_element = prev.0.upgrade().unwrap();
+                    let prev_weight = prev.1;
+                    if next_weight > prev_weight {
+                        if next_weight >= threshold { 
+                            Some((next_element, next_weight)) 
+                        } else { None }
+                    } else {
+                        if prev_weight >= threshold { 
+                            Some((prev_element, prev_weight))
+                        } else { None }
+                    }
+                } else {
+                    if next_weight >= threshold { 
+                        Some((next_element, next_weight))
+                    } else { None }
+                }
+            } else {
+                if let Some(prev) = &element.prev {
+                    let prev_element = prev.0.upgrade().unwrap();
+                    let prev_weight = prev.1;
+                    if prev_weight >= threshold { 
+                        Some((prev_element, prev_weight))
+                    } else { None }
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
     pub fn search(&self, key: &Key) -> Option<Arc<RwLock<Element<Key, ORDER>>>> {
         let node = &self.root;
         
@@ -741,6 +786,39 @@ pub mod tests {
         assert_eq!(graph.element_max.as_ref().unwrap().read().unwrap().key, 500);
 
         graph.print_graph();
+    }
+
+    #[test]
+    fn fuzzy_search() {
+        let mut graph = ASAGraph::<i32, 3>::new(1);
+        for i in [1, 2, 3, 5, 6, 7] {
+            graph.insert(&i);
+        }
+        let result = graph.fuzzy_search(&4, 0.8);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0.read().unwrap().key, 3);
+        assert!(graph.fuzzy_search(&10, 0.8).is_none());
+        assert!(graph.search(&-1).is_none());
+
+        let mut graph = ASAGraph::<f64, 3>::new(1);
+        for i in [1.0, 2.0, 3.0, 5.0, 6.0, 7.0] {
+            graph.insert(&i);
+        }
+        let result = graph.fuzzy_search(&3.1, 0.95);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0.read().unwrap().key, 3.0);
+        assert!(graph.fuzzy_search(&3.5, 0.95).is_none());
+        assert!(graph.search(&-1.0).is_none());
+
+        let mut graph = ASAGraph::<String, 3>::new(1);
+        for i in ["1".to_string(), "2".to_string()] {
+            graph.insert(&i);
+        }
+        let result = graph.fuzzy_search(&"1".to_string(), 0.8);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().0.read().unwrap().key, "1".to_string());
+        assert!(graph.fuzzy_search(&"3".to_string(), 0.8).is_none());
+
     }
 
     #[test]

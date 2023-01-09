@@ -70,7 +70,7 @@ pub struct SMAGDS {
 }
 
 impl SMAGDS {
-    pub const EPSILON: f32 = 0.00001;
+    pub const SIGNAL_SIMILARITY_THRESHOLD: f32 = 0.95;
 
     pub fn new<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
         data: &[(X, Y)]
@@ -88,9 +88,6 @@ impl SMAGDS {
 
         let params = SMAGDSParams::default();
         let mut magds = MAGDS::new();
-        let pattern_level_neuron_counter = Self::prepare_pattern_level_neurons(
-            params.max_pattern_level
-        );
         let absolute_pattern_neurons = Self::prepare_pattern_level_neurons(
             params.max_pattern_level
         );
@@ -327,6 +324,15 @@ impl SMAGDS {
             let second_point = &data[i];
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
+
+            if let Some(sn) = x_interval.search(&points_x_interval.into()) {
+                let sn = sn.write().unwrap();
+                if sn.defined_neurons().is_empty() {
+                    
+                }
+            } else {
+
+            } 
             x_interval.insert(&points_x_interval.into());
 
             y.insert(&first_point.y);

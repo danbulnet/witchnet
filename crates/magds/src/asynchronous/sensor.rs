@@ -329,6 +329,115 @@ impl SensorAsync<DataTypeValue> for SensorConatiner {
         }
     }
 
+    fn fuzzy_search(
+        &mut self, item: &DataTypeValue, threshold: f32
+    ) -> Option<(Arc<RwLock<dyn NeuronAsync>>, f32)> {
+        match self {
+            SensorConatiner::Bool(v) => {
+                match v.fuzzy_search(item.as_bool()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::U8(v) => {
+                match v.fuzzy_search(item.as_u8()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::U16(v) => {
+                match v.fuzzy_search(item.as_u16()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::U32(v) => {
+                match v.fuzzy_search(item.as_u32()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::U64(v) => {
+                match v.fuzzy_search(item.as_u64()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::U128(v) => {
+                match v.fuzzy_search(item.as_u128()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::USize(v) => {
+                match v.fuzzy_search(item.as_u_size()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::I8(v) => {
+                match v.fuzzy_search(item.as_i8()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::I16(v) => {
+                match v.fuzzy_search(item.as_i16()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::I32(v) => {
+                match v.fuzzy_search(item.as_i32()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::I64(v) => {
+                match v.fuzzy_search(item.as_i64()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::I128(v) => {
+                match v.fuzzy_search(item.as_i128()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::ISize(v) => {
+                match v.fuzzy_search(item.as_i_size()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::F32(v) => {
+                match v.fuzzy_search(item.as_f32()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::F64(v) => {
+                match v.fuzzy_search(item.as_f64()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::ArcStr(v) => {
+                match v.fuzzy_search(item.as_arc_str()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            },
+            SensorConatiner::String(v) => {
+                match v.fuzzy_search(item.as_string()?, threshold) {
+                    Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+                    None => None
+                }
+            }
+        }
+    }
+
     fn search(&self, item: &DataTypeValue) -> Option<Arc<RwLock<dyn NeuronAsync>>> {
         match self {
             SensorConatiner::Bool(v) => {

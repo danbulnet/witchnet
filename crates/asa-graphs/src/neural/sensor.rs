@@ -54,6 +54,15 @@ where
         }
     }
 
+    fn fuzzy_search(
+        &mut self, item: &Key, threshold: f32
+    ) -> Option<(Rc<RefCell<dyn Neuron>>, f32)> {
+        match self.fuzzy_search(item, threshold) {
+            Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
+            None => None
+        }
+    }
+
     fn activate(
         &mut self, 
         item: &Key, 

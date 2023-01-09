@@ -46,6 +46,15 @@ where
         )
     }
 
+    fn fuzzy_search(
+        &mut self, item: &Key, threshold: f32
+    ) -> Option<(Arc<RwLock<dyn NeuronAsync>>, f32)> {
+        match self.fuzzy_search(item, threshold) {
+            Some(n) => Some((n.0 as Arc<RwLock<dyn NeuronAsync>>, n.1)),
+            None => None
+        }
+    }
+
     fn search(&self, item: &Key) -> Option<Arc<RwLock<dyn NeuronAsync>>> { 
         match self.search(item) {
             Some(n) => Some(n as Arc<RwLock<dyn NeuronAsync>>),
