@@ -257,6 +257,11 @@ where Key: SensorData, [(); ORDER + 1]:, PhantomData<Key>: DataDeductor, DataTyp
 
     fn data_type(&self) -> DataType { self.data_type.data_type() }
 
+    fn increment_counter(&mut self) -> usize {
+        self.counter += 1;
+        self.counter
+    }
+
     fn counter(&self) -> usize { self.counter }
     
     fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>] { &[] }

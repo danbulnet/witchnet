@@ -26,6 +26,7 @@ use witchnet_common::{
 pub struct SimpleNeuron {
     pub id: NeuronID,
     pub activation: f32,
+    pub counter: usize,
     pub(crate) self_ptr: Weak<RwLock<SimpleNeuron>>,
     pub(crate) defined_neurons: DefiningConnectionsAsync,
     pub(crate) defining_neurons: ExplanatoryConnectionsAsync,
@@ -40,6 +41,7 @@ impl SimpleNeuron {
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
+                    counter: 0,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnectionsAsync::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnectionsAsync::new(),
@@ -60,6 +62,7 @@ impl SimpleNeuron {
             RwLock::new(
                 SimpleNeuron {
                     id,
+                    counter: 0,
                     activation: 0.0f32,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnectionsAsync::new(weighting_strategy),
@@ -162,6 +165,11 @@ impl NeuronAsync for SimpleNeuron {
     fn data_type(&self) -> DataType { self.data_type() }
 
     fn counter(&self) -> usize { self.counter() }
+
+    fn increment_counter(&mut self) -> usize {
+        self.counter += 1;
+        self.counter
+    }
 
     fn explain(&self) -> &[Arc<RwLock<dyn NeuronAsync>>] {
         self.explain()

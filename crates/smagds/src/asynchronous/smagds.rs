@@ -325,11 +325,10 @@ impl SMAGDS {
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
 
-            if let Some(sn) = x_interval.search(&points_x_interval.into()) {
-                let sn = sn.write().unwrap();
-                if sn.defined_neurons().is_empty() {
-                    
-                }
+            if let Some(sn) = x_interval.fuzzy_search(
+                &points_x_interval.into(), Self::SIGNAL_SIMILARITY_THRESHOLD
+            ) {
+                
             } else {
 
             } 

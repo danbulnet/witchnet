@@ -279,6 +279,11 @@ where
 
     fn data_type(&self) -> DataType { self.data_type.data_type() }
 
+    fn increment_counter(&mut self) -> usize {
+        self.counter += 1;
+        self.counter
+    }
+
     fn counter(&self) -> usize { self.counter }
     
     fn explain(&self) -> &[Arc<RwLock<dyn NeuronAsync>>] { &[] }

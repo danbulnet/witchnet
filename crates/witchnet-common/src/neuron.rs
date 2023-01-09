@@ -42,6 +42,8 @@ pub trait Neuron {
 
     fn data_type(&self) -> DataType;
 
+    fn increment_counter(&mut self) -> usize;
+
     fn counter(&self) -> usize;
 
     fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>];
@@ -97,6 +99,8 @@ pub trait NeuronAsync: Sync + Send {
     fn is_sensor(&self) -> bool;
 
     fn data_type(&self) -> DataType;
+
+    fn increment_counter(&mut self) -> usize;
 
     fn counter(&self) -> usize;
 

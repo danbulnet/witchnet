@@ -27,6 +27,7 @@ use witchnet_common::{
 pub struct SimpleNeuron {
     pub id: NeuronID,
     pub activation: f32,
+    pub counter: usize,
     pub(crate) self_ptr: Weak<RefCell<SimpleNeuron>>,
     pub(crate) defined_neurons: DefiningConnections,
     pub(crate) defining_neurons: ExplanatoryConnections,
@@ -41,6 +42,7 @@ impl SimpleNeuron {
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
+                    counter: 0,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnections::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnections::new(),
@@ -62,6 +64,7 @@ impl SimpleNeuron {
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
+                    counter: 0,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnections::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnections::new(),
@@ -161,6 +164,11 @@ impl Neuron for SimpleNeuron {
     fn is_sensor(&self) -> bool { self.is_sensor() }
 
     fn data_type(&self) -> DataType { self.data_type() }
+
+    fn increment_counter(&mut self) -> usize {
+        self.counter += 1;
+        self.counter
+    }
 
     fn counter(&self) -> usize { self.counter() }
 
