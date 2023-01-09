@@ -332,107 +332,107 @@ impl Sensor<DataTypeValue> for SensorConatiner {
     }
 
     fn fuzzy_search(
-        &mut self, item: &DataTypeValue, threshold: f32
+        &mut self, item: &DataTypeValue, threshold: f32, perserve_inserted_neuron: bool
     ) -> Option<(Rc<RefCell<dyn Neuron>>, f32)> {
         match self {
             SensorConatiner::Bool(v) => {
-                match v.fuzzy_search(item.as_bool()?, threshold) {
+                match v.fuzzy_search(item.as_bool()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::U8(v) => {
-                match v.fuzzy_search(item.as_u8()?, threshold) {
+                match v.fuzzy_search(item.as_u8()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::U16(v) => {
-                match v.fuzzy_search(item.as_u16()?, threshold) {
+                match v.fuzzy_search(item.as_u16()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::U32(v) => {
-                match v.fuzzy_search(item.as_u32()?, threshold) {
+                match v.fuzzy_search(item.as_u32()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::U64(v) => {
-                match v.fuzzy_search(item.as_u64()?, threshold) {
+                match v.fuzzy_search(item.as_u64()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::U128(v) => {
-                match v.fuzzy_search(item.as_u128()?, threshold) {
+                match v.fuzzy_search(item.as_u128()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::USize(v) => {
-                match v.fuzzy_search(item.as_u_size()?, threshold) {
+                match v.fuzzy_search(item.as_u_size()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::I8(v) => {
-                match v.fuzzy_search(item.as_i8()?, threshold) {
+                match v.fuzzy_search(item.as_i8()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::I16(v) => {
-                match v.fuzzy_search(item.as_i16()?, threshold) {
+                match v.fuzzy_search(item.as_i16()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::I32(v) => {
-                match v.fuzzy_search(item.as_i32()?, threshold) {
+                match v.fuzzy_search(item.as_i32()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::I64(v) => {
-                match v.fuzzy_search(item.as_i64()?, threshold) {
+                match v.fuzzy_search(item.as_i64()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::I128(v) => {
-                match v.fuzzy_search(item.as_i128()?, threshold) {
+                match v.fuzzy_search(item.as_i128()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::ISize(v) => {
-                match v.fuzzy_search(item.as_i_size()?, threshold) {
+                match v.fuzzy_search(item.as_i_size()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::F32(v) => {
-                match v.fuzzy_search(item.as_f32()?, threshold) {
+                match v.fuzzy_search(item.as_f32()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::F64(v) => {
-                match v.fuzzy_search(item.as_f64()?, threshold) {
+                match v.fuzzy_search(item.as_f64()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::ArcStr(v) => {
-                match v.fuzzy_search(item.as_arc_str()?, threshold) {
+                match v.fuzzy_search(item.as_arc_str()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }
             },
             SensorConatiner::String(v) => {
-                match v.fuzzy_search(item.as_string()?, threshold) {
+                match v.fuzzy_search(item.as_string()?, threshold, perserve_inserted_neuron) {
                     Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
                     None => None
                 }

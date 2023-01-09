@@ -55,9 +55,9 @@ where
     }
 
     fn fuzzy_search(
-        &mut self, item: &Key, threshold: f32
+        &mut self, item: &Key, threshold: f32, perserve_inserted_neuron: bool
     ) -> Option<(Rc<RefCell<dyn Neuron>>, f32)> {
-        match self.fuzzy_search(item, threshold) {
+        match self.fuzzy_search(item, threshold, perserve_inserted_neuron) {
             Some(n) => Some((n.0 as Rc<RefCell<dyn Neuron>>, n.1)),
             None => None
         }

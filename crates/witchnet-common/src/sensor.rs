@@ -158,7 +158,7 @@ pub trait Sensor<D: SensorData>: Any + Display {
     fn search(&self, item: &D) -> Option<Rc<RefCell<dyn Neuron>>>;
     
     fn fuzzy_search(
-        &mut self, item: &D, threshold: f32
+        &mut self, item: &D, threshold: f32, perserve_inserted_neuron: bool
     ) -> Option<(Rc<RefCell<dyn Neuron>>, f32)>;
 
     fn activate(
@@ -208,7 +208,7 @@ pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
     fn search(&self, item: &D) -> Option<Arc<RwLock<dyn NeuronAsync>>>;
 
     fn fuzzy_search(
-        &mut self, item: &D, threshold: f32
+        &mut self, item: &D, threshold: f32, perserve_inserted_neuron: bool
     ) -> Option<(Arc<RwLock<dyn NeuronAsync>>, f32)>;
 
     fn activate(

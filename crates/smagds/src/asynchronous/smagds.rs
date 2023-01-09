@@ -325,13 +325,13 @@ impl SMAGDS {
             let points_x_interval = second_point.x.distance(&first_point.x);
             let points_y_interval = second_point.y.distance(&first_point.y);
 
-            if let Some(sn) = x_interval.fuzzy_search(
-                &points_x_interval.into(), Self::SIGNAL_SIMILARITY_THRESHOLD
+            if let Some((sn, _)) = x_interval.fuzzy_search(
+                &points_x_interval.into(), Self::SIGNAL_SIMILARITY_THRESHOLD, true
             ) {
-                
+                sn.write().unwrap().increment_counter();
             } else {
 
-            } 
+            }
             x_interval.insert(&points_x_interval.into());
 
             y.insert(&first_point.y);
