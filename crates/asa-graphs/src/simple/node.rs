@@ -6,7 +6,7 @@ use std::{
 
 use witchnet_common::{
     distances::Distance,
-    algorithms::SearchAlgorithm
+    algorithms::SearchAlgorithm, neuron::Neuron
 };
 
 use super::element::Element;
@@ -316,6 +316,23 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         for i in (index..=self.size).rev() {
             self.children[i + 1] = self.children[i].take();
         }
+    }
+
+    pub(crate) fn test_node(&self) -> bool {
+        let mut node_string = format!("size: {}, elements: ", self.size);
+        let mut is_ok = true;
+        for (i, element) in (&self.elements).into_iter().enumerate() {
+            let s = match &element {
+                Some(e) => format!(
+                    "[{i}:{}({})]", e.borrow().key, e.borrow().counter
+                ),
+                None => "[none]".to_string()
+            };
+            node_string.push_str(&s);
+            if element.is_none() && i < self.size { is_ok = false; }
+        }
+        if !is_ok { println!("{node_string}"); }
+        return is_ok
     }
 
     pub const MIN_CHILDREN: usize = (ORDER + 1) / 2;

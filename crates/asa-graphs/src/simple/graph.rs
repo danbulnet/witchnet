@@ -1,5 +1,5 @@
 use std::{
-    fmt::Display,
+    fmt::{Display, format},
     rc::Rc,
     cell::RefCell
 };
@@ -192,7 +192,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                     } else {
                         // 4. Else the element storing the removed key is a non leaf node that 
                         //    must be replaced by the previous or next element stored in leaves
-                        let node_deref = node.borrow_mut();
+                        let mut node_deref = node.borrow_mut();
                         let mut left_leaf = node_deref.children[index].clone();
                         let mut right_leaf = node_deref.children[index + 1].clone();
                         let mut left_leaf_parent = Some(node.clone());
@@ -226,16 +226,14 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                         let mut right_leaf = right_leaf.as_mut().unwrap().borrow_mut();
                         let left_leaf_size = left_leaf.size;
                         if left_leaf.size >= 2 {
-                            let mut node = node.borrow_mut();
-                            node.remove_element_without_shift(index);
-                            node.keys[index] = left_leaf.keys[left_leaf_size - 1].take();
-                            node.elements[index] = left_leaf.elements[left_leaf_size - 1].take();
+                            node_deref.remove_element_without_shift(index);
+                            node_deref.keys[index] = left_leaf.keys[left_leaf_size - 1].take();
+                            node_deref.elements[index] = left_leaf.elements[left_leaf_size - 1].take();
                             return true
                         } else if right_leaf.size >= 2 {
-                            let mut node = node.borrow_mut();
-                            node.remove_element_without_shift(index);
-                            node.keys[index] = right_leaf.keys[0].take();
-                            node.elements[index] = right_leaf.elements[0].take();
+                            node_deref.remove_element_without_shift(index);
+                            node_deref.keys[index] = right_leaf.keys[0].take();
+                            node_deref.elements[index] = right_leaf.elements[0].take();
                             right_leaf.remove_element_soft(0);
                             return true
                         } else {
@@ -762,7 +760,12 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
 pub mod tests {
     use std::time::Instant;
     
-    use rand::Rng;
+    use rand::{
+        Rng, 
+        seq::SliceRandom,
+        rngs::StdRng,
+        SeedableRng
+    };
     
     use super::ASAGraph;
 
@@ -953,5 +956,30 @@ pub mod tests {
             ).collect()
         ).collect();
         println!("{:?}", lvlvs);
+    }
+
+    #[test]
+    fn remove() {
+        // let mut rng = rand::thread_rng();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(42);
+
+        let mut graph = ASAGraph::<i32, 5>::new("test");
+
+        let mut numbers = vec![];
+        for _ in 0..50 {
+            let number: i32 = rng.gen_range(1..=20);
+            numbers.push(number);
+            graph.insert(&number);
+        }
+        numbers.shuffle(&mut rng);
+
+        graph.print_graph();
+
+        for number in &numbers {
+            println!("removing {number}");
+            graph.remove(number);
+        }
+
+        graph.print_graph();
     }
 }
