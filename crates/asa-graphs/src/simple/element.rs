@@ -52,6 +52,15 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
             element.next = None; 
         }
     }
+
+    pub fn remove_connections(&mut self) {
+        if let Some(next) = &self.next {
+            next.upgrade().unwrap().borrow_mut().prev = self.prev.clone();
+        }
+        if let Some(prev) = &self.prev {
+            prev.upgrade().unwrap().borrow_mut().next = self.next.clone();
+        }
+    }
 }
 
 impl<Key, const ORDER: usize> Display for Element<Key, ORDER> 

@@ -145,25 +145,166 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         }
     }
 
-    // pub fn remove(&mut self, key: &Key) -> bool {
-    //     // 1. Use the search operation to find an element containing the key intended for removal.
-    //     let mut node = self.root.clone();
-    //     if node.borrow().size == 0 { return false }
+    pub fn remove(&mut self, key: &Key) -> bool {
+        // 1. Use the search operation to find an element containing the key intended for removal.
+        let mut current_node = Some(self.root.clone());
+        if current_node.as_ref().unwrap().borrow().size == 0 { return false }
 
-    //     let (key_min, key_max) = self.extreme_keys().unwrap_or_else(|| {
-    //         panic!("element_min / element_min must not be nullptr")
-    //     });
+        let mut parent: Option<Rc<RefCell<Node<Key, ORDER>>>> = None;
+        let mut parent_of_parent: Option<Rc<RefCell<Node<Key, ORDER>>>> = None;
+        let mut parent_index: Option<usize> = None;
+        let mut child_index: Option<usize> = None;
 
-    //     loop {
-    //         let node_insert_result = if key.distance(key_max) > key.distance(key_min) {
-                
-    //         } else {
+        while let Some(node) = &current_node.clone() {
+            let mut index = 0;
+            {
+                let node = node.borrow();
+                while index < node.size && key > node.keys[index].as_ref().unwrap() {
+                    index += 1;
+                }
+            }
 
-    //         }
-    //     }
+            if index < node.borrow().size && key == node.borrow().keys[index].as_ref().unwrap() {
+                let element = node.borrow().elements[index].as_ref().unwrap().clone();
+                if element.borrow().counter == 1 {
+                    // 3. I f the element storing the removed key is a leaf
+                    if node.borrow().is_leaf {
+                        // 3. remove the element storing this key from this leaf, switch pointers
+                        //    from its predecessor and successor to point themselves 
+                        //    as direct neighbors.
+                        node.borrow_mut().remove_element(index);
+                         // 3. Next, if this leaf is not empty, finish the remove operation, 
+                         //    else go to step 6 to fill or remove this empty leaf
+                        if node.borrow().size > 0 {
+                            return true
+                        } else {
+                            // 6. Empty leaf
+                            if !Rc::ptr_eq(&node, &self.root) {
+                                // empty_node(parent, child_index, parent_of_parent, parent_index);
+                            }
+                            return true
+                        }
+                    } else {
+                        // 4. Else the element storing the removed key is a non leaf node that 
+                        //    must be replaced by the previous or next element stored in leaves
+                        let node_deref = node.borrow_mut();
+                        let mut left_leaf = node_deref.children[index].clone();
+                        let mut right_leaf = node_deref.children[index + 1].clone();
+                        let mut left_leaf_parent = Some(node.clone());
+                        let mut right_leaf_parent = Some(node.clone());
+                        let mut left_leaf_parent_of_parent = parent.clone();
+                        let mut right_leaf_parent_of_parent = parent.clone();
+                        let mut left_parent_size = node_deref.size;
+                        let mut right_parent_size = node_deref.size;
 
-    //     false
-    // }
+                        while !left_leaf.as_ref().unwrap().borrow().is_leaf {
+                            left_parent_size = left_leaf.as_ref().unwrap().borrow().size;
+                            right_parent_size = right_leaf.as_ref().unwrap().borrow().size;
+                            left_leaf_parent_of_parent = left_leaf_parent.take();
+                            right_leaf_parent_of_parent = right_leaf_parent.take();
+                            left_leaf_parent = left_leaf.clone();
+                            right_leaf_parent = right_leaf.clone();
+                            left_leaf = {
+                                let left_leaf_deref = left_leaf.as_ref().unwrap().borrow();
+                                left_leaf_deref.children[left_leaf_deref.size].clone()
+                            };
+                            right_leaf = {
+                                let right_leaf_deref = right_leaf.as_ref().unwrap().borrow();
+                                right_leaf_deref.children[0].clone()
+                            };
+                        }
+                        // 4. If one of these leaves contains more than one element, 
+                        //    replace the removed element in the non leaf node by this
+                        //    connected neighbor element from the leaf containing 
+                        //    more than one element, and finish the remove operation
+                        let mut left_leaf = left_leaf.as_mut().unwrap().borrow_mut();
+                        let mut right_leaf = right_leaf.as_mut().unwrap().borrow_mut();
+                        let left_leaf_size = left_leaf.size;
+                        if left_leaf.size >= 2 {
+                            let mut node = node.borrow_mut();
+                            node.remove_element_without_shift(index);
+                            node.keys[index] = left_leaf.keys[left_leaf_size - 1].take();
+                            node.elements[index] = left_leaf.elements[left_leaf_size - 1].take();
+                            return true
+                        } else if right_leaf.size >= 2 {
+                            let mut node = node.borrow_mut();
+                            node.remove_element_without_shift(index);
+                            node.keys[index] = right_leaf.keys[0].take();
+                            node.elements[index] = right_leaf.elements[0].take();
+                            right_leaf.remove_element_soft(0);
+                            return true
+                        } else {
+                            // 5. Therefore the previous and next elements are stored in 
+                            //    leaves that contain only single elements
+                            //    choose the element of the leaf which parent contains 
+                            //    more elements to simplify the next rebalancing operation.
+                            if left_parent_size >= right_parent_size {
+                                let mut node_deref = node.borrow_mut();
+                                node_deref.elements[index].as_mut().unwrap().borrow_mut()
+                                    .remove_connections();
+                                node_deref.keys[index] = left_leaf.keys[0].take();
+                                node_deref.elements[index] = left_leaf.elements[0].take();
+                                left_leaf.size -= 1;
+                                // 6. Empty leaf
+                                let leaf_index = if Rc::ptr_eq(
+                                    left_leaf_parent.as_ref().unwrap(), &node
+                                ) { index } else { 
+                                    left_leaf_parent.as_ref().unwrap().borrow().size 
+                                };
+                                let leaf_parent_index = if Rc::ptr_eq(
+                                    left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                ) { index } else {
+                                    if Rc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &parent.as_ref().unwrap()
+                                    ) { child_index.unwrap() } else { 
+                                        left_leaf_parent_of_parent.as_ref().unwrap().borrow().size 
+                                    }
+                                };
+                                // emptynode(left_leaf_parent, leaf_index, left_leaf_parent_of_parent, leaf_parent_index);
+                                return true
+                            } else {
+                                let mut node_deref = node.borrow_mut();
+                                node_deref.elements[index].as_mut().unwrap().borrow_mut()
+                                    .remove_connections();
+                                node_deref.keys[index] = right_leaf.keys[0].take();
+                                node_deref.elements[index] = right_leaf.elements[0].take();
+                                right_leaf.size -= 1;
+                                // 6. Empty leaf
+                                let leaf_index = if Rc::ptr_eq(
+                                    left_leaf_parent.as_ref().unwrap(), &node
+                                ) { index + 1 } else { 0 };
+                                let leaf_parent_index = if Rc::ptr_eq(
+                                    left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                ) { index + 1 } else {
+                                    if Rc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &parent.as_ref().unwrap()
+                                    ) { child_index.unwrap() } else { 0 }
+                                };
+                                // emptynode(right_leaf_parent, leaf_index, right_leaf_parent_of_parent, leaf_parent_index);
+                                return true
+                            }
+                        }
+                    }
+                } else {
+                    // 2. I f the counter of the element storing the removed key 
+                    //    is greater than one, decrement this counter ,
+                    //    remove the link to the b oun d object, and finish the remove operation.
+                    element.borrow_mut().counter -= 1;
+                    return true
+                }
+            } else if node.borrow().is_leaf {
+                //  1. If this key is not found, finish this operation with no effect
+                return false
+            } else {
+                parent_of_parent = parent;
+                parent = Some(node.clone());
+                current_node = node.borrow().children[index].clone();
+                parent_index = child_index;
+                child_index = Some(index);
+            }
+        }
+        false
+    }
 
     pub fn print_graph(&self) {
         let mut height = 0;

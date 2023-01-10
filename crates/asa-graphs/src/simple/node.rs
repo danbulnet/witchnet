@@ -264,6 +264,41 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         new_element
     }
 
+    pub fn remove_element(&mut self, index: usize) {
+        let element = self.elements[index].as_mut().unwrap();
+        element.borrow_mut().remove_connections();
+
+        for i in index..(self.size - 1) {
+            self.keys[i] = self.keys[i + 1].take();
+            self.elements[i] = self.elements[i + 1].take();
+        }
+
+        self.size -= 1;
+    }
+
+    pub fn remove_element_without_shift(&mut self, index: usize) {
+        let element = self.elements[index].as_mut().unwrap();
+        element.borrow_mut().remove_connections();
+        self.elements[index] = None;
+    }
+
+    pub fn remove_element_soft(&mut self, index: usize) {
+        for i in index..(self.size - 1) {
+            self.keys[i] = self.keys[i + 1].take();
+            self.elements[i] = self.elements[i + 1].take();
+        }
+        self.size -= 1;
+    }
+
+    pub fn find_child(&self, child: &Rc<RefCell<Self>>) -> Option<usize> {
+        for i in 0..=self.size {
+            if Rc::ptr_eq(self.children[i].as_ref().unwrap(), child) {
+                return Some(i)
+            }
+        }
+        None
+    }
+
     pub const MIN_CHILDREN: usize = (ORDER + 1) / 2;
     pub const MAX_CHILDREN: usize = ORDER + 1;
     pub const MIN_ELEMENTS: usize = (ORDER + 1) / 2 - 1;
