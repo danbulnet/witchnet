@@ -276,13 +276,13 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         self.size -= 1;
     }
 
-    pub fn remove_element_without_shift(&mut self, index: usize) {
+    pub(crate) fn remove_element_without_shift(&mut self, index: usize) {
         let element = self.elements[index].as_mut().unwrap();
         element.borrow_mut().remove_connections();
         self.elements[index] = None;
     }
 
-    pub fn remove_element_soft(&mut self, index: usize) {
+    pub(crate) fn remove_element_soft(&mut self, index: usize) {
         for i in index..(self.size - 1) {
             self.keys[i] = self.keys[i + 1].take();
             self.elements[i] = self.elements[i + 1].take();
@@ -290,13 +290,32 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         self.size -= 1;
     }
 
-    pub fn find_child(&self, child: &Rc<RefCell<Self>>) -> Option<usize> {
+    pub(crate) fn find_child(&self, child: &Rc<RefCell<Self>>) -> Option<usize> {
         for i in 0..=self.size {
             if Rc::ptr_eq(self.children[i].as_ref().unwrap(), child) {
                 return Some(i)
             }
         }
         None
+    }
+
+    pub(crate) fn shift_right(&mut self, index: usize) {
+        for i in ((index + 1)..=self.size).rev() {
+            self.keys[i] = self.keys[i - 1].take();
+            self.elements[i] = self.elements[i - 1].take();
+        }
+    }
+
+    pub(crate) fn shift_left_children(&mut self, index: usize) {
+        for i in index..(Self::MAX_CHILDREN - 1) {
+            self.children[i] = self.children[i + 1].take();
+        }
+    }
+
+    pub(crate) fn shift_right_children(&mut self, index: usize) {
+        for i in (index..=self.size).rev() {
+            self.children[i + 1] = self.children[i].take();
+        }
     }
 
     pub const MIN_CHILDREN: usize = (ORDER + 1) / 2;
