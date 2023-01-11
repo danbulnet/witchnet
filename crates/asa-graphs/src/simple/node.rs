@@ -318,7 +318,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         }
     }
 
-    pub(crate) fn test_node(&self) -> bool {
+    pub(crate) fn test_node(&self, print: bool) -> bool {
         let mut node_string = format!("size: {}, elements: ", self.size);
         let mut is_ok = true;
         for (i, element) in (&self.elements).into_iter().enumerate() {
@@ -331,7 +331,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
             node_string.push_str(&s);
             if element.is_none() && i < self.size { is_ok = false; }
         }
-        if !is_ok { println!("{node_string}"); }
+        if !is_ok && print { println!("{node_string}"); }
         return is_ok
     }
 
