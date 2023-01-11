@@ -130,6 +130,28 @@ where
         }
     }
 
+    pub fn remove_connections(&mut self, range: f32) {
+        if let Some(next) = &self.next {
+            let next_ptr = next.0.upgrade().unwrap();
+            let mut next_element = next_ptr.borrow_mut();
+            if let Some(prev) = &self.prev {
+                let prev_ptr = prev.0.upgrade().unwrap();
+                let mut prev_element = prev_ptr.borrow_mut();
+                let weight = prev_element.weight(&next_element, range);
+                prev_element.next = Some((next.0.clone(), weight));
+                next_element.prev = Some((prev.0.clone(), weight));
+            } else {
+                next_element.prev = None;
+            }
+        } else {
+            if let Some(prev) = &self.prev {
+                let prev_ptr = prev.0.upgrade().unwrap();
+                let mut prev_element = prev_ptr.borrow_mut();
+                prev_element.prev = None;
+            }
+        }
+    }
+
     pub fn weight(&self, other: &Self, range: f32) -> f32 {
         1.0f32 - (other.key.distance(&self.key) as f32).abs() / range
     }

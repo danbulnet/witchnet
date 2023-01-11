@@ -2,7 +2,8 @@ use std::{
     sync::{ Arc, RwLock },
     cmp::Ordering::*,
     marker::PhantomData,
-    fmt::{ Display, Formatter, Result as FmtResult }
+    fmt::{ Display, Formatter, Result as FmtResult },
+    io::{ self, Write }
 };
 
 use anyhow::Result;
@@ -335,6 +336,513 @@ where
         }
     }
 
+    pub fn remove(&mut self, key: &Key) -> bool {
+        let (key_min, key_max) = match self.extreme_keys(){
+            Some((key_min, key_max)) => (
+                *dyn_clone::clone_box(key_min), 
+                *dyn_clone::clone_box(key_max)
+            ),
+            None => return false
+        };
+        
+        let result = self.remove_without_weights(key);
+
+        if key.equals(&key_min) || key.equals(&key_max) {
+            // self.update_elements_weights(key_min.distance(&key_max) as f32);
+        }
+
+        result
+    }
+
+    pub fn remove_without_weights(&mut self, key: &Key) -> bool {
+        // 1. Use the search operation to find an element containing the key intended for removal.
+        let mut current_node = Some(self.root.clone());
+        if current_node.as_ref().unwrap().read().unwrap().size == 0 { return false }
+
+        let mut parent: Option<Arc<RwLock<Node<Key, ORDER>>>> = None;
+        let mut parent_of_parent: Option<Arc<RwLock<Node<Key, ORDER>>>> = None;
+        let mut parent_index: Option<usize> = None;
+        let mut child_index: Option<usize> = None;
+
+        while let Some(node) = &current_node.clone() {
+            let mut index = 0;
+            {
+                let node = node.read().unwrap();
+                while index < node.size && key.partial_compare(
+                    node.keys[index].as_ref().unwrap()
+                ) == Some(Greater) { index += 1; }
+            }
+
+            if index < node.read().unwrap().size && key.equals(node.read().unwrap().keys[index].as_ref().unwrap()) {
+                let element = node.read().unwrap().elements[index].as_ref().unwrap().clone();
+                if element.read().unwrap().counter == 1 {
+                    // 3. I f the element storing the removed key is a leaf
+                    if node.read().unwrap().is_leaf {
+                        // 3. remove the element storing this key from this leaf, switch pointers
+                        //    from its predecessor and successor to point themselves 
+                        //    as direct neighbors.
+                        node.write().unwrap().remove_element(index, self.range());
+                         // 3. Next, if this leaf is not empty, finish the remove operation, 
+                         //    else go to step 6 to fill or remove this empty leaf
+                        if node.read().unwrap().size > 0 {
+                            return true
+                        } else {
+                            // 6. Empty leaf
+                            if !Arc::ptr_eq(&node, &self.root) {
+                                self.empty_node(
+                                    parent.unwrap().clone(),
+                                    child_index.unwrap(),
+                                    parent_of_parent,
+                                    parent_index
+                                );
+                            }
+                            return true
+                        }
+                    } else {
+                        // 4. Else the element storing the removed key is a non leaf node that 
+                        //    must be replaced by the previous or next element stored in leaves
+                        let mut left_leaf = node.read().unwrap().children[index].clone();
+                        let mut right_leaf = node.read().unwrap().children[index + 1].clone();
+                        let mut left_leaf_parent = Some(node.clone());
+                        let mut right_leaf_parent = Some(node.clone());
+                        let mut left_leaf_parent_of_parent = parent.clone();
+                        let mut right_leaf_parent_of_parent = parent.clone();
+                        let mut left_parent_size = node.read().unwrap().size;
+                        let mut right_parent_size = node.read().unwrap().size;
+
+                        while !left_leaf.as_ref().unwrap().read().unwrap().is_leaf {
+                            left_parent_size = left_leaf.as_ref().unwrap().read().unwrap().size;
+                            right_parent_size = right_leaf.as_ref().unwrap().read().unwrap().size;
+                            left_leaf_parent_of_parent = left_leaf_parent.take();
+                            right_leaf_parent_of_parent = right_leaf_parent.take();
+                            left_leaf_parent = left_leaf.clone();
+                            right_leaf_parent = right_leaf.clone();
+                            left_leaf = {
+                                let left_leaf_deref = left_leaf.as_ref().unwrap().read().unwrap();
+                                left_leaf_deref.children[left_leaf_deref.size].clone()
+                            };
+                            right_leaf = {
+                                let right_leaf_deref = right_leaf.as_ref().unwrap().read().unwrap();
+                                right_leaf_deref.children[0].clone()
+                            };
+                        }
+                        // 4. If one of these leaves contains more than one element, 
+                        //    replace the removed element in the non leaf node by this
+                        //    connected neighbor element from the leaf containing 
+                        //    more than one element, and finish the remove operation
+                        let left_leaf_size = left_leaf.as_ref().unwrap().read().unwrap().size;
+                        let right_leaf_size = right_leaf.as_ref().unwrap().read().unwrap().size;
+                        if left_leaf_size >= 2 {
+                            let mut node_deref = node.write().unwrap();
+                            let mut left_leaf = left_leaf.as_mut().unwrap().write().unwrap();
+                            node_deref.remove_element_without_shift(index, self.range());
+                            node_deref.keys[index] = left_leaf.keys[left_leaf_size - 1].take();
+                            node_deref.elements[index] = left_leaf.elements[left_leaf_size - 1].take();
+                            left_leaf.size -= 1;
+                            return true
+                        } else if right_leaf_size >= 2 {
+                            let mut node_deref = node.write().unwrap();
+                            let mut right_leaf = right_leaf.as_mut().unwrap().write().unwrap();
+                            node_deref.remove_element_without_shift(index, self.range());
+                            node_deref.keys[index] = right_leaf.keys[0].take();
+                            node_deref.elements[index] = right_leaf.elements[0].take();
+                            right_leaf.remove_element_soft(0);
+                            return true
+                        } else {
+                            // 5. Therefore the previous and next elements are stored in 
+                            //    leaves that contain only single elements
+                            //    choose the element of the leaf which parent contains 
+                            //    more elements to simplify the next rebalancing operation.
+                            if left_parent_size >= right_parent_size {
+                                {
+                                    let mut left_leaf = left_leaf.as_mut().unwrap().write().unwrap();
+                                    let mut node_deref = node.write().unwrap();
+                                    node_deref.elements[index].as_mut().unwrap().write().unwrap()
+                                        .remove_connections(self.range());
+                                    node_deref.keys[index] = left_leaf.keys[0].take();
+                                    node_deref.elements[index] = left_leaf.elements[0].take();
+                                    left_leaf.size -= 1;
+                                }
+                                // 6. Empty leaf
+                                let left_leaf_parent_ptr = left_leaf_parent.as_ref().unwrap();
+                                let leaf_index = if Arc::ptr_eq(left_leaf_parent_ptr, node) { 
+                                    index 
+                                } else {
+                                    match left_leaf_parent_ptr.read() {
+                                        Ok(b) => b.size,
+                                        Err(_) => node.read().unwrap().size,
+                                    }
+                                };
+                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() &&
+                                    Arc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                    ) { Some(index) } else {
+                                    if left_leaf_parent_of_parent.is_some() && 
+                                        parent.is_some() && Arc::ptr_eq(
+                                            left_leaf_parent_of_parent.as_ref().unwrap(), 
+                                            &parent.as_ref().unwrap()
+                                    ) { child_index } else {
+                                        if left_leaf_parent_of_parent.is_some() {
+                                            Some(
+                                                left_leaf_parent_of_parent.as_ref()
+                                                    .unwrap().read().unwrap().size
+                                            )
+                                        } else { None }
+                                    }
+                                };
+                                self.empty_node(
+                                    left_leaf_parent.unwrap().clone(),
+                                    leaf_index,
+                                    left_leaf_parent_of_parent,
+                                    leaf_parent_index
+                                );
+                                return true
+                            } else {
+                                {
+                                    let mut right_leaf = right_leaf.as_mut().unwrap().write().unwrap();
+                                    let mut node_deref = node.write().unwrap();
+                                    node_deref.elements[index].as_mut().unwrap().write().unwrap()
+                                        .remove_connections(self.range());
+                                    node_deref.keys[index] = right_leaf.keys[0].take();
+                                    node_deref.elements[index] = right_leaf.elements[0].take();
+                                    right_leaf.size -= 1;
+                                }
+                                // 6. Empty leaf
+                                let leaf_index = if Arc::ptr_eq(
+                                    left_leaf_parent.as_ref().unwrap(), &node
+                                ) { index + 1 } else { 0 };
+                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() &&
+                                    Arc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                ) { Some(index + 1) } else {
+                                    if left_leaf_parent_of_parent.is_some() && 
+                                        parent.is_some() && Arc::ptr_eq(
+                                            left_leaf_parent_of_parent.as_ref().unwrap(), 
+                                            &parent.as_ref().unwrap()
+                                    ) { child_index } else { 
+                                        if left_leaf_parent_of_parent.is_some() { Some(0) } else { None }
+                                    }
+                                };
+                                self.empty_node(
+                                    right_leaf_parent.unwrap().clone(), 
+                                    leaf_index, 
+                                    right_leaf_parent_of_parent, 
+                                    leaf_parent_index
+                                );
+                                return true
+                            }
+                        }
+                    }
+                } else {
+                    // 2. I f the counter of the element storing the removed key 
+                    //    is greater than one, decrement this counter ,
+                    //    remove the link to the b oun d object, and finish the remove operation.
+                    element.write().unwrap().counter -= 1;
+                    return true
+                }
+            } else if node.read().unwrap().is_leaf {
+                //  1. If this key is not found, finish this operation with no effect
+                return false
+            } else {
+                parent_of_parent = parent;
+                parent = Some(node.clone());
+                current_node = node.read().unwrap().children[index].clone();
+                parent_index = child_index;
+                child_index = Some(index);
+            }
+        }
+
+        false
+    }
+
+    fn empty_node(
+        &mut self, 
+        node: Arc<RwLock<Node<Key, ORDER>>>,
+        index: usize,
+        parent: Option<Arc<RwLock<Node<Key, ORDER>>>>,
+        parent_index: Option<usize>
+    ) {
+        // 6. If one of the nearest siblings of the empty leaf contains 
+        //    more than one element, replace its ancestor element from
+        //    the empty leaf side by the closest element from this sibling
+        //    and shift this ancestor element to the empty node
+        //    Next, finish the remove operation
+        let empty_node = node.read().unwrap().children[index].as_ref().unwrap().clone();
+        let sibling_node = node.read().unwrap().children[1].clone();
+        let second_sibling_node = if index == 0 {
+            None
+        } else { node.read().unwrap().children[index - 1].clone() };
+        
+        let mut node_deref = node.write().unwrap();
+        let mut empty_node_deref = empty_node.write().unwrap();
+        let node_size = node_deref.size;
+        
+        if index == 0 && sibling_node.as_ref().unwrap().read().unwrap().size > 1 {
+            let mut sibling_node_deref = sibling_node.as_ref().unwrap().write().unwrap();
+            
+            empty_node_deref.keys[0] = node_deref.keys[0].take();
+            empty_node_deref.elements[0] = node_deref.elements[0].take();
+            empty_node_deref.size += 1;
+
+            node_deref.keys[0] = sibling_node_deref.keys[0].take();
+            node_deref.elements[0] = sibling_node_deref.elements[0].take();
+            sibling_node_deref.remove_element_soft(0);
+
+            return
+        } else if index == node_size 
+            && second_sibling_node.as_ref().unwrap().read().unwrap().size > 1 {
+            let mut sibling_node_deref = second_sibling_node.as_ref().unwrap().write().unwrap();
+            let sibling_size = sibling_node_deref.size;
+            
+            empty_node_deref.keys[0] = node_deref.keys[node_size - 1].take();
+            empty_node_deref.elements[0] = node_deref.elements[node_size - 1].take();
+            empty_node_deref.size += 1;
+
+            node_deref.keys[node_size - 1] = sibling_node_deref.keys[sibling_size - 1].take();
+            node_deref.elements[node_size - 1] 
+                = sibling_node_deref.elements[sibling_size - 1].take();
+            sibling_node_deref.size -= 1;
+
+            return
+        } else {
+            let l_sibling = if index != 0 {
+                node_deref.children[index - 1].clone()
+            } else { None };
+            let r_sibling = if index + 1 <= node_size {
+                node_deref.children[index + 1].clone()
+            } else { None };
+            if l_sibling.is_some() && l_sibling.as_ref().unwrap().read().unwrap().size > 1 {
+                let mut l_sibling_deref = l_sibling.as_ref().unwrap().write().unwrap();
+                let l_sibling_size = l_sibling_deref.size;
+
+                empty_node_deref.keys[0] = node_deref.keys[index - 1].take();
+                empty_node_deref.elements[0] = node_deref.elements[index - 1].take();
+                empty_node_deref.size += 1;
+
+                node_deref.keys[index - 1] = l_sibling_deref.keys[l_sibling_size - 1].take();
+                node_deref.elements[index - 1] 
+                    = l_sibling_deref.elements[l_sibling_size - 1].take();
+                l_sibling_deref.remove_element_soft(l_sibling_size - 1);
+
+                return
+            } else if r_sibling.is_some() && r_sibling.as_ref().unwrap().read().unwrap().size > 1 {
+                let mut r_sibling_deref = r_sibling.as_ref().unwrap().write().unwrap();
+
+                empty_node_deref.keys[0] = node_deref.keys[index].take();
+                empty_node_deref.elements[0] = node_deref.elements[index].take();
+                empty_node_deref.size += 1;
+
+                node_deref.keys[index] = r_sibling_deref.keys[0].take();
+                node_deref.elements[index] = r_sibling_deref.elements[0].take();
+                r_sibling_deref.remove_element_soft(0);
+
+                return
+            // both siblings contain one element
+            } else {
+                // 7. If the parent of the empty leaf stores more than one element, 
+                //    move the nearest parent element to the closest
+                //    sibling of the empty leaf, remove the empty leaf, 
+                //    and finish this operation.
+                if node_size >= 2 {
+                    if index == 0 {
+                        let mut r_sibling_deref = r_sibling.as_ref().unwrap().write().unwrap();
+                        
+                        r_sibling_deref.shift_right(0);
+                        r_sibling_deref.keys[0] = node_deref.keys[index].take();
+                        r_sibling_deref.elements[0] = node_deref.elements[index].take();
+                        r_sibling_deref.size += 1;
+                        node_deref.remove_element_soft(index);
+                        node_deref.children[index] = None;
+                        node_deref.shift_left_children(0);
+                        
+                        return
+                    } else {
+                        let mut l_sibling_deref = l_sibling.as_ref().unwrap().write().unwrap();
+                        let l_sibling_size = l_sibling_deref.size;
+                        
+                        l_sibling_deref.keys[l_sibling_size] = node_deref.keys[index - 1].take();
+                        l_sibling_deref.elements[l_sibling_size] = node_deref.elements[index - 1].take();
+                        l_sibling_deref.size += 1;
+                        node_deref.remove_element_soft(index - 1);
+                        node_deref.children[index] = None;
+                        node_deref.shift_left_children(index);
+                        
+                        return
+                    }
+                } else {
+                    // 8. Because both the parent of the empty leaf and the only sibling 
+                    //    store only single elements, move the element from this sibling 
+                    //    to the parent, remove both children of this parent,
+                    //    and continue in step 9 to rebalance the tree because 
+                    //    leaves are not at the same level.
+                    if index == 0 {
+                        let mut r_sibling_deref = r_sibling.as_ref().unwrap().write().unwrap();
+                        node_deref.shift_right(1);
+                        node_deref.keys[1] = r_sibling_deref.keys[0].take();
+                        node_deref.elements[1] = r_sibling_deref.elements[0].take();
+                        node_deref.size += 1;
+                        node_deref.is_leaf = true;
+                        node_deref.children[0] = None;
+                        node_deref.children[1] = None;
+                    } else {
+                        let mut l_sibling_deref = l_sibling.as_ref().unwrap().write().unwrap();
+                        node_deref.shift_right(index - 1);
+                        node_deref.keys[index - 1] = l_sibling_deref.keys[0].take();
+                        node_deref.elements[index - 1] = l_sibling_deref.elements[0].take();
+                        node_deref.size += 1;
+                        node_deref.is_leaf = true;
+                        node_deref.children[index - 1] = None;
+                        node_deref.children[index] = None;
+                    }
+                    // 9. Continue in step 9 to rebalance the tree because leaves 
+                    //    are not at the same level. Next finish
+                    if !Arc::ptr_eq(&node, &self.root) {
+                        self.rebalance(
+                            node.clone(),
+                            &mut node_deref,
+                            parent.unwrap(),
+                            parent_index.unwrap()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn rebalance(
+        &mut self, 
+        node: Arc<RwLock<Node<Key, ORDER>>>, 
+        mut node_deref: &mut Node<Key, ORDER>, 
+        parent: Arc<RwLock<Node<Key, ORDER>>>,
+        parent_index: usize
+    ) {
+        // 9. If one of the sibling node of the reduced subtree root contains 
+        //    more than one element, shift it closest element to the parent 
+        //    replacing the closest element in it, create a new child
+        //    and move down the replaced element from t he parent to this new child. 
+        //    Connect this new child to the reduced subtree and switch the closest child
+        //    of the sibling to this new child as well. Next, finish
+        // let mut node_deref = node.write().unwrap();
+        let mut parent_deref = parent.write().unwrap();
+
+        let l_sibling = if parent_index != 0 {
+            parent_deref.children[parent_index - 1].clone()
+        } else { None };
+        let r_sibling = if parent_index + 1 <= parent_deref.size {
+            parent_deref.children[parent_index + 1].clone()
+        } else { None };
+        
+        if l_sibling.is_some() && l_sibling.as_ref().unwrap().read().unwrap().size > 1 {
+            let mut l_sibling_deref = l_sibling.as_ref().unwrap().write().unwrap();
+            let l_sibling_size = l_sibling_deref.size;
+
+            let new_node = Arc::new(RwLock::new(Node::<Key, ORDER>::new(false, None)));
+            let mut new_node_deref = new_node.write().unwrap();
+            new_node_deref.keys[0] = parent_deref.keys[parent_index - 1].take();
+            new_node_deref.elements[0] = parent_deref.elements[parent_index - 1].take();
+            new_node_deref.size += 1;
+            new_node_deref.children[0] = l_sibling_deref.children[l_sibling_size].take();
+            new_node_deref.children[1] = Some(node.clone());
+
+            new_node_deref.parent = Some(Arc::downgrade(&parent));
+            node_deref.parent = Some(Arc::downgrade(&new_node));
+            new_node_deref.children[0].as_mut().unwrap().write().unwrap().parent 
+                = Some(Arc::downgrade(&new_node));
+
+            parent_deref.children[parent_index] = Some(new_node.clone());
+            parent_deref.keys[parent_index - 1] 
+                = l_sibling_deref.keys[l_sibling_size - 1].take();
+            parent_deref.elements[parent_index - 1] 
+                = l_sibling_deref.elements[l_sibling_size - 1].take();
+            l_sibling_deref.size -= 1;
+
+            return
+        } else if r_sibling.is_some() && r_sibling.as_ref().unwrap().read().unwrap().size > 1 {
+            let mut r_sibling_deref = r_sibling.as_ref().unwrap().write().unwrap();
+
+            let new_node = Arc::new(RwLock::new(Node::<Key, ORDER>::new(false, None)));
+            let mut new_node_deref = new_node.write().unwrap();
+            new_node_deref.keys[0] = parent_deref.keys[parent_index].take();
+            new_node_deref.elements[0] = parent_deref.elements[parent_index].take();
+            new_node_deref.size += 1;
+            new_node_deref.children[0] = Some(node.clone());
+            new_node_deref.children[1] = r_sibling_deref.children[0].take();
+
+            new_node_deref.parent = Some(Arc::downgrade(&parent));
+            node_deref.parent = Some(Arc::downgrade(&new_node));
+            new_node_deref.children[1].as_mut().unwrap().write().unwrap().parent 
+                = Some(Arc::downgrade(&new_node));
+
+            parent_deref.children[parent_index] = Some(new_node.clone());
+            parent_deref.keys[parent_index] = r_sibling_deref.keys[0].take();
+            parent_deref.elements[parent_index] = r_sibling_deref.elements[0].take();
+            r_sibling_deref.remove_element_soft(0);
+            r_sibling_deref.shift_left_children(0);
+
+            return
+        }
+        // 10. Move the parent element to the closest one element sibling of the reduced
+        //     subtree root and switch this reduced subtree root from its parent to this sibling.
+        //     Next, finish this operation if the parent node still contains one element.
+        //     If not, start the rebalancing operation for this sib ling going to step 9 until the
+        //     main root of the tree is not achieved.
+        if let Some(l_sibling) = l_sibling {
+            let mut l_sibling_deref = l_sibling.write().unwrap();
+            let mut l_sibling_size = l_sibling_deref.size;
+
+            l_sibling_deref.keys[l_sibling_size] = parent_deref.keys[parent_index - 1].take();
+            l_sibling_deref.elements[l_sibling_size] 
+                = parent_deref.elements[parent_index - 1].take();
+            l_sibling_deref.size += 1;
+            l_sibling_size += 1;
+            l_sibling_deref.children[l_sibling_size] = Some(node.clone());
+            parent_deref.remove_element_soft(parent_index - 1);
+            parent_deref.shift_left_children(parent_index);
+            node_deref.parent = Some(Arc::downgrade(&l_sibling));
+        } else if let Some(r_sibling) = r_sibling {
+            let mut r_sibling_deref = r_sibling.write().unwrap();
+
+            r_sibling_deref.shift_right(0);
+            r_sibling_deref.keys[0] = parent_deref.keys[parent_index].take();
+            r_sibling_deref.elements[0] = parent_deref.elements[parent_index].take();
+            r_sibling_deref.size += 1;
+            r_sibling_deref.shift_right_children(0);
+            r_sibling_deref.children[0] = Some(node.clone());
+            parent_deref.remove_element_soft(parent_index);
+            parent_deref.shift_left_children(parent_index);
+            node_deref.parent = Some(Arc::downgrade(&r_sibling));
+        }
+        if parent_deref.size >= 1 {
+            return
+        } else if Arc::ptr_eq(&parent, &self.root) {
+            self.root = parent_deref.children[0].as_ref().unwrap().clone();
+            self.root.write().unwrap().parent = None;
+            return
+        } else {
+            let parent_of_parent = parent_deref.parent.clone();
+            let reduced_subree_root = parent_deref.children[0].as_ref().unwrap().clone();
+            let mut reduced_subree_root_deref = reduced_subree_root.write().unwrap();
+
+            if let Some(parent_of_parent_weak) = &parent_of_parent {
+                let parent_of_parent = parent_of_parent_weak.upgrade().unwrap();
+
+                let parent_of_parent_index = parent_of_parent.read().unwrap().find_child(&parent);
+                parent_of_parent.write().unwrap().children[parent_of_parent_index.unwrap()] 
+                    = Some(reduced_subree_root.clone());
+                
+                reduced_subree_root_deref.parent = Some(parent_of_parent_weak.clone());
+                self.rebalance(
+                    reduced_subree_root.clone(),
+                    &mut reduced_subree_root_deref,
+                    parent_of_parent,
+                    parent_of_parent_index.unwrap()
+                );
+
+                return
+            }
+        }
+    }
+
     pub fn range(&self) -> f32 { 
         if self.key_min.is_none() || self.key_max.is_none() { return f32::NAN }
         let ret = self.key_min.as_ref().unwrap().distance(self.key_max.as_ref().unwrap()) as f32;
@@ -371,6 +879,56 @@ where
             } else {
                 println!("");
                 return
+            }
+        }
+    }
+
+    pub fn test_graph(&self, print_if_ok: bool) -> bool {
+        let mut height = 0;
+        let mut node = self.root.clone();
+        let mut queue: Vec<Vec<Arc<RwLock<Node<Key, ORDER>>>>> = vec![vec![]];
+        queue[0].push(node.clone());
+
+        let mut is_ok = true;
+
+        loop {
+            queue.push(vec![]);
+            for i in 0..(queue[height].len()) {
+                node = queue[height][i].clone();
+                let node_size = node.read().unwrap().size;
+                for j in 0..(node_size) {
+                    if !node.read().unwrap().is_leaf {
+                        queue[height + 1].push(node.read().unwrap().children[j].as_ref().unwrap().clone());
+                    }
+                }
+                if !node.read().unwrap().is_leaf {
+                    let node_deref = node.read().unwrap();
+                    match node_deref.children[node_size].as_ref() {
+                        Some(child) => queue[height + 1].push(child.clone()),
+                        None => { 
+                            print!("something went wrong with "); 
+                            node_deref.print_node(false);
+                        }
+                    };
+                }
+            }
+            if queue.last().unwrap().len() > 0 {
+                height += 1;
+            } else {
+                for level in &queue {
+                    for node in level {
+                        if !node.read().unwrap().test_node(true) { is_ok = false; }
+                    }
+                }
+                if !is_ok {
+                    println!("asa-graph is not ok:");
+                    self.print_graph() 
+                } else if print_if_ok {
+                    self.print_graph() 
+                }
+                io::stdout().flush().unwrap();
+
+                return is_ok
             }
         }
     }
@@ -729,7 +1287,12 @@ where Key: SensorData + Sync + Send, [(); ORDER + 1]: {
 pub mod tests {
     use std::{ time::Instant };
     
-    use rand::Rng;
+    use rand::{
+        Rng, 
+        seq::SliceRandom,
+        rngs::StdRng,
+        SeedableRng
+    };
 
     use witchnet_common::{
         neuron::NeuronAsync,
@@ -994,5 +1557,35 @@ pub mod tests {
             ).collect()
         ).collect();
         println!("{:?}", lvlvs);
+    }
+
+    #[test]
+    fn remove() {
+        let mut rng = StdRng::seed_from_u64(42);
+
+        let mut graph = ASAGraph::<i32, 5>::new(1);
+
+        let mut numbers = vec![];
+        for _ in 0..5150 {
+            let number: i32 = rng.gen_range(1..=2850);
+            numbers.push(number);
+            graph.insert(&number);
+        }
+        numbers.shuffle(&mut rng);
+
+        graph.print_graph();
+
+        print!("removing ");
+        for number in &numbers {
+            print!("{number} ");
+            graph.remove(number);
+            if !graph.test_graph(false) {
+                println!("removing {number} went wrong, returning");
+                return
+            }
+        }
+        println!();
+
+        graph.print_graph();
     }
 }

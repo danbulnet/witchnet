@@ -289,6 +289,115 @@ where
         new_element
     }
 
+    pub fn remove_element(&mut self, index: usize, range: f32) {
+        let element = self.elements[index].as_mut().unwrap();
+        element.borrow_mut().remove_connections(range);
+
+        for i in index..(self.size - 1) {
+            self.keys[i] = self.keys[i + 1].take();
+            self.elements[i] = self.elements[i + 1].take();
+        }
+
+        self.size -= 1;
+    }
+
+    pub(crate) fn remove_element_without_shift(&mut self, index: usize, range: f32) {
+        let element = self.elements[index].as_mut().unwrap();
+        element.borrow_mut().remove_connections(range);
+        self.elements[index] = None;
+    }
+
+    pub(crate) fn remove_element_soft(&mut self, index: usize) {
+        for i in index..(self.size - 1) {
+            self.keys[i] = self.keys[i + 1].take();
+            self.elements[i] = self.elements[i + 1].take();
+        }
+        self.size -= 1;
+    }
+
+    pub(crate) fn find_child(&self, child: &Rc<RefCell<Self>>) -> Option<usize> {
+        for i in 0..=self.size {
+            if Rc::ptr_eq(self.children[i].as_ref().unwrap(), child) {
+                return Some(i)
+            }
+        }
+        None
+    }
+
+    pub(crate) fn shift_right(&mut self, index: usize) {
+        for i in ((index + 1)..=self.size).rev() {
+            self.keys[i] = self.keys[i - 1].take();
+            self.elements[i] = self.elements[i - 1].take();
+        }
+    }
+
+    pub(crate) fn shift_left_children(&mut self, index: usize) {
+        for i in index..(Self::MAX_CHILDREN - 1) {
+            self.children[i] = self.children[i + 1].take();
+        }
+    }
+
+    pub(crate) fn shift_right_children(&mut self, index: usize) {
+        for i in (index..=self.size).rev() {
+            self.children[i + 1] = self.children[i].take();
+        }
+    }
+
+    pub(crate) fn test_node(&self, print: bool) -> bool {
+        let mut is_ok = true;
+        for i in 0..self.size {
+            if self.elements[i].is_none() { is_ok = false; }
+            if self.keys[i].is_none() { is_ok = false; }
+        }
+        for i in 0..=self.size {
+            if self.children[i].is_none() && !self.is_leaf { is_ok = false; }
+        }
+        
+        if !is_ok && print {
+            println!("wrong node size: {} is_leaf: {}", self.size, self.is_leaf);
+            print!("   "); self.print_node_elements();
+            print!("   "); self.print_node_children(false);
+        }
+
+        return is_ok
+    }
+
+    pub(crate) fn print_node(&self, borrow: bool) {
+        println!("node size: {} is_leaf: {}", self.size, self.is_leaf);
+        print!("   "); self.print_node_elements();
+        print!("   "); self.print_node_children(borrow);
+    }
+
+    pub(crate) fn print_node_elements(&self) -> String {
+        let mut node_string = format!("elements: ");
+        for element in &self.elements {
+            let s = match &element {
+                Some(e) => format!(
+                    "[{}:{}]", e.borrow().key, e.borrow().counter
+                ),
+                None => "[none]".to_string()
+            };
+            node_string.push_str(&s);
+        }
+        println!("{node_string}");
+        node_string
+    }
+
+    pub(crate) fn print_node_children(&self, borrow: bool) -> String {
+        let mut node_string = format!("children: ");
+        for child in &self.children {
+            let s = match &child {
+                Some(c) => if borrow {
+                    format!("[{}]", c.borrow().size)
+                } else { "[some]".to_string() },
+                None => "[none]".to_string()
+            };
+            node_string.push_str(&s);
+        }
+        println!("{node_string}");
+        node_string
+    }
+
     pub const MIN_CHILDREN: usize = (ORDER + 1) / 2;
     pub const MAX_CHILDREN: usize = ORDER + 1;
     pub const MIN_ELEMENTS: usize = (ORDER + 1) / 2 - 1;
