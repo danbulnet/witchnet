@@ -63,6 +63,8 @@ where
         }
     }
 
+    fn remove(&mut self, item: &Key) -> bool { self.remove(item) }
+
     fn activate(
         &mut self, 
         item: &Key, 

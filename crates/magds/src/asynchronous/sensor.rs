@@ -494,6 +494,62 @@ impl SensorAsync<DataTypeValue> for SensorConatiner {
         }
     }
 
+    fn remove(&mut self, item: &DataTypeValue) -> bool {
+        match self {
+            SensorConatiner::Bool(v) => {
+                v.remove(item.as_bool().unwrap())
+            },
+            SensorConatiner::U8(v) => {
+                v.remove(item.as_u8().unwrap())
+            },
+            SensorConatiner::U16(v) => {
+                v.remove(item.as_u16().unwrap())
+            },
+            SensorConatiner::U32(v) => {
+                v.remove(item.as_u32().unwrap())
+            },
+            SensorConatiner::U64(v) => {
+                v.remove(item.as_u64().unwrap())
+            },
+            SensorConatiner::U128(v) => {
+                v.remove(item.as_u128().unwrap())
+            },
+            SensorConatiner::USize(v) => {
+                v.remove(item.as_u_size().unwrap())
+            },
+            SensorConatiner::I8(v) => {
+                v.remove(item.as_i8().unwrap())
+            },
+            SensorConatiner::I16(v) => {
+                v.remove(item.as_i16().unwrap())
+            },
+            SensorConatiner::I32(v) => {
+                v.remove(item.as_i32().unwrap())
+            },
+            SensorConatiner::I64(v) => {
+                v.remove(item.as_i64().unwrap())
+            },
+            SensorConatiner::I128(v) => {
+                v.remove(item.as_i128().unwrap())
+            },
+            SensorConatiner::ISize(v) => {
+                v.remove(item.as_i_size().unwrap())
+            },
+            SensorConatiner::F32(v) => {
+                v.remove(item.as_f32().unwrap())
+            },
+            SensorConatiner::F64(v) => {
+                v.remove(item.as_f64().unwrap())
+            },
+            SensorConatiner::ArcStr(v) => {
+                v.remove(item.as_arc_str().unwrap())
+            },
+            SensorConatiner::String(v) => {
+                v.remove(item.as_string().unwrap())
+            }
+        }
+    }
+
     fn activate(
         &mut self, 
         item: &DataTypeValue, 
