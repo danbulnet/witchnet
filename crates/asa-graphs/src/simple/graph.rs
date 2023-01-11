@@ -3,7 +3,7 @@ use std::{
     rc::Rc,
     cell::RefCell,
     
-    io::{ self, Write },
+    io::{ self, Write }
 };
 
 use witchnet_common::distances::Distance;
@@ -223,8 +223,6 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                         //    replace the removed element in the non leaf node by this
                         //    connected neighbor element from the leaf containing 
                         //    more than one element, and finish the remove operation
-                        // let mut left_leaf = left_leaf.as_mut().unwrap().borrow_mut();
-                        // let mut right_leaf = right_leaf.as_mut().unwrap().borrow_mut();
                         let left_leaf_size = left_leaf.as_ref().unwrap().borrow().size;
                         let right_leaf_size = right_leaf.as_ref().unwrap().borrow().size;
                         if left_leaf_size >= 2 {
@@ -268,15 +266,20 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                                         Err(_) => node.borrow().size,
                                     }
                                 };
-                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() && Rc::ptr_eq(
-                                    left_leaf_parent_of_parent.as_ref().unwrap(), &node
-                                ) { Some(index) } else {
-                                    if left_leaf_parent_of_parent.is_some() && Rc::ptr_eq(
-                                        left_leaf_parent_of_parent.as_ref().unwrap(), 
-                                        &parent.as_ref().unwrap()
+                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() &&
+                                    Rc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                    ) { Some(index) } else {
+                                    if left_leaf_parent_of_parent.is_some() && 
+                                        parent.is_some() && Rc::ptr_eq(
+                                            left_leaf_parent_of_parent.as_ref().unwrap(), 
+                                            &parent.as_ref().unwrap()
                                     ) { child_index } else {
                                         if left_leaf_parent_of_parent.is_some() {
-                                            Some(left_leaf_parent_of_parent.as_ref().unwrap().borrow().size)
+                                            Some(
+                                                left_leaf_parent_of_parent.as_ref()
+                                                    .unwrap().borrow().size
+                                            )
                                         } else { None }
                                     }
                                 };
@@ -301,11 +304,14 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                                 let leaf_index = if Rc::ptr_eq(
                                     left_leaf_parent.as_ref().unwrap(), &node
                                 ) { index + 1 } else { 0 };
-                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() && Rc::ptr_eq(
-                                    left_leaf_parent_of_parent.as_ref().unwrap(), &node
+                                let leaf_parent_index = if left_leaf_parent_of_parent.is_some() &&
+                                    Rc::ptr_eq(
+                                        left_leaf_parent_of_parent.as_ref().unwrap(), &node
                                 ) { Some(index + 1) } else {
-                                    if left_leaf_parent_of_parent.is_some() && Rc::ptr_eq(
-                                        left_leaf_parent_of_parent.as_ref().unwrap(), &parent.as_ref().unwrap()
+                                    if left_leaf_parent_of_parent.is_some() && 
+                                        parent.is_some() && Rc::ptr_eq(
+                                            left_leaf_parent_of_parent.as_ref().unwrap(), 
+                                            &parent.as_ref().unwrap()
                                     ) { child_index } else { 
                                         if left_leaf_parent_of_parent.is_some() { Some(0) } else { None }
                                     }
@@ -355,7 +361,9 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         //    Next, finish the remove operation
         let empty_node = node.borrow().children[index].as_ref().unwrap().clone();
         let sibling_node = node.borrow().children[1].clone();
-        let second_sibling_node = node.borrow().children[index - 1].clone();
+        let second_sibling_node = if index == 0 {
+            None
+        } else { node.borrow().children[index - 1].clone() };
         
         let mut node_deref = node.borrow_mut();
         let mut empty_node_deref = empty_node.borrow_mut();
@@ -376,7 +384,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         } else if index == node_size 
             && second_sibling_node.as_ref().unwrap().borrow().size > 1 {
             let mut sibling_node_deref = second_sibling_node.as_ref().unwrap().borrow_mut();
-            let sibling_size = sibling_node_deref.size - 1;
+            let sibling_size = sibling_node_deref.size;
             
             empty_node_deref.keys[0] = node_deref.keys[node_size - 1].take();
             empty_node_deref.elements[0] = node_deref.elements[node_size - 1].take();
@@ -397,7 +405,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
             } else { None };
             if l_sibling.is_some() && l_sibling.as_ref().unwrap().borrow().size > 1 {
                 let mut l_sibling_deref = l_sibling.as_ref().unwrap().borrow_mut();
-                let l_sibling_size = l_sibling_deref.size - 1;
+                let l_sibling_size = l_sibling_deref.size;
 
                 empty_node_deref.keys[0] = node_deref.keys[index - 1].take();
                 empty_node_deref.elements[0] = node_deref.elements[index - 1].take();
@@ -481,7 +489,12 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                     // 9. Continue in step 9 to rebalance the tree because leaves 
                     //    are not at the same level. Next finish
                     if !Rc::ptr_eq(&node, &self.root) {
-                        self.rebalance(node.clone(), parent.unwrap(), parent_index.unwrap());
+                        self.rebalance(
+                            node.clone(),
+                            &mut node_deref,
+                            parent.unwrap(),
+                            parent_index.unwrap()
+                        );
                     }
                 }
             }
@@ -489,7 +502,9 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
     }
 
     pub fn rebalance(
-        &mut self, node: Rc<RefCell<Node<Key, ORDER>>>, 
+        &mut self, 
+        node: Rc<RefCell<Node<Key, ORDER>>>, 
+        mut node_deref: &mut Node<Key, ORDER>, 
         parent: Rc<RefCell<Node<Key, ORDER>>>,
         parent_index: usize
     ) {
@@ -499,14 +514,13 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         //    and move down the replaced element from t he parent to this new child. 
         //    Connect this new child to the reduced subtree and switch the closest child
         //    of the sibling to this new child as well. Next, finish
-        let mut node_deref = node.borrow_mut();
+        // let mut node_deref = node.borrow_mut();
         let mut parent_deref = parent.borrow_mut();
-        let parent_size = parent_deref.size;
 
         let l_sibling = if parent_index != 0 {
             parent_deref.children[parent_index - 1].clone()
         } else { None };
-        let r_sibling = if parent_index + 1 <= parent_size {
+        let r_sibling = if parent_index + 1 <= parent_deref.size {
             parent_deref.children[parent_index + 1].clone()
         } else { None };
         
@@ -566,12 +580,13 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         //     main root of the tree is not achieved.
         if let Some(l_sibling) = l_sibling {
             let mut l_sibling_deref = l_sibling.borrow_mut();
-            let l_sibling_size = l_sibling_deref.size;
+            let mut l_sibling_size = l_sibling_deref.size;
 
             l_sibling_deref.keys[l_sibling_size] = parent_deref.keys[parent_index - 1].take();
             l_sibling_deref.elements[l_sibling_size] 
                 = parent_deref.elements[parent_index - 1].take();
             l_sibling_deref.size += 1;
+            l_sibling_size += 1;
             l_sibling_deref.children[l_sibling_size] = Some(node.clone());
             parent_deref.remove_element_soft(parent_index - 1);
             parent_deref.shift_left_children(parent_index);
@@ -589,7 +604,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
             parent_deref.shift_left_children(parent_index);
             node_deref.parent = Some(Rc::downgrade(&r_sibling));
         }
-        if parent_size >= 1 {
+        if parent_deref.size >= 1 {
             return
         } else if Rc::ptr_eq(&parent, &self.root) {
             self.root = parent_deref.children[0].as_ref().unwrap().clone();
@@ -602,13 +617,17 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
 
             if let Some(parent_of_parent_weak) = &parent_of_parent {
                 let parent_of_parent = parent_of_parent_weak.upgrade().unwrap();
+
                 let parent_of_parent_index = parent_of_parent.borrow().find_child(&parent);
                 parent_of_parent.borrow_mut().children[parent_of_parent_index.unwrap()] 
                     = Some(reduced_subree_root.clone());
                 
                 reduced_subree_root_deref.parent = Some(parent_of_parent_weak.clone());
                 self.rebalance(
-                    reduced_subree_root.clone(), parent_of_parent, parent_of_parent_index.unwrap()
+                    reduced_subree_root.clone(),
+                    &mut reduced_subree_root_deref,
+                    parent_of_parent,
+                    parent_of_parent_index.unwrap()
                 );
 
                 return
@@ -650,7 +669,7 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         }
     }
 
-    pub fn test_graph(&self) {
+    pub fn test_graph(&self, print_if_ok: bool) -> bool {
         let mut height = 0;
         let mut node = self.root.clone();
         let mut queue: Vec<Vec<Rc<RefCell<Node<Key, ORDER>>>>> = vec![vec![]];
@@ -669,7 +688,14 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                     }
                 }
                 if !node.borrow().is_leaf {
-                    queue[height + 1].push(node.borrow().children[node_size].as_ref().unwrap().clone());
+                    let node_deref = node.borrow();
+                    match node_deref.children[node_size].as_ref() {
+                        Some(child) => queue[height + 1].push(child.clone()),
+                        None => { 
+                            print!("something went wrong with "); 
+                            node_deref.print_node(false);
+                        }
+                    };
                 }
             }
             if queue.last().unwrap().len() > 0 {
@@ -683,11 +709,12 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
                 if !is_ok {
                     println!("asa-graph is not ok:");
                     self.print_graph() 
-                } else {
+                } else if print_if_ok {
                     self.print_graph() 
                 }
                 io::stdout().flush().unwrap();
-                return
+
+                return is_ok
             }
         }
     }
@@ -1024,13 +1051,13 @@ pub mod tests {
 
     #[test]
     fn remove() {
-        let mut rng = rand::rngs::StdRng::seed_from_u64(42);
+        let mut rng = StdRng::seed_from_u64(42);
 
         let mut graph = ASAGraph::<i32, 5>::new("test");
 
         let mut numbers = vec![];
-        for _ in 0..50 {
-            let number: i32 = rng.gen_range(1..=20);
+        for _ in 0..5150 {
+            let number: i32 = rng.gen_range(1..=2850);
             numbers.push(number);
             graph.insert(&number);
         }
@@ -1038,10 +1065,16 @@ pub mod tests {
 
         graph.print_graph();
 
+        print!("removing ");
         for number in &numbers {
-            println!("removing {number}");
+            print!("{number} ");
             graph.remove(number);
+            if !graph.test_graph(false) {
+                println!("removing {number} went wrong, returning");
+                return
+            }
         }
+        println!();
 
         graph.print_graph();
     }

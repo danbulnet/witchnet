@@ -6,7 +6,7 @@ use std::{
 
 use witchnet_common::{
     distances::Distance,
-    algorithms::SearchAlgorithm, neuron::Neuron
+    algorithms::SearchAlgorithm
 };
 
 use super::element::Element;
@@ -319,20 +319,58 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
     }
 
     pub(crate) fn test_node(&self, print: bool) -> bool {
-        let mut node_string = format!("size: {}, elements: ", self.size);
         let mut is_ok = true;
-        for (i, element) in (&self.elements).into_iter().enumerate() {
+        for i in 0..self.size {
+            if self.elements[i].is_none() { is_ok = false; }
+            if self.keys[i].is_none() { is_ok = false; }
+        }
+        for i in 0..=self.size {
+            if self.children[i].is_none() && !self.is_leaf { is_ok = false; }
+        }
+        
+        if !is_ok && print {
+            println!("wrong node size: {} is_leaf: {}", self.size, self.is_leaf);
+            print!("   "); self.print_node_elements();
+            print!("   "); self.print_node_children(false);
+        }
+
+        return is_ok
+    }
+
+    pub(crate) fn print_node(&self, borrow: bool) {
+        println!("node size: {} is_leaf: {}", self.size, self.is_leaf);
+        print!("   "); self.print_node_elements();
+        print!("   "); self.print_node_children(borrow);
+    }
+
+    pub(crate) fn print_node_elements(&self) -> String {
+        let mut node_string = format!("elements: ");
+        for element in &self.elements {
             let s = match &element {
                 Some(e) => format!(
-                    "[{i}:{}({})]", e.borrow().key, e.borrow().counter
+                    "[{}:{}]", e.borrow().key, e.borrow().counter
                 ),
                 None => "[none]".to_string()
             };
             node_string.push_str(&s);
-            if element.is_none() && i < self.size { is_ok = false; }
         }
-        if !is_ok && print { println!("{node_string}"); }
-        return is_ok
+        println!("{node_string}");
+        node_string
+    }
+
+    pub(crate) fn print_node_children(&self, borrow: bool) -> String {
+        let mut node_string = format!("children: ");
+        for child in &self.children {
+            let s = match &child {
+                Some(c) => if borrow {
+                    format!("[{}]", c.borrow().size)
+                } else { "[some]".to_string() },
+                None => "[none]".to_string()
+            };
+            node_string.push_str(&s);
+        }
+        println!("{node_string}");
+        node_string
     }
 
     pub const MIN_CHILDREN: usize = (ORDER + 1) / 2;
