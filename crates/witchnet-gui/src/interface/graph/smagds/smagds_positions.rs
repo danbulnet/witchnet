@@ -37,6 +37,8 @@ pub(crate) fn set_positions(
     positions: &mut SMAGDSPositions,
     appearance: &Appearance
 ) {
+    *positions = SMAGDSPositions::default();
+
     group_neurons(magds, positions);
 
     let group_max_r = find_max_neuron_group_r(origin, positions, appearance);

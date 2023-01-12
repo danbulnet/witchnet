@@ -294,12 +294,12 @@ impl SMAGDS {
                 //     &x_diff_sn, &current_absolute_pattern, &y_sn,
                     // *epsilon
                 // );
-                // current_relative_pattern = Self::add_relative_pattern_neuron(
-                //     magds, level,
-                //     absolute_pattern_neurons, &self.neuron_groups,
-                //     &x_diff_sn, Some(&current_relative_pattern), &y_diff_sn,
-                //     *epsilon
-                // );
+                current_relative_pattern = Self::add_relative_pattern_neuron(
+                    magds, level,
+                    absolute_pattern_neurons, &self.neuron_groups,
+                    &x_diff_sn, Some(&current_relative_pattern), &y_diff_sn,
+                    *epsilon
+                );
             }
         }
     }
