@@ -48,7 +48,7 @@ pub(crate) fn sequential_data_window(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
     smagds_res: &mut ResMut<SMAGDSMain>,
-    sequence_1d_res: &mut ResMut<Sequence2D>
+    sequence_2d_res: &mut ResMut<Sequence2D>
 ) {
     egui::ScrollArea::vertical()
         .stick_to_bottom(true)
@@ -61,15 +61,17 @@ pub(crate) fn sequential_data_window(
 
             // features_list(ui, data_files_res);
 
-            data(ui, sequence_1d_res, data_files_res);
+            data(ui, sequence_2d_res, data_files_res);
             
-            sampling(ui, sequence_1d_res);
+            sampling(ui, sequence_2d_res);
+
+            smagds_params(ui, smagds_res, sequence_2d_res);
             
             add_magds_button_row(
                 ui, 
                 data_files_res,
                 smagds_res,
-                sequence_1d_res
+                sequence_2d_res
             );
 
             loaded_files(ui, &mut smagds_res.loaded_datasets);
@@ -154,6 +156,55 @@ pub(crate) fn features_list(ui: &mut Ui, data_files_res: &mut ResMut<SequentialD
     }
 }
 
+pub(crate) fn smagds_params(
+    ui: &mut Ui, 
+    smagds_res: &mut SMAGDSMain,
+    sequence_2d_res: &mut ResMut<Sequence2D>
+) {
+    let params = &mut smagds_res.params;
+    let loaded_samples = &sequence_2d_res.loaded_samples;
+    if !loaded_samples.is_empty() {
+        let samples_bounds = (
+            loaded_samples.first().unwrap()[0],
+            loaded_samples.last().unwrap()[0],
+        );
+        let sampels_range = samples_bounds.1 - samples_bounds.0;
+
+        widgets::slider_row(
+            ui, 
+            "simth", 
+            &mut params.signal_similarity_threshold, 
+            (0.0, 1.0)
+        );
+
+        widgets::slider_row(
+            ui, 
+            "ε", 
+            &mut params.epsilon, 
+            (0.0, 0.00005)
+        );
+
+        widgets::slider_row_usize(
+            ui, 
+            "lvlmax", 
+            &mut params.max_pattern_level, 
+            (1, loaded_samples.len() - 1)
+        );
+
+        if params.max_pattern_length.is_some() {
+            params.max_pattern_length.unwrap();
+        } else { 
+            params.max_pattern_length = Some(sampels_range); 
+        };
+        widgets::slider_row_f64(
+            ui,
+            "lenmax",
+            params.max_pattern_length.as_mut().unwrap(),
+            (0.0, sampels_range)
+        );
+    }
+}
+
 pub(crate) fn add_magds_button_row(
     ui: &mut Ui,
     data_files_res: &mut ResMut<SequentialDataFiles>,
@@ -171,10 +222,14 @@ pub(crate) fn add_magds_button_row(
                     .collect();
                     
                 #[allow(unused)]
-                let &mut SMAGDSMain { smagds, appearance, loaded_datasets: loaded_dataset, positions } = &mut smagds_res;
+                let &mut SMAGDSMain { 
+                    smagds, appearance, loaded_datasets: loaded_dataset, positions, params
+                } = &mut smagds_res;
 
                 *smagds = Some(
-                    Arc::new(RwLock::new(SMAGDS::new(&sampled_data).unwrap()))
+                    Arc::new(RwLock::new(SMAGDS::new_custom(
+                        &sampled_data, params.clone()
+                    ).unwrap()))
                 );
 
                 let (sensors_names, neurons_names) = {

@@ -131,6 +131,22 @@ pub fn slider_row(
     slider
 }
 
+pub fn slider_row_f64(
+    ui: &mut Ui, label: &str, value: &mut f64, bounds: (f64, f64)
+) -> Option<Response> {
+    let mut slider = None;
+    ui.horizontal(|ui| {
+        let label_widget = RichText::new(label)
+            .family(FontFamily::Proportional)
+            .size(STANDARD_TEXT_SIZE)
+            .color(NEUTRAL_COLOR);
+        ui.label(label_widget);
+        slider = Some(Slider::new(value, (bounds.0)..=(bounds.1)).ui(ui));
+    });
+    ui.end_row();
+    slider
+}
+
 pub fn slider_row_usize(
     ui: &mut Ui, label: &str, value: &mut usize, bounds: (usize, usize)
 ) -> Option<Response> {

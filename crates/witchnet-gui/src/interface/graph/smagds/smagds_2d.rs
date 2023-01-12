@@ -19,7 +19,9 @@ pub(crate) fn smagds(
 ) {
     if smagds_res.smagds.is_some() {
         #[allow(unused)]
-        let &mut SMAGDSMain { smagds, appearance, loaded_datasets, positions } = &mut smagds_res;
+        let &mut SMAGDSMain { 
+            smagds, appearance, loaded_datasets, positions, params 
+        } = &mut smagds_res;
         let sensor_settings = &appearance.sensors[&Selector::All];
         let connection_settings = &appearance.connections[&Selector::All];
 
@@ -33,7 +35,8 @@ pub(crate) fn smagds(
             neuron_2d::neurons(
                 ui,
                 &magds,
-                (group_id, &group_name), 
+                (group_id, &group_name),
+                &smagds.neuron_groups,
                 &neurons, 
                 positions,
                 appearance

@@ -25,13 +25,17 @@ use witchnet_common::{
 pub struct SMAGDSParams {
     pub max_pattern_length: Option<f64>,
     pub max_pattern_level: usize,
+    pub epsilon: f32,
+    pub signal_similarity_threshold: f32
 }
 
 impl Default for SMAGDSParams {
     fn default() -> Self {
         Self {
             max_pattern_length: None,
-            max_pattern_level: 10
+            max_pattern_level: 10,
+            epsilon: 0.00005,
+            signal_similarity_threshold: 0.97
         }
     }
 }
@@ -49,13 +53,13 @@ pub(crate) struct SMAGDSSensors {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct SMAGDSNeuronGropuIds {
-    absolute_pattern_level: HashMap<usize, u32>,
-    relative_pattern_level: HashMap<usize, u32>,
-    same_absolute_patterns_interval: u32,
-    same_relative_patterns_interval: u32,
-    different_absolute_patterns_interval: u32,
-    different_relative_patterns_interval: u32
+pub struct SMAGDSNeuronGropuIds {
+    pub absolute_pattern_level: HashMap<usize, u32>,
+    pub relative_pattern_level: HashMap<usize, u32>,
+    pub same_absolute_patterns_interval: u32,
+    pub same_relative_patterns_interval: u32,
+    pub different_absolute_patterns_interval: u32,
+    pub different_relative_patterns_interval: u32
 }
 
 #[derive(Debug, Clone)]
@@ -63,18 +67,21 @@ pub struct SMAGDS {
     pub magds: MAGDS,
     pub data: Vec<DataPoint2D>,
     pub(crate) sensors: SMAGDSSensors,
-    pub(crate) neuron_groups: SMAGDSNeuronGropuIds,
+    pub neuron_groups: SMAGDSNeuronGropuIds,
     pub(crate) absolute_pattern_neurons: HashMap<usize, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
     pub(crate) relative_pattern_neurons: HashMap<usize, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
     pub params: SMAGDSParams
 }
 
 impl SMAGDS {
-    pub const EPSILON: f32 = 0.00005;
-    pub const SIGNAL_SIMILARITY_THRESHOLD: f32 = 0.97;
-
     pub fn new<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
         data: &[(X, Y)]
+    ) -> anyhow::Result<Self> where DataTypeValue: From<X> + From<Y> {
+        Self::new_custom(data, SMAGDSParams::default())
+    }
+
+    pub fn new_custom<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
+        data: &[(X, Y)], params: SMAGDSParams
     ) -> anyhow::Result<Self> where DataTypeValue: From<X> + From<Y> {
         if data.len() < 2 { anyhow::bail!("data length must be >= 2") }
 
@@ -87,14 +94,15 @@ impl SMAGDS {
             }).collect();
         converted_data.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
 
-        let params = SMAGDSParams::default();
         let mut magds = MAGDS::new();
         let absolute_pattern_neurons = Self::prepare_pattern_level_neurons(
-            params.max_pattern_level
+            params.max_pattern_level, data.len()
         );
         let mut smagds = Self {
             sensors: Self::prepare_sensory_fields(&mut magds, &converted_data),
-            neuron_groups: Self::prepare_neuron_gropus(&mut magds, params.max_pattern_level),
+            neuron_groups: Self::prepare_neuron_gropus(
+                &mut magds, params.max_pattern_level, data.len()
+            ),
             params,
             magds,
             data: converted_data,
@@ -174,7 +182,7 @@ impl SMAGDS {
     }
 
     fn prepare_neuron_gropus(
-        magds: &mut MAGDS, max_pattern_level: usize
+        magds: &mut MAGDS, max_pattern_level: usize, data_len: usize
     ) -> SMAGDSNeuronGropuIds {
         let mut ids = SMAGDSNeuronGropuIds {
             absolute_pattern_level: HashMap::new(),
@@ -185,9 +193,10 @@ impl SMAGDS {
             different_relative_patterns_interval: 4
         };
 
-        for lvl in 1..=max_pattern_level {
+        let corrected_max_pattern_level = usize::min(max_pattern_level, data_len);
+        for lvl in 1..=corrected_max_pattern_level {
             let absolute_id = 4 + lvl as u32;
-            let relative_id = 4 + max_pattern_level as u32 + lvl as u32;
+            let relative_id = 4 + corrected_max_pattern_level as u32 + lvl as u32;
             ids.absolute_pattern_level.insert(lvl, absolute_id);
             ids.relative_pattern_level.insert(lvl, relative_id);
             magds.add_neuron_group(&format!("absolute pattern level {lvl}"), Some(absolute_id));
@@ -215,12 +224,14 @@ impl SMAGDS {
         let mut magds = &mut self.magds;
         
         let data = &self.data;
-        let SMAGDSParams { max_pattern_length, max_pattern_level } = &self.params;
+        let SMAGDSParams { 
+            max_pattern_length, max_pattern_level, epsilon, signal_similarity_threshold 
+        } = &self.params;
 
         let mut x_interval = self.sensors.x_interval.write().unwrap();
+        let mut y_entry = self.sensors.y_entry.write().unwrap();
         let mut y = self.sensors.y.write().unwrap();
         let mut y_interval = self.sensors.y_interval.write().unwrap();
-        let mut y_entry = self.sensors.y_entry.write().unwrap();
         let mut sapi = self.sensors.same_absolute_patterns_interval.write().unwrap();
         let mut srpi = self.sensors.same_relative_patterns_interval.write().unwrap();
         let mut dapi = self.sensors.different_absolute_patterns_interval.write().unwrap();
@@ -232,7 +243,7 @@ impl SMAGDS {
         let mut relative_pattern_neurons = &mut self.relative_pattern_neurons;
         
         let patterns: HashMap<usize, Arc<RwLock<dyn NeuronAsync>>> = HashMap::new();
-        let th = Self::SIGNAL_SIMILARITY_THRESHOLD;
+        let th = *signal_similarity_threshold;
         for i in 1..data.len() {
             let first_point = &data[i - 1]; let y1 = &first_point.y;
             let second_point = &data[i]; let y2 = &second_point.y;
@@ -240,52 +251,56 @@ impl SMAGDS {
             let y_diff = second_point.y.distance(&first_point.y);
             
             let (x_diff_sn, _) = x_interval.fuzzy_search(&x_diff.into(), th, false).unwrap();
-            let (y1_sn, _) = y.fuzzy_search(&y1.clone().into(), th, false).unwrap();
-            let (y2_sn, _) = y.fuzzy_search(&y2.clone().into(), th, false).unwrap();
-            let (y_diff_sn, _) = y_interval.fuzzy_search(&y_diff.into(), th, false).unwrap();
             let (y_entry_sn, _) = y_entry.fuzzy_search(&y1.clone().into(), th, false).unwrap();
+            let (y_sn, _) = y.fuzzy_search(&y2.clone().into(), th, false).unwrap();
+            let (y_diff_sn, _) = y_interval.fuzzy_search(&y_diff.into(), th, false).unwrap();
 
             let absolute_pattern_lvl1_neuron = Self::add_absolute_pattern_neuron(
                 magds, 1,
                 absolute_pattern_neurons, &self.neuron_groups,
-                &y1_sn, &x_diff_sn, &y2_sn, &y_entry_sn
+                &x_diff_sn, &y_entry_sn, &y_sn,
+                *epsilon
             );
             let relative_pattern_lvl1_neuron = Self::add_relative_pattern_neuron(
                 magds, 1,
                 absolute_pattern_neurons, &self.neuron_groups,
-                None, &x_diff_sn, &y_diff_sn, &y_entry_sn
+                &x_diff_sn, None, &y_diff_sn,
+                *epsilon
             );
 
-            // let mut current_pattern_len = x_diff;
-            // let mut current_absolute_pattern = absolute_pattern_lvl1_neuron;
-            // let mut current_relative_pattern = relative_pattern_lvl1_neuron;
-            // for j in (i + 1)..usize::min(i + max_pattern_level, data.len()) {
-            //     let first_point = &data[i - 1];
-            //     let second_point = &data[i]; let y2 = &second_point.y;
-            //     let x_diff = second_point.x.distance(&first_point.x);
-            //     let y_diff = second_point.y.distance(&first_point.y);
+            let mut current_pattern_len = x_diff;
+            let mut current_absolute_pattern = absolute_pattern_lvl1_neuron;
+            let mut current_relative_pattern = relative_pattern_lvl1_neuron;
+            for j in (i + 1)..usize::min(i + max_pattern_level, data.len()) {
+                let first_point = &data[i - 1];
+                let second_point = &data[i]; let y2 = &second_point.y;
+                let x_diff = second_point.x.distance(&first_point.x);
+                let y_diff = second_point.y.distance(&first_point.y);
 
-            //     if let Some(max_pattern_length) = max_pattern_length {
-            //         current_pattern_len += x_diff;
-            //         if current_pattern_len > *max_pattern_length { break }
-            //     }
+                if let Some(max_pattern_length) = max_pattern_length {
+                    current_pattern_len += x_diff;
+                    if current_pattern_len > *max_pattern_length { break }
+                }
 
-            //     let (x_diff_sn, _) = x_interval.fuzzy_search(&x_diff.into(), th, false).unwrap();
-            //     let (y2_sn, _) = y.fuzzy_search(&y2.clone().into(), th, false).unwrap();
-            //     let (y_diff_sn, _) = y_interval.fuzzy_search(&y_diff.into(), th, false).unwrap();
+                let (x_diff_sn, _) = x_interval.fuzzy_search(&x_diff.into(), th, false).unwrap();
+                let (y_sn, _) = y.fuzzy_search(&y2.clone().into(), th, false).unwrap();
+                let (y_diff_sn, _) = y_interval.fuzzy_search(&y_diff.into(), th, false).unwrap();
                 
-            //     let level = j - i;
-            //     current_absolute_pattern = Self::add_absolute_pattern_neuron(
-            //         magds, level,
-            //         absolute_pattern_neurons, &self.neuron_groups,
-            //         &current_absolute_pattern, &x_diff_sn, &y2_sn, &y_entry_sn
-            //     );
-            //     current_relative_pattern = Self::add_relative_pattern_neuron(
-            //         magds, level,
-            //         absolute_pattern_neurons, &self.neuron_groups,
-            //         Some(&current_relative_pattern), &x_diff_sn, &y_diff_sn, &y_entry_sn
-            //     );
-            // }
+                let level = j - i + 1;
+                println!("level {level}");
+                // current_absolute_pattern = Self::add_absolute_pattern_neuron(
+                //     magds, level,
+                //     absolute_pattern_neurons, &self.neuron_groups,
+                //     &x_diff_sn, &current_absolute_pattern, &y_sn,
+                    // *epsilon
+                // );
+                // current_relative_pattern = Self::add_relative_pattern_neuron(
+                //     magds, level,
+                //     absolute_pattern_neurons, &self.neuron_groups,
+                //     &x_diff_sn, Some(&current_relative_pattern), &y_diff_sn,
+                //     *epsilon
+                // );
+            }
         }
     }
 
@@ -294,18 +309,18 @@ impl SMAGDS {
         if data.len() < 2 { return }
 
         let mut x_interval = self.sensors.x_interval.write().unwrap();
+        let mut y_entry = self.sensors.y_entry.write().unwrap();
         let mut y = self.sensors.y.write().unwrap();
         let mut y_interval = self.sensors.y_interval.write().unwrap();
-        let mut y_entry = self.sensors.y_entry.write().unwrap();
 
         let mut x_interval_min = data[1].x.distance(&data[0].x);
         let mut x_interval_max = data[1].x.distance(&data[0].x);
+        let mut y_entry_min = data[0].y.clone();
+        let mut y_entry_max = data[0].y.clone();
         let mut y_min = data[0].y.clone();
         let mut y_max = data[0].y.clone();
         let mut y_interval_min = data[1].y.distance(&data[0].y);
         let mut y_interval_max = data[1].y.distance(&data[0].y);
-        let mut y_entry_min = data[0].y.clone();
-        let mut y_entry_max = data[0].y.clone();
 
         for i in 1..data.len() {
             let first_point = &data[i - 1];
@@ -314,12 +329,12 @@ impl SMAGDS {
             let points_y_interval = second_point.y.distance(&first_point.y);
 
             if second_point.y < y_min { 
-                y_min = second_point.y.clone(); 
                 y_entry_min = second_point.y.clone(); 
+                y_min = second_point.y.clone(); 
             }
             if second_point.y > y_max { 
+                y_entry_max = second_point.y.clone();
                 y_max = second_point.y.clone(); 
-                y_entry_max = second_point.y.clone() 
             }
             if points_x_interval < x_interval_min { x_interval_min = points_x_interval }
             if points_x_interval > x_interval_max { x_interval_max = points_x_interval }
@@ -328,22 +343,21 @@ impl SMAGDS {
         }
 
         x_interval.insert(&x_interval_min.into()); x_interval.insert(&x_interval_max.into());
+        y_entry.insert(&y_entry_min); y_entry.insert(&y_entry_max);
         y.insert(&y_min); y.insert(&y_max);
         y_interval.insert(&y_interval_min.into()); y_interval.insert(&y_interval_max.into());
-        y_entry.insert(&y_entry_min); y_entry.insert(&y_entry_max);
-
+        
+        let th = self.params.signal_similarity_threshold;
         for i in 1..data.len() {
             let first_point = &data[i - 1];
             let second_point = &data[i];
             let x_diff = second_point.x.distance(&first_point.x);
             let y_diff = second_point.y.distance(&first_point.y);
 
-            Self::fuzzy_search_insert(&mut x_interval, x_diff.into());
-
-            Self::fuzzy_search_insert(&mut y, first_point.y.clone().into());
-            Self::fuzzy_search_insert(&mut y, second_point.y.clone().into());
-            Self::fuzzy_search_insert(&mut y_interval, y_diff.into());
-            Self::fuzzy_search_insert(&mut y_entry, first_point.y.clone().into());
+            Self::fuzzy_search_insert(&mut x_interval, x_diff.into(), th);
+            Self::fuzzy_search_insert(&mut y_entry, first_point.y.clone().into(), th);
+            Self::fuzzy_search_insert(&mut y, first_point.y.clone().into(), th);
+            Self::fuzzy_search_insert(&mut y_interval, y_diff.into(), th);
         }
     }
 
@@ -358,17 +372,17 @@ impl SMAGDS {
         level: usize, 
         absolute_pattern_neurons: &mut HashMap<usize, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
         group_ids: &SMAGDSNeuronGropuIds,
-        base_pattern_sn: &Arc<RwLock<dyn NeuronAsync>>,
         x_diff_sn: &Arc<RwLock<dyn NeuronAsync>>,
-        y2_sn: &Arc<RwLock<dyn NeuronAsync>>,
-        y_entry_sn: &Arc<RwLock<dyn NeuronAsync>>
+        base_pattern_sn: &Arc<RwLock<dyn NeuronAsync>>,
+        y_sn: &Arc<RwLock<dyn NeuronAsync>>,
+        epsilon: f32
     ) -> Arc<RwLock<dyn NeuronAsync>> {
-        base_pattern_sn.write().unwrap().activate(1.0, false, true);
-        y2_sn.write().unwrap().activate(1.0, false, true);
         x_diff_sn.write().unwrap().activate(1.0, false, true);
+        base_pattern_sn.write().unwrap().activate(1.0, false, true);
+        y_sn.write().unwrap().activate(1.0, false, true);
 
         let mut activated_neurons: Vec<_> = (&absolute_pattern_neurons[&level]).into_iter()
-            .filter(|neuron| neuron.read().unwrap().activation() >= 3.0 - Self::EPSILON)
+            .filter(|neuron| neuron.read().unwrap().activation() >= 3.0 - epsilon)
             .cloned().collect();
         activated_neurons.sort_by(
             |a, b| a.read().unwrap().activation().partial_cmp(
@@ -383,7 +397,7 @@ impl SMAGDS {
             });
             absolute_neuron_vec.push(absolute_neuron.clone());
 
-            for sn in [&x_diff_sn, &base_pattern_sn, &y2_sn, &y_entry_sn] {
+            for sn in [&x_diff_sn, &base_pattern_sn, &y_sn] {
                 sn.write().unwrap().connect_bilateral(
                     absolute_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
@@ -400,7 +414,7 @@ impl SMAGDS {
         };
 
         base_pattern_sn.write().unwrap().deactivate(false, true);
-        y2_sn.write().unwrap().deactivate(false, true);
+        y_sn.write().unwrap().deactivate(false, true);
         x_diff_sn.write().unwrap().deactivate(false, true);
         
         absolute_pattern_lvl1_neuron
@@ -411,10 +425,10 @@ impl SMAGDS {
         level: usize, 
         relative_pattern_neurons: &mut HashMap<usize, Vec<Arc<RwLock<dyn NeuronAsync>>>>,
         group_ids: &SMAGDSNeuronGropuIds,
-        base_pattern_sn: Option<&Arc<RwLock<dyn NeuronAsync>>>,
         x_diff_sn: &Arc<RwLock<dyn NeuronAsync>>,
+        base_pattern_sn: Option<&Arc<RwLock<dyn NeuronAsync>>>,
         y_diff_sn: &Arc<RwLock<dyn NeuronAsync>>,
-        y_entry_sn: &Arc<RwLock<dyn NeuronAsync>>
+        epsilon: f32
     ) -> Arc<RwLock<dyn NeuronAsync>> {
         x_diff_sn.write().unwrap().activate(1.0, false, true);
         y_diff_sn.write().unwrap().activate(1.0, false, true);
@@ -425,7 +439,7 @@ impl SMAGDS {
         }
 
         let mut activated_neurons: Vec<_> = (&relative_pattern_neurons[&level]).into_iter()
-            .filter(|neuron| neuron.read().unwrap().activation() >= threshold - Self::EPSILON)
+            .filter(|neuron| neuron.read().unwrap().activation() >= threshold - epsilon)
             .cloned().collect();
         activated_neurons.sort_by(
             |a, b| a.read().unwrap().activation().partial_cmp(
@@ -440,9 +454,9 @@ impl SMAGDS {
             });
             relative_neuron_vec.push(relative_neuron.clone());
 
-            let mut to_connect = vec![&x_diff_sn, &y_diff_sn, &y_entry_sn];
+            let mut to_connect = vec![&x_diff_sn, &y_diff_sn];
             if level > 1 { to_connect.push(base_pattern_sn.as_ref().unwrap()); }
-            for sn in [&x_diff_sn, &y_diff_sn, &y_entry_sn] {
+            for sn in &to_connect {
                 sn.write().unwrap().connect_bilateral(
                     relative_neuron.clone(), false, ConnectionKind::Defining
                 ).unwrap();
@@ -466,20 +480,23 @@ impl SMAGDS {
     }
 
     fn prepare_pattern_level_neurons(
-        max_pattern_level: usize
+        max_pattern_level: usize, data_len: usize
     ) -> HashMap<usize, Vec<Arc<RwLock<dyn NeuronAsync>>>> {
         let mut result = HashMap::new();
-        for lvl in 1..=max_pattern_level {
+        let corrected_max_pattern_level = usize::min(max_pattern_level, data_len);
+        for lvl in 1..=corrected_max_pattern_level {
             result.insert(lvl, vec![]);
         }
         result
     }
 
     fn fuzzy_search_insert(
-        sensor: &mut SensorConatiner, data: DataTypeValue
+        sensor: &mut SensorConatiner, 
+        data: DataTypeValue,
+        signal_similarity_threshold: f32
     ) -> Arc<RwLock<dyn NeuronAsync>> {
         if let Some((sn, _)) = sensor.fuzzy_search(
-            &data, Self::SIGNAL_SIMILARITY_THRESHOLD, true
+            &data, signal_similarity_threshold, true
         ) {
             sn.write().unwrap().increment_counter();
             sn

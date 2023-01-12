@@ -7,6 +7,9 @@ use bevy_egui::egui::{
 };
 
 use magds::asynchronous::magds::MAGDS;
+
+use smagds::asynchronous::smagds::SMAGDSNeuronGropuIds;
+
 use witchnet_common::{
     neuron:: NeuronAsync
 };
@@ -33,7 +36,8 @@ use crate::{
 pub(crate) fn neurons(
     ui: &mut PlotUi, 
     magds: &MAGDS,
-    neuron_group: (u32, &str), 
+    neuron_group: (u32, &str),
+    neuron_group_ids: &SMAGDSNeuronGropuIds,
     neurons: &[Arc<RwLock<dyn NeuronAsync>>],
     positions: &mut SMAGDSPositions,
     appearance: &Appearance,
@@ -48,7 +52,12 @@ pub(crate) fn neurons(
     for neuron_ptr in neurons {
         let neuron = neuron_ptr.read().unwrap();
 
-        generate_sensors_and_connections(
+        let absolute_pattern_level_ids: Vec<u32> = neuron_group_ids.absolute_pattern_level
+            .values().cloned().collect();
+        let relative_pattern_level_ids: Vec<u32> = neuron_group_ids.relative_pattern_level
+            .values().cloned().collect();
+
+        draw_sensor_connections(
             ui,
             magds,
             &*neuron,
@@ -56,15 +65,28 @@ pub(crate) fn neurons(
             positions,
             neuron_size
         );
+            
+        if absolute_pattern_level_ids.contains(&neuron_group.0) ||
+            relative_pattern_level_ids.contains(&neuron_group.0) {
+            draw_pattern_neuron_and_labels(
+                ui,
+                &*neuron,
+                neuron_group_name,
+                positions,
+                neuron_settings,
+                neuron_size
+            );
+        } else {
+            draw_neuron_and_labels(
+                ui,
+                &*neuron,
+                neuron_group_name,
+                positions,
+                neuron_settings,
+                neuron_size
+            );
+        }
 
-        generate_neurons_and_labels(
-            ui,
-            &*neuron,
-            neuron_group_name,
-            positions,
-            neuron_settings,
-            neuron_size
-        );
     }
 
     let group_center_pos = positions.neuron_groups[&neuron_group_id];
@@ -79,7 +101,7 @@ pub(crate) fn neurons(
     ui.rich_text(text);
 }
 
-fn generate_sensors_and_connections(
+fn draw_sensor_connections(
     ui: &mut PlotUi, 
     magds: &MAGDS,
     neuron: &dyn NeuronAsync,
@@ -145,7 +167,66 @@ fn generate_sensors_and_connections(
     }
 }
 
-fn generate_neurons_and_labels(
+fn draw_neuron_and_labels(
+    ui: &mut PlotUi, 
+    neuron: &dyn NeuronAsync,
+    neuron_group_name: &str,
+    positions: &mut SMAGDSPositions,
+    neuron_settings: &NeuronAppearance,
+    neuron_size: f64
+) {
+    let neuron_pos = positions.neurons[&neuron.id()];
+    let neuron_value = format!("{} [{}]", neuron.id(), neuron.counter());
+    let neuron_id_id = neuron.id().id;
+    let neuron_activation = neuron.activation();
+    let neuron_counter = neuron.counter();
+    let neuron_name = format!("{neuron_group_name}: {neuron_id_id}");
+    let neuron_color = if neuron_activation >= 4.0 { 
+        &neuron_settings.primary_active_color
+    } else { &neuron_settings.primary_color };
+
+    let nodes = Nodes::new(vec![[neuron_pos.0, neuron_pos.1]])
+        .name(&neuron_value)
+        .filled(true)
+        .shape(NodeShape::Circle)
+        .radius(neuron_size as f32)
+        .color(utils::color_bevy_to_egui(&neuron_color));    
+    if neuron_settings.show { ui.nodes(nodes); }
+
+    if neuron_settings.show_text {
+        let text = RichText::new(
+            PlotPoint::new(neuron_pos.0, neuron_pos.1 + neuron_size / 1.5), 
+            &format!("{:.3}", neuron_activation)
+        ).name(&format!("{neuron_name} activation"))
+            .color(utils::color_bevy_to_egui(&neuron_settings.text_color))
+            .text_size(neuron_settings.text_size / 2.0)
+            .available_width(f32::INFINITY)
+            .anchor(Align2::CENTER_CENTER);
+        ui.rich_text(text);
+
+        let text = RichText::new(
+            PlotPoint::new(neuron_pos.0, neuron_pos.1), 
+            &neuron_id_id.to_string()
+        ).name(&neuron_name)
+            .color(utils::color_bevy_to_egui(&neuron_settings.text_marked_color))
+            .text_size(neuron_settings.text_size)
+            .available_width(f32::INFINITY)
+            .anchor(Align2::CENTER_CENTER);
+        ui.rich_text(text);
+
+        let text = RichText::new(
+            PlotPoint::new(neuron_pos.0, neuron_pos.1 - neuron_size / 1.5), 
+            &neuron_counter.to_string()
+        ).name(&format!("{neuron_name} counter"))
+            .color(utils::color_bevy_to_egui(&neuron_settings.text_color))
+            .text_size(neuron_settings.text_size / 2.0)
+            .available_width(f32::INFINITY)
+            .anchor(Align2::CENTER_CENTER);
+        ui.rich_text(text);
+    }
+}
+
+fn draw_pattern_neuron_and_labels(
     ui: &mut PlotUi, 
     neuron: &dyn NeuronAsync,
     neuron_group_name: &str,

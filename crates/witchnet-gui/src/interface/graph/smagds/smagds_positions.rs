@@ -24,7 +24,6 @@ use crate::{
         appearance::{ Appearance, Selector },
         smagds::{ 
             SMAGDSPositions,
-            BIG_GAP_FACTOR,
             SENSOR_SMALL_GAP_FACTOR,
             NEURON_SMALL_GAP_FACTOR,
             SENSOR_NEURON_GAP_R_FACTOR
@@ -44,15 +43,15 @@ pub(crate) fn set_positions(
 
     if let Some(group_max_r) = group_max_r {
         let groups_r = neuron_gropu_origins(origin, group_max_r, positions);
-        let neuron_gropu_centers = positions.neuron_groups.clone();
-        let neuron_gropu_len = neuron_gropu_centers.len();
+        let neuron_group_centers = positions.neuron_groups.clone();
+        let neuron_group_len = neuron_group_centers.len();
     
-        for (group_id, group_origin) in neuron_gropu_centers {
+        for (group_id, group_origin) in neuron_group_centers {
             let group_name: Arc<str> = magds.neuron_group_name_from_id(group_id).unwrap().into();
             let _ = neuron_positions(group_id, group_name, group_origin, positions, appearance);
         }
     
-        let sensors_radius = if neuron_gropu_len <= 1 {
+        let sensors_radius = if neuron_group_len <= 1 {
             (group_max_r + SENSOR_SMALL_GAP_FACTOR * group_max_r) * SENSOR_NEURON_GAP_R_FACTOR
         } else {
             (groups_r) * SENSOR_NEURON_GAP_R_FACTOR
@@ -324,8 +323,7 @@ fn group_neurons(
         if positions.group_ids_to_neurons.contains_key(&parent_id) {
             positions.group_ids_to_neurons.get_mut(&parent_id).unwrap().push(neuron.clone());
         } else {
-            positions.group_ids_to_neurons.insert(parent_id, vec![]);
-            positions.group_ids_to_neurons.get_mut(&parent_id).unwrap().push(neuron.clone());
+            positions.group_ids_to_neurons.insert(parent_id, vec![neuron.clone()]);
         }
     }
 }

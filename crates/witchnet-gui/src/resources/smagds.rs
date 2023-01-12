@@ -10,7 +10,7 @@ use bevy_egui::egui::Color32;
 
 use witchnet_common::neuron::{ NeuronID, NeuronAsync };
 
-use smagds::asynchronous::smagds::SMAGDS;
+use smagds::asynchronous::smagds::{ SMAGDS, SMAGDSParams };
 
 use crate::{
     resources::appearance::{
@@ -37,7 +37,8 @@ pub(crate) struct SMAGDSMain {
     pub(crate) smagds: Option<Arc<RwLock<SMAGDS>>>,
     pub(crate) appearance: Appearance,
     pub(crate) loaded_datasets: Vec<SMAGDSLoadedDataset>,
-    pub(crate) positions: SMAGDSPositions
+    pub(crate) positions: SMAGDSPositions,
+    pub(crate) params: SMAGDSParams
 }
 
 impl Default for SMAGDSMain {
@@ -73,7 +74,8 @@ impl Default for SMAGDSMain {
                 selected_connection: Selector::default()
             },
             loaded_datasets: vec![],
-            positions: SMAGDSPositions::default()
+            positions: SMAGDSPositions::default(),
+            params: SMAGDSParams::default(),
         }
     }
 }
