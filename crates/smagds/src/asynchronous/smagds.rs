@@ -71,7 +71,7 @@ pub struct SMAGDS {
 
 impl SMAGDS {
     pub const EPSILON: f32 = 0.00005;
-    pub const SIGNAL_SIMILARITY_THRESHOLD: f32 = 0.95;
+    pub const SIGNAL_SIMILARITY_THRESHOLD: f32 = 0.97;
 
     pub fn new<X: SensorData + DataDeductor, Y: SensorData + DataDeductor>(
         data: &[(X, Y)]
@@ -250,11 +250,11 @@ impl SMAGDS {
                 absolute_pattern_neurons, &self.neuron_groups,
                 &y1_sn, &x_diff_sn, &y2_sn, &y_entry_sn
             );
-            // let relative_pattern_lvl1_neuron = Self::add_relative_pattern_neuron(
-            //     magds, 1,
-            //     absolute_pattern_neurons, &self.neuron_groups,
-            //     None, &x_diff_sn, &y_diff_sn, &y_entry_sn
-            // );
+            let relative_pattern_lvl1_neuron = Self::add_relative_pattern_neuron(
+                magds, 1,
+                absolute_pattern_neurons, &self.neuron_groups,
+                None, &x_diff_sn, &y_diff_sn, &y_entry_sn
+            );
 
             // let mut current_pattern_len = x_diff;
             // let mut current_absolute_pattern = absolute_pattern_lvl1_neuron;
@@ -344,11 +344,6 @@ impl SMAGDS {
             Self::fuzzy_search_insert(&mut y, second_point.y.clone().into());
             Self::fuzzy_search_insert(&mut y_interval, y_diff.into());
             Self::fuzzy_search_insert(&mut y_entry, first_point.y.clone().into());
-
-            y.insert(&first_point.y);
-            y.insert(&second_point.y);
-            y_interval.insert(&y_diff.into());
-            y_entry.insert(&first_point.y);
         }
     }
 
@@ -484,7 +479,7 @@ impl SMAGDS {
         sensor: &mut SensorConatiner, data: DataTypeValue
     ) -> Arc<RwLock<dyn NeuronAsync>> {
         if let Some((sn, _)) = sensor.fuzzy_search(
-            &data, Self::SIGNAL_SIMILARITY_THRESHOLD, false
+            &data, Self::SIGNAL_SIMILARITY_THRESHOLD, true
         ) {
             sn.write().unwrap().increment_counter();
             sn

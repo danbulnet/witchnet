@@ -150,7 +150,7 @@ where
                         let prev_element = prev.0.upgrade().unwrap();
                         let prev_weight = prev.1;
                         if next_weight > prev_weight {
-                            if next_weight >= threshold { 
+                            if next_weight >= threshold {
                                 should_remove = true;
                                 Some((next_element, next_weight)) 
                             } else {
@@ -1064,8 +1064,6 @@ where
     }
 
     fn update_elements_weights(&mut self, range: f32) {
-        self.print_graph();
-
         let mut prev_element_ptr = match &self.element_min {
             Some(e) => e.clone(),
             None => return

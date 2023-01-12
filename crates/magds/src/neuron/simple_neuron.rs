@@ -42,7 +42,7 @@ impl SimpleNeuron {
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
-                    counter: 0,
+                    counter: 1,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnections::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnections::new(),
@@ -64,7 +64,7 @@ impl SimpleNeuron {
                 SimpleNeuron {
                     id,
                     activation: 0.0f32,
-                    counter: 0,
+                    counter: 1,
                     self_ptr: Weak::new(), 
                     defined_neurons: DefiningConnections::new(weighting_strategy),
                     defining_neurons: ExplanatoryConnections::new(),
@@ -100,7 +100,7 @@ impl SimpleNeuron {
 
     pub fn data_type(&self) -> DataType { DataType::Unknown }
 
-    pub fn counter(&self) -> usize { 1usize }
+    pub fn counter(&self) -> usize { self.counter }
 
     pub fn explain(&self) -> &[Rc<RefCell<dyn Neuron>>] {
         self.defining_sensors()
