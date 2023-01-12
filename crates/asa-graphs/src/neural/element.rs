@@ -147,7 +147,7 @@ where
             if let Some(prev) = &self.prev {
                 let prev_ptr = prev.0.upgrade().unwrap();
                 let mut prev_element = prev_ptr.borrow_mut();
-                prev_element.prev = None;
+                prev_element.next = None;
             }
         }
     }

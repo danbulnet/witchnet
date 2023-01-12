@@ -146,7 +146,42 @@ where Key: Clone + Display + PartialOrd + PartialEq + Distance, [(); ORDER + 1]:
         }
     }
 
+    fn update_min_max(&mut self, key: &Key) -> bool {
+        let (key_min, key_max) = match self.extreme_keys(){
+            Some((key_min, key_max)) => (
+                *dyn_clone::clone_box(key_min), 
+                *dyn_clone::clone_box(key_max)
+            ),
+            None => return false
+        };
+        if key == &key_min {
+            let next_element_min = match &self.element_min.as_ref().unwrap().borrow().next {
+                Some(el) => Some(el.upgrade().unwrap().clone()),
+                None => None
+            };
+            self.element_min = next_element_min;
+            self.key_min = match &self.element_min {
+                Some(el) => Some(*dyn_clone::clone_box(&el.borrow().key)),
+                None => None
+            };
+        }
+        if key == &key_max {
+            let next_element_max = match &self.element_max.as_ref().unwrap().borrow().prev {
+                Some(el) => Some(el.upgrade().unwrap().clone()),
+                None => None
+            };
+            self.element_max = next_element_max;
+            self.key_max = match &self.element_max {
+                Some(el) => Some(*dyn_clone::clone_box(&el.borrow().key)),
+                None => None
+            };
+        }
+        true
+    }
+
     pub fn remove(&mut self, key: &Key) -> bool {
+        if !self.update_min_max(key) { return false }
+
         // 1. Use the search operation to find an element containing the key intended for removal.
         let mut current_node = Some(self.root.clone());
         if current_node.as_ref().unwrap().borrow().size == 0 { return false }

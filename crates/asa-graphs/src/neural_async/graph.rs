@@ -137,59 +137,74 @@ where
         } else {
             if self.data_category().is_categorical() { return None }
 
-            let element_ptr = self.insert(item);
-            let mut element = element_ptr.write().unwrap();
-            element.decrement_counter();
+            let mut should_remove = false;
 
-            if let Some(next) = &element.next {
-                let next_element = next.0.upgrade().unwrap();
-                let next_weight = next.1;
-                if let Some(prev) = &element.prev {
-                    let prev_element = prev.0.upgrade().unwrap();
-                    let prev_weight = prev.1;
-                    if next_weight > prev_weight {
-                        if next_weight >= threshold { 
-                            Some((next_element, next_weight)) 
+            let result = {
+                let element_ptr = self.insert(item);
+                let element = element_ptr.write().unwrap();
+
+                if let Some(next) = &element.next {
+                    let next_element = next.0.upgrade().unwrap();
+                    let next_weight = next.1;
+                    if let Some(prev) = &element.prev {
+                        let prev_element = prev.0.upgrade().unwrap();
+                        let prev_weight = prev.1;
+                        if next_weight > prev_weight {
+                            if next_weight >= threshold { 
+                                should_remove = true;
+                                Some((next_element, next_weight)) 
+                            } else {
+                                if perserve_inserted_neuron { 
+                                    Some((element_ptr.clone(), 1.0)) 
+                                } else { should_remove = true; None } 
+                            }
+                        } else {
+                            if prev_weight >= threshold {
+                                should_remove = true;
+                                Some((prev_element, prev_weight))
+                            } else { 
+                                if perserve_inserted_neuron { 
+                                    Some((element_ptr.clone(), 1.0)) 
+                                } else { should_remove = true; None } 
+                            }
+                        }
+                    } else {
+                        if next_weight >= threshold {
+                            should_remove = true;
+                            Some((next_element, next_weight))
                         } else {
                             if perserve_inserted_neuron { 
                                 Some((element_ptr.clone(), 1.0)) 
-                            } else { None } 
+                            } else { should_remove = true; None } 
                         }
-                    } else {
-                        if prev_weight >= threshold { 
+                    }
+                } else {
+                    if let Some(prev) = &element.prev {
+                        let prev_element = prev.0.upgrade().unwrap();
+                        let prev_weight = prev.1;
+                        if prev_weight >= threshold {
+                            should_remove = true;
                             Some((prev_element, prev_weight))
-                        } else { 
+                        } else {
                             if perserve_inserted_neuron { 
                                 Some((element_ptr.clone(), 1.0)) 
-                            } else { None } 
+                            } else { should_remove = true; None } 
                         }
-                    }
-                } else {
-                    if next_weight >= threshold { 
-                        Some((next_element, next_weight))
                     } else {
                         if perserve_inserted_neuron { 
                             Some((element_ptr.clone(), 1.0)) 
-                        } else { None } 
+                        } else { should_remove = true; None } 
                     }
                 }
-            } else {
-                if let Some(prev) = &element.prev {
-                    let prev_element = prev.0.upgrade().unwrap();
-                    let prev_weight = prev.1;
-                    if prev_weight >= threshold { 
-                        Some((prev_element, prev_weight))
-                    } else {
-                        if perserve_inserted_neuron { 
-                            Some((element_ptr.clone(), 1.0)) 
-                        } else { None } 
-                    }
-                } else {
-                    if perserve_inserted_neuron { 
-                        Some((element_ptr.clone(), 1.0)) 
-                    } else { None } 
+            };
+
+            if should_remove { self.remove(item); } else {
+                if let Some(result) = &result {
+                    result.0.write().unwrap().decrement_counter(); 
                 }
             }
+
+            result
         }
     }
 
@@ -336,7 +351,7 @@ where
         }
     }
 
-    pub fn remove(&mut self, key: &Key) -> bool {
+    fn update_min_max(&mut self, key: &Key) -> bool {
         let (key_min, key_max) = match self.extreme_keys(){
             Some((key_min, key_max)) => (
                 *dyn_clone::clone_box(key_min), 
@@ -344,11 +359,44 @@ where
             ),
             None => return false
         };
+        if key.equals(&key_min) {
+            let el_min = self.element_min.as_ref().unwrap();
+            let next_element_min = match &el_min.read().unwrap().next {
+                Some((el, _)) => Some(el.upgrade().unwrap().clone()),
+                None => None
+            };
+            self.element_min = next_element_min;
+            self.key_min = match &self.element_min {
+                Some(el) => Some(*dyn_clone::clone_box(&el.read().unwrap().key)),
+                None => None
+            };
+        }
+        if key.equals(&key_max) {
+            let el_max = self.element_max.as_ref().unwrap();
+            let next_element_max = match &el_max.read().unwrap().prev {
+                Some((el, _)) => Some(el.upgrade().unwrap().clone()),
+                None => None
+            };
+            self.element_max = next_element_max;
+            self.key_max = match &self.element_max {
+                Some(el) => Some(*dyn_clone::clone_box(&el.read().unwrap().key)),
+                None => None
+            };
+        }
+        true
+    }
+
+    pub fn remove(&mut self, key: &Key) -> bool {
+        if !self.update_min_max(key) { return false }
         
         let result = self.remove_without_weights(key);
 
-        if key.equals(&key_min) || key.equals(&key_max) {
-            // self.update_elements_weights(key_min.distance(&key_max) as f32);
+        if let Some(key_min) = &self.key_min {
+            if let Some(key_max) = &self.key_max {
+                if key.equals(key_min) || key.equals(key_max) {
+                    self.update_elements_weights(key_min.distance(key_max) as f32);
+                }
+            }
         }
 
         result
@@ -1016,6 +1064,8 @@ where
     }
 
     fn update_elements_weights(&mut self, range: f32) {
+        self.print_graph();
+
         let mut prev_element_ptr = match &self.element_min {
             Some(e) => e.clone(),
             None => return
@@ -1395,11 +1445,19 @@ pub mod tests {
         for i in [1, 2, 3, 5, 6, 7] {
             graph.insert(&i);
         }
+        assert_eq!(graph.count_elements_unique(), 6);
         let result = graph.fuzzy_search(&4, 0.8, false);
+        assert_eq!(graph.count_elements_unique(), 6);
         assert!(result.is_some());
+        graph.fuzzy_search(&4, 0.8, true);
+        assert_eq!(graph.count_elements_unique(), 6);
         assert_eq!(result.unwrap().0.read().unwrap().key, 3);
         assert!(graph.fuzzy_search(&10, 0.8, false).is_none());
+        assert_eq!(graph.count_elements_unique(), 6);
         assert!(graph.fuzzy_search(&-2, 0.8, false).is_none());
+        assert_eq!(graph.count_elements_unique(), 6);
+        assert!(graph.fuzzy_search(&-2, 0.8, true).is_some());
+        assert_eq!(graph.count_elements_unique(), 7);
 
         let mut graph = ASAGraph::<f64, 3>::new(1);
         for i in [1.0, 2.0, 3.0, 5.0, 6.0, 7.0] {
