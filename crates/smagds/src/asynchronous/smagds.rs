@@ -288,12 +288,12 @@ impl SMAGDS {
                 
                 let level = j - i + 1;
                 println!("level {level}");
-                // current_absolute_pattern = Self::add_absolute_pattern_neuron(
-                //     magds, level,
-                //     absolute_pattern_neurons, &self.neuron_groups,
-                //     &x_diff_sn, &current_absolute_pattern, &y_sn,
-                    // *epsilon
-                // );
+                current_absolute_pattern = Self::add_absolute_pattern_neuron(
+                    magds, level,
+                    absolute_pattern_neurons, &self.neuron_groups,
+                    &x_diff_sn, &current_absolute_pattern, &y_sn,
+                    *epsilon
+                );
                 current_relative_pattern = Self::add_relative_pattern_neuron(
                     magds, level,
                     absolute_pattern_neurons, &self.neuron_groups,
@@ -377,9 +377,10 @@ impl SMAGDS {
         y_sn: &Arc<RwLock<dyn NeuronAsync>>,
         epsilon: f32
     ) -> Arc<RwLock<dyn NeuronAsync>> {
-        x_diff_sn.write().unwrap().activate(1.0, false, true);
-        base_pattern_sn.write().unwrap().activate(1.0, false, true);
-        y_sn.write().unwrap().activate(1.0, false, true);
+        x_diff_sn.write().unwrap().activate_defining(1.0);
+        y_sn.write().unwrap().activate_defining(1.0);
+        base_pattern_sn.write().unwrap().deactivate(false, false);
+        base_pattern_sn.write().unwrap().activate_defining(1.0);
 
         let mut activated_neurons: Vec<_> = (&absolute_pattern_neurons[&level]).into_iter()
             .filter(|neuron| neuron.read().unwrap().activation() >= 3.0 - epsilon)
@@ -408,6 +409,7 @@ impl SMAGDS {
             if activated_neurons.len() > 1 { 
                 log::warn!("activated_absolute_lvl{level}_neurons len > 1"); 
             }
+            println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
             let absolute_neuron = activated_neurons[0].clone();
             absolute_neuron.write().unwrap().increment_counter();
             absolute_neuron
@@ -430,11 +432,13 @@ impl SMAGDS {
         y_diff_sn: &Arc<RwLock<dyn NeuronAsync>>,
         epsilon: f32
     ) -> Arc<RwLock<dyn NeuronAsync>> {
-        x_diff_sn.write().unwrap().activate(1.0, false, true);
-        y_diff_sn.write().unwrap().activate(1.0, false, true);
+        x_diff_sn.write().unwrap().activate_defining(1.0);
+        y_diff_sn.write().unwrap().activate_defining(1.0);
         let mut threshold = 2.0;
         if level > 1 { 
-            base_pattern_sn.unwrap().write().unwrap().activate(1.0, false, true);
+            let mut base_pattern_sn = base_pattern_sn.unwrap().write().unwrap();
+            base_pattern_sn.deactivate(false, false);
+            base_pattern_sn.activate_defining(1.0);
             threshold = 3.0;
         }
 
@@ -467,7 +471,6 @@ impl SMAGDS {
             if activated_neurons.len() > 1 { 
                 log::warn!("activated_relative_lvl{level}_neurons len > 1"); 
             }
-            // println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
             let relative_neuron = activated_neurons[0].clone();
             relative_neuron.write().unwrap().increment_counter();
             relative_neuron
@@ -476,9 +479,6 @@ impl SMAGDS {
         x_diff_sn.write().unwrap().deactivate(false, true);
         y_diff_sn.write().unwrap().deactivate(false, true);
         if level > 1 { base_pattern_sn.unwrap().write().unwrap().deactivate(false, true); }
-        if !activated_neurons.is_empty() {
-            println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
-        }
         
         relative_pattern_lvl1_neuron
     }
