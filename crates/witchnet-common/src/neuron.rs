@@ -58,6 +58,8 @@ pub trait Neuron {
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
     ) -> f32;
 
+    fn activate_defining(&mut self, signal: f32) -> f32;
+
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
 
     fn connect_to(
@@ -117,6 +119,8 @@ pub trait NeuronAsync: Sync + Send {
     fn activate(
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
     ) -> f32;
+
+    fn activate_defining(&mut self, signal: f32) -> f32;
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool);
 

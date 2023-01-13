@@ -1153,6 +1153,15 @@ where
         ))
     }
 
+    pub fn activate_defining(&mut self, key: &Key, signal: f32) -> Result<f32> {
+        let element = match self.search(key) {
+            Some(e) => e,
+            None => anyhow::bail!("activate_defining: key {} not found", key)
+        };
+
+        Ok(element.clone().borrow_mut().activate_defining(signal))
+    }
+
     pub fn deactivate(
         &mut self, key: &Key, propagate_horizontal: bool, propagate_vertical: bool
     ) -> Result<()> {

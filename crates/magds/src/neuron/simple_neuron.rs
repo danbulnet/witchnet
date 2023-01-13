@@ -143,6 +143,19 @@ impl SimpleNeuron {
         max_activation
     }
 
+    pub fn activate_defining(&mut self, signal: f32) -> f32 {
+        self.activation += signal;
+        let mut max_activation = 0.0f32;
+        for neuron in self.defined_neurons() {
+            if !neuron.borrow().is_sensor() {
+                let output_signal = self.activation / self.defined_neurons.common_weight();
+                max_activation = f32::max(max_activation, output_signal);
+                neuron.borrow_mut().activate(output_signal, false, false);
+            }
+        }
+        max_activation
+    }
+
     pub fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
         self.activation = 0.0f32;
 
@@ -193,6 +206,10 @@ impl Neuron for SimpleNeuron {
         &mut self, signal: f32, propagate_horizontal: bool, propagate_vertical: bool
     ) -> f32 {
         self.activate(signal, propagate_horizontal, propagate_vertical)
+    }
+
+    fn activate_defining(&mut self, signal: f32) -> f32 {
+        self.activate_defining(signal)
     }
 
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {

@@ -170,6 +170,8 @@ pub trait Sensor<D: SensorData>: Any + Display {
         propagate_horizontal: bool, 
         propagate_vertical: bool
     ) -> Result<f32>;
+
+    fn activate_defining(&mut self, item: &D, signal: f32) -> Result<f32>;
     
     fn deactivate(
         &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool
@@ -222,6 +224,8 @@ pub trait SensorAsync<D: SensorData>: Any + Display + Sync + Send {
         propagate_horizontal: bool, 
         propagate_vertical: bool
     ) -> Result<f32>;
+
+    fn activate_defining(&mut self, item: &D, signal: f32) -> Result<f32>;
     
     fn deactivate(
         &mut self, item: &D, propagate_horizontal: bool, propagate_vertical: bool

@@ -350,6 +350,16 @@ where
         max_activation
     }
 
+    fn activate_defining(&mut self, signal: f32) -> f32 {
+        let neurons_activation = self.simple_activate(signal);
+        let mut max_activation = 0.0f32;
+        for (neuron, activation) in &neurons_activation {
+            max_activation = f32::max(max_activation, *activation);
+            neuron.write().unwrap().activate(*activation, false, false);
+        }
+        max_activation
+    }
+
     fn deactivate(&mut self, propagate_horizontal: bool, propagate_vertical: bool) {
         self.activation = 0.0f32;
 

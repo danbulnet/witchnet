@@ -648,6 +648,62 @@ impl Sensor<DataTypeValue> for SensorConatiner {
         }
     }
 
+    fn activate_defining(&mut self, item: &DataTypeValue, signal: f32) -> Result<f32> {
+        match self {
+            SensorConatiner::Bool(v) => {
+                v.activate_defining(item.as_bool().unwrap(), signal)
+            },
+            SensorConatiner::U8(v) => {
+                v.activate_defining(item.as_u8().unwrap(), signal)
+            },
+            SensorConatiner::U16(v) => {
+                v.activate_defining(item.as_u16().unwrap(), signal)
+            },
+            SensorConatiner::U32(v) => {
+                v.activate_defining(item.as_u32().unwrap(), signal)
+            },
+            SensorConatiner::U64(v) => {
+                v.activate_defining(item.as_u64().unwrap(), signal)
+            },
+            SensorConatiner::U128(v) => {
+                v.activate_defining(item.as_u128().unwrap(), signal)
+            },
+            SensorConatiner::USize(v) => {
+                v.activate_defining(item.as_u_size().unwrap(), signal)
+            },
+            SensorConatiner::I8(v) => {
+                v.activate_defining(item.as_i8().unwrap(), signal)
+            },
+            SensorConatiner::I16(v) => {
+                v.activate_defining(item.as_i16().unwrap(), signal)
+            },
+            SensorConatiner::I32(v) => {
+                v.activate_defining(item.as_i32().unwrap(), signal)
+            },
+            SensorConatiner::I64(v) => {
+                v.activate_defining(item.as_i64().unwrap(), signal)
+            },
+            SensorConatiner::I128(v) => {
+                v.activate_defining(item.as_i128().unwrap(), signal)
+            },
+            SensorConatiner::ISize(v) => {
+                v.activate_defining(item.as_i_size().unwrap(), signal)
+            },
+            SensorConatiner::F32(v) => {
+                v.activate_defining(item.as_f32().unwrap(), signal)
+            },
+            SensorConatiner::F64(v) => {
+                v.activate_defining(item.as_f64().unwrap(), signal)
+            },
+            SensorConatiner::ArcStr(v) => {
+                v.activate_defining(item.as_arc_str().unwrap(), signal)
+            },
+            SensorConatiner::String(v) => {
+                v.activate_defining(item.as_string().unwrap(), signal)
+            }
+        }
+    }
+
     fn deactivate(
         &mut self, 
         item: &DataTypeValue, 

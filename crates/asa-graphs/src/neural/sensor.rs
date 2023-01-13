@@ -75,6 +75,10 @@ where
         self.activate(item, signal, propagate_horizontal, propagate_vertical)
     }
 
+    fn activate_defining(&mut self, item: &Key, signal: f32) -> Result<f32> {
+        self.activate_defining(item, signal)
+    }
+
     fn deactivate(
         &mut self, 
         item: &Key, 

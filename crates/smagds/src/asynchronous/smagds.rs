@@ -467,6 +467,7 @@ impl SMAGDS {
             if activated_neurons.len() > 1 { 
                 log::warn!("activated_relative_lvl{level}_neurons len > 1"); 
             }
+            // println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
             let relative_neuron = activated_neurons[0].clone();
             relative_neuron.write().unwrap().increment_counter();
             relative_neuron
@@ -475,6 +476,9 @@ impl SMAGDS {
         x_diff_sn.write().unwrap().deactivate(false, true);
         y_diff_sn.write().unwrap().deactivate(false, true);
         if level > 1 { base_pattern_sn.unwrap().write().unwrap().deactivate(false, true); }
+        if !activated_neurons.is_empty() {
+            println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
+        }
         
         relative_pattern_lvl1_neuron
     }
