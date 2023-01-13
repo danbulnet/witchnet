@@ -287,7 +287,6 @@ impl SMAGDS {
                 let (y_diff_sn, _) = y_interval.fuzzy_search(&y_diff.into(), th, false).unwrap();
                 
                 let level = j - i + 1;
-                println!("level {level}");
                 current_absolute_pattern = Self::add_absolute_pattern_neuron(
                     magds, level,
                     absolute_pattern_neurons, &self.neuron_groups,
@@ -409,7 +408,6 @@ impl SMAGDS {
             if activated_neurons.len() > 1 { 
                 log::warn!("activated_absolute_lvl{level}_neurons len > 1"); 
             }
-            println!("activated_neurons[0].activation {}", activated_neurons[0].read().unwrap().activation());
             let absolute_neuron = activated_neurons[0].clone();
             absolute_neuron.write().unwrap().increment_counter();
             absolute_neuron
